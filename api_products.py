@@ -52,16 +52,17 @@ def get_next_index():
 # print(get_next_index())
 
 
-def get_products(a_list=[37]):
-    products_list = []
-    for x in a_list:
-        pro = prestashop.get('products', x)['product']
-        products_list.append(pro)
+def get_products(a_list=[37, 10]):
+    products_list = [prestashop.get('products', y)['product'] for y in a_list]
     return products_list
 
 
-# extracted_products_1 = get_products(get_products_indexes(5))
-# print(extracted_products_1[-1])
+# extracted_products_1 = get_products(get_products_indexes(10))
+# print(extracted_products_1)
+# for extr in extracted_products_1:
+#     print(extr['manufacturer_name']['value'])
+
+
 
 
 
