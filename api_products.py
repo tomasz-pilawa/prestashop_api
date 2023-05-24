@@ -52,15 +52,22 @@ def get_next_index():
 # print(get_next_index())
 
 
-def get_products(a_list=[37, 10]):
-    products_list = [prestashop.get('products', y)['product'] for y in a_list]
+def get_products(a_list=[37, 10], brand=None):
+    if brand:
+        products_list = [prestashop.get('products', y)['product'] for y in a_list
+                         if prestashop.get('products', y)['product']['manufacturer_name']['value'] == brand]
+    else:
+        products_list = [prestashop.get('products', y)['product'] for y in a_list]
     return products_list
 
 
-# extracted_products_1 = get_products(get_products_indexes(10))
-# print(extracted_products_1)
+# extracted_products_1 = get_products(get_products_indexes(50), 'Anna Lotan')
+#
 # for extr in extracted_products_1:
+#     print(extr['name']['language']['value'])
 #     print(extr['manufacturer_name']['value'])
+#     print(extr)
+
 
 
 
