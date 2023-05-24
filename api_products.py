@@ -52,6 +52,18 @@ def get_next_index():
 # print(get_next_index())
 
 
+def get_all_manufacturers():
+    manufacturers = prestashop.get('manufacturers')
+    indexes_list = []
+    for manufacturer in manufacturers['manufacturers']['manufacturer']:
+        indexes_list.append(int(manufacturer['attrs']['id']))
+    names = [prestashop.get('manufacturers', m)['manufacturer']['name'] for m in indexes_list]
+    return names
+
+
+# print(get_all_manufacturers())
+
+
 def get_products(a_list=[37, 10], brand=None):
     if brand:
         products_list = [prestashop.get('products', y)['product'] for y in a_list
