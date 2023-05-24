@@ -64,7 +64,7 @@ def get_all_manufacturers():
 # print(get_all_manufacturers())
 
 
-def get_products(a_list=[37, 10], brand=None):
+def get_products(a_list=(37, 10), brand=None):
     if brand:
         products_list = [prestashop.get('products', y)['product'] for y in a_list
                          if prestashop.get('products', y)['product']['manufacturer_name']['value'] == brand]
@@ -73,16 +73,9 @@ def get_products(a_list=[37, 10], brand=None):
     return products_list
 
 
-# extracted_products_1 = get_products(get_products_indexes(50), 'Anna Lotan')
-#
-# for extr in extracted_products_1:
-#     print(extr['name']['language']['value'])
-#     print(extr['manufacturer_name']['value'])
-#     print(extr)
+extracted_products_1 = get_products(get_products_indexes(50), 'Anna Lotan')
 
-
-
-
-
-
-
+for extr in extracted_products_1:
+    print(extr['name']['language']['value'])
+    print(extr['manufacturer_name']['value'])
+    print(extr)
