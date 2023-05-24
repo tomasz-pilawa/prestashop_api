@@ -73,9 +73,9 @@ def get_products(a_list=(37, 10), brand=None):
     return products_list
 
 
-extracted_products_1 = get_products(get_products_indexes(50), 'Anna Lotan')
+# extracted_products_1 = get_products(get_products_indexes(50), 'Anna Lotan')
 
-for extr in extracted_products_1:
-    print(extr['name']['language']['value'])
-    print(extr['manufacturer_name']['value'])
-    print(extr)
+# for extr in extracted_products_1:
+#     print(extr['name']['language']['value'])
+#     print(extr['manufacturer_name']['value'])
+#     print(extr)
