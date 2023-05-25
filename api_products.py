@@ -31,6 +31,7 @@ def test_get_product_names_from_range(x=8, y=10):
 
 
 def get_products_indexes(n=5):
+    # it's an absolute testing function - prestashop.search would be more efficient one-liner
     options = {'limit': n}
     products = prestashop.get('products', options=options)
 
@@ -46,7 +47,7 @@ def get_products_indexes(n=5):
 
 
 def get_next_index():
-    return max(get_products_indexes(5000))+1
+    return max(prestashop.search('products'))+1
 
 
 # print(get_next_index())
