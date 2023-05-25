@@ -1,4 +1,5 @@
 import os
+import json
 from prestapyt import PrestaShopWebServiceDict
 
 api_url = os.getenv('quelinda_link')
@@ -65,18 +66,26 @@ def get_all_manufacturers():
 # print(get_all_manufacturers())
 
 
-def get_products(a_list=(37, 10), brand=None):
+def get_products(id_list=(37, 10), brand=None):         # obsolete function
     if brand:
-        products_list = [prestashop.get('products', y)['product'] for y in a_list
+        products_list = [prestashop.get('products', y)['product'] for y in id_list
                          if prestashop.get('products', y)['product']['manufacturer_name']['value'] == brand]
     else:
-        products_list = [prestashop.get('products', y)['product'] for y in a_list]
+        products_list = [prestashop.get('products', y)['product'] for y in id_list]
     return products_list
 
 
-# extracted_products_1 = get_products(get_products_indexes(50), 'Anna Lotan')
+def get_products_2(brand=None):
+    with open('brands_mapped.json') as file:
+        data = json.load(file)
 
-# for extr in extracted_products_1:
-#     print(extr['name']['language']['value'])
-#     print(extr['manufacturer_name']['value'])
-#     print(extr)
+    if brand in list(data.keys()):
+        print(f"The brand exists. Processing the data...")
+        indexes = data[brand]
+        products = [prestashop.get('products', product_index)['product'] for product_index in indexes]
+        print(f"\nThere are {len(products)} products of {brand}:\n")
+        for product in products:
+            print(product['name']['language']['value'])
+        return products
+    else:
+        print("None brand given or the brand doesn't exist")
