@@ -11,7 +11,7 @@ prestashop = PrestaShopWebServiceDict(api_url, api_key)
 def get_init_brand_dict():
     indexes = prestashop.search('products')
 
-    products_list = [prestashop.get('products', y)['product'] for y in indexes[:10]]
+    products_list = [prestashop.get('products', y)['product'] for y in indexes]
     indexes_used = []
     brands_used = []
 
@@ -32,6 +32,3 @@ def get_init_brand_dict():
     print(result)
 
     return result
-
-
-get_init_brand_dict()
