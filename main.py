@@ -9,4 +9,4 @@ import json
 
 brand_test = 'Filorga'
 
-ap.get_products_2(brand_test)
+# ap.get_products_2(brand_test)
