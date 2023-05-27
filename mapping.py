@@ -9,6 +9,7 @@ prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
 
 def get_init_brand_dict():
+
     indexes = prestashop.search('products')
 
     products_list = [prestashop.get('products', y)['product'] for y in indexes]
@@ -32,3 +33,20 @@ def get_init_brand_dict():
     print(result)
 
     return result
+
+
+# print(get_all_manufacturers())
+
+
+def get_manufacturers_dict():
+
+    manufacturer_ids = prestashop.search('manufacturers')
+    manufacturer_names = [prestashop.get('manufacturers', m)['manufacturer']['name'] for m in manufacturer_ids]
+
+    manufacturer_dict = dict(zip(manufacturer_names, manufacturer_ids))
+
+    with open('manufacturers_dict.json', 'w') as file:
+        json.dump(manufacturer_dict, file)
+
+    return manufacturer_dict
+

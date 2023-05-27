@@ -9,6 +9,7 @@ prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
 
 def test_specific_id_response(product_id=8):
+
     specific = prestashop.get('products', product_id)['product']
     print(specific)
     print(specific.keys())
@@ -22,6 +23,7 @@ def test_specific_id_response(product_id=8):
 
 
 def test_get_product_names_from_range(x=8, y=10):
+
     for x in range(x, y):
         pro = prestashop.get('products', x)['product']
         print(pro['id'])
@@ -32,6 +34,7 @@ def test_get_product_names_from_range(x=8, y=10):
 
 
 def get_products_indexes(n=5):
+
     # it's an absolute testing function - prestashop.search would be more efficient one-liner
     options = {'limit': n}
     products = prestashop.get('products', options=options)
@@ -54,18 +57,6 @@ def get_next_index():
 # print(get_next_index())
 
 
-def get_all_manufacturers():
-    manufacturers = prestashop.get('manufacturers')
-    indexes_list = []
-    for manufacturer in manufacturers['manufacturers']['manufacturer']:
-        indexes_list.append(int(manufacturer['attrs']['id']))
-    names = [prestashop.get('manufacturers', m)['manufacturer']['name'] for m in indexes_list]
-    return names
-
-
-# print(get_all_manufacturers())
-
-
 def get_products(id_list=(37, 10), brand=None):         # obsolete function
     if brand:
         products_list = [prestashop.get('products', y)['product'] for y in id_list
@@ -76,6 +67,7 @@ def get_products(id_list=(37, 10), brand=None):         # obsolete function
 
 
 def get_products_2(brand=None):
+
     with open('brands_mapped.json') as file:
         data = json.load(file)
 
