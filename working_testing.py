@@ -1,4 +1,6 @@
 import os
+import json
+import csv
 from prestapyt import PrestaShopWebServiceDict
 
 api_url = os.getenv('quelinda_link')
@@ -58,8 +60,31 @@ prestashop = PrestaShopWebServiceDict(api_url, api_key)
 # prestashop.delete('addresses', 15320)
 
 
-blank_product = prestashop.get('products', 37)
-
+# blank_product = prestashop.get('products', 37)
+# # blank_product_2 = prestashop.get('products', options={'schema': 'blank'})
+#
 # for k, v in blank_product['product'].items():
 #     print(f"'{k}': '{v}',")
+#
+# print(blank_product)
 
+# features = prestashop.search('product_feature_values')
+# print(features)
+# print(len(features))
+
+# ft = prestashop.get('product_feature_values', 47)
+# print(ft)
+
+
+# default_product_values = {'state': ' 1',
+#                           'low_stock_alert': '0',
+#                           'active': '0',
+#                           'redirect_type': '404',
+#                           'condition': 'new',
+#                           'show_price': '1',
+#                           'indexed': '1',
+#                           'visibility': 'both'}
+
+
+# with open('default_product_values.json', 'w') as file:
+#     json.dump(default_product_values, file)
