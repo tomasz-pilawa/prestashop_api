@@ -20,7 +20,14 @@ def add_product_from_csv(product):
         row = next(reader)
         data = dict(zip(header, row))
 
-        return data
+    with open('manufacturers_dict.json') as man_file:
+        id_manufacturer = json.load(man_file)[data['manufacturer_name']]
+
+    data['id_manufacturer'] = id_manufacturer
+    data['wholesale_price'] = str(round(int(data['price'])/1.87, 2))
+    data['link_rewrite'] = data['name'].lower().replace(' ', '-')
+
+    return data
 
 
 print(add_product_from_csv(product_1))
