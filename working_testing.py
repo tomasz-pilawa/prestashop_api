@@ -76,7 +76,7 @@ prestashop = PrestaShopWebServiceDict(api_url, api_key)
 # print(ft)
 
 
-# default_product_values = {'state': ' 1',
+# default_product_values = {'state': '1',
 #                           'low_stock_alert': '0',
 #                           'active': '0',
 #                           'redirect_type': '404',

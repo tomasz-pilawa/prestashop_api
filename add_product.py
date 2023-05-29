@@ -9,9 +9,6 @@ api_key = os.getenv('quelinda_pass')
 prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
 
-product_1 = 'random_product.csv'
-
-
 def add_product_from_csv(product):
 
     with open(product) as file:
@@ -27,7 +24,22 @@ def add_product_from_csv(product):
     data['wholesale_price'] = str(round(int(data['price'])/1.87, 2))
     data['link_rewrite'] = data['name'].lower().replace(' ', '-')
 
+    with open('default_product_values.json') as def_file:
+        default_values = json.load(def_file)
+
+    data.update(default_values)
+
+    data.pop('manufacturer_name')
+
+    for x in ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']:
+        data[x] = {'language': {'attrs': {'id': '2'}, 'value': data[x]}}
+
+    print('Inserting the product...')
+
+    product_info = {'product': data}
+    print(product_info)
+    prestashop.add('products', product_info)
+
     return data
 
 
-print(add_product_from_csv(product_1))
