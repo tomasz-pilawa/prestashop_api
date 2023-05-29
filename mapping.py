@@ -50,3 +50,16 @@ def get_manufacturers_dict():
 
     return manufacturer_dict
 
+
+def get_categories_dict():
+
+    category_ids = prestashop.search('categories')
+    category_names = [prestashop.get('categories', m)['category']['name']['language']['value'] for m in category_ids]
+
+    category_dict = dict(zip(category_names, category_ids))
+
+    with open('categories_dict.json', 'w') as file:
+        json.dump(category_dict, file)
+
+    return category_dict
+

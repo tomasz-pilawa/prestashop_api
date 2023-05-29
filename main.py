@@ -4,6 +4,7 @@ import json
 
 # mp.get_init_brand_dict()
 # mp.get_manufacturers_dict()
+# mp.get_categories_dict()
 
 brand_test = 'Filorga'
 
