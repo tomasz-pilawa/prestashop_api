@@ -45,7 +45,7 @@ def add_product_from_csv(product):
     return data
 
 
-def add_from_xml(file_name, brand):
+def add_from_xml(file_name, brand, to_print=0):
 
     tree = ET.parse(file_name)
     root = tree.getroot()
@@ -57,24 +57,21 @@ def add_from_xml(file_name, brand):
         if o_brand == brand:
             selected_products.append(o)
 
-    # brand_products = ap.get_products_2(brand=brand)
-    # sku_list = []
-    #
-    # for product in brand_products:
-    #     sku_list.append(product['reference'])
-    #
-    # print(sku_list)
-    # print(len(sku_list))
+    with open('sku_mapped.json') as file:
+        sku_list = json.load(file)[brand]
 
-    # iterate for every selected_SKU to match quelinda_SKU - DROP matching
+    for product in selected_products:
+        product_sku = product.find("attrs/a[@name='Kod_producenta']").text
+        if product_sku in sku_list:
+            selected_products.remove(product)
 
-    # check remaining products
+    if to_print == 1:
+        for p in selected_products:
+            print(p.find('name').text)
+            print(p.get('id'))
+            print(p.find("attrs/a[@name='Kod_producenta']").text)
 
-    # for product in selected_products:
-    #     name = product.find('name').text
-    #     sku = product.find("attrs/a[@name='Kod_producenta']").text
-    #     print(name)
-    #     print(sku)
+    print(ET.tostring(selected_products[3], encoding='unicode', method='xml'))
 
     print('Function completed')
 
