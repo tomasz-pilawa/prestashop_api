@@ -66,7 +66,7 @@ def get_products(id_list=(37, 10), brand=None):         # obsolete function
     return products_list
 
 
-def get_products_2(brand=None):
+def get_products_2(brand=None, to_print=0):
 
     with open('brands_mapped.json') as file:
         data = json.load(file)
@@ -76,8 +76,12 @@ def get_products_2(brand=None):
         indexes = data[brand]
         products = [prestashop.get('products', product_index)['product'] for product_index in indexes]
         print(f"\nThere are {len(products)} products of {brand}:\n")
-        for product in products:
-            print(product['name']['language']['value'])
+
+        if to_print == 1:
+            for product in products:
+                print(product['name']['language']['value'])
+
         return products
+
     else:
         print("None brand given or the brand doesn't exist")

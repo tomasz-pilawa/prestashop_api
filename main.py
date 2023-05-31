@@ -4,6 +4,7 @@ import json
 import add_product as add_p
 
 # mp.get_init_brand_dict()
+# mp.get_init_sku_dict()
 # mp.get_manufacturers_dict()
 # mp.get_categories_dict()
 

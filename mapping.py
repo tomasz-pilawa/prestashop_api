@@ -63,3 +63,28 @@ def get_categories_dict():
 
     return category_dict
 
+
+def get_init_sku_dict():
+
+    indexes = prestashop.search('products')
+
+    products_list = [prestashop.get('products', y)['product'] for y in indexes]
+    sku_list = []
+    brands = []
+
+    for product in products_list:
+        sku_list.append(product['reference'])
+        if not product['manufacturer_name']['value']:
+            product['manufacturer_name']['value'] = 'Z_MISSING'
+        brands.append(product['manufacturer_name']['value'])
+
+    result = {}
+    for brand, product in zip(brands, sku_list):
+        result.setdefault(brand, []).append(product)
+    result['indexes_used'] = sku_list
+
+    with open('sku_mapped.json', 'w') as file:
+        json.dump(result, file)
+
+    return result
+

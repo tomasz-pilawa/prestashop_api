@@ -3,6 +3,7 @@ import json
 import csv
 from prestapyt import PrestaShopWebServiceDict
 import xml.etree.ElementTree as ET
+import api_products as ap
 
 api_url = os.getenv('quelinda_link')
 api_key = os.getenv('quelinda_pass')
@@ -56,7 +57,14 @@ def add_from_xml(file_name, brand):
         if o_brand == brand:
             selected_products.append(o)
 
-    # load SKU from quelinda database --> list
+    # brand_products = ap.get_products_2(brand=brand)
+    # sku_list = []
+    #
+    # for product in brand_products:
+    #     sku_list.append(product['reference'])
+    #
+    # print(sku_list)
+    # print(len(sku_list))
 
     # iterate for every selected_SKU to match quelinda_SKU - DROP matching
 
