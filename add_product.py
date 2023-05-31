@@ -2,6 +2,7 @@ import os
 import json
 import csv
 from prestapyt import PrestaShopWebServiceDict
+import xml.etree.ElementTree as ET
 
 api_url = os.getenv('quelinda_link')
 api_key = os.getenv('quelinda_pass')
@@ -43,3 +44,31 @@ def add_product_from_csv(product):
     return data
 
 
+def add_from_xml(file_name, brand):
+
+    tree = ET.parse(file_name)
+    root = tree.getroot()
+
+    selected_products = []
+
+    for o in root.findall('o'):
+        o_brand = o.find("./attrs/a[@name='Producent']").text
+        if o_brand == brand:
+            selected_products.append(o)
+
+    # load SKU from quelinda database --> list
+
+    # iterate for every selected_SKU to match quelinda_SKU - DROP matching
+
+    # check remaining products
+
+    # for product in selected_products:
+    #     name = product.find('name').text
+    #     sku = product.find("attrs/a[@name='Kod_producenta']").text
+    #     print(name)
+    #     print(sku)
+
+    print('Function completed')
+
+
+add_from_xml(file_name='luminosa_feed.xml', brand='Germaine de Capuccini')
