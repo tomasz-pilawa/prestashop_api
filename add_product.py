@@ -74,6 +74,7 @@ def add_from_xml(file_name, brand, to_print=0, price_ratio=1.87):
             selected_products.remove(product)
 
     if to_print == 1:
+        print(f'\nThere are potentially {len(selected_products)} products to add from the XML file\n')
         for p in selected_products:
             print(p.find('name').text)
             print(p.get('id'))
@@ -81,37 +82,42 @@ def add_from_xml(file_name, brand, to_print=0, price_ratio=1.87):
 
     # print(ET.tostring(selected_products[3], encoding='unicode', method='xml'))
 
-    single_product = selected_products[3]
+    # single_product = selected_products[3]
     # print(ET.tostring(single_product, encoding='unicode', method='xml'))
 
+    selecto = selected_products[:2]
+
     with open('default_product_values.json') as def_file:
-        data = json.load(def_file)
+        default_data = json.load(def_file)
 
     with open('manufacturers_dict.json') as man_file:
-        data['id_manufacturer'] = json.load(man_file)[brand]
+        default_data['id_manufacturer'] = json.load(man_file)[brand]
 
-    data['id_category_default'] = 2
-    data['reference'] = single_product.find("attrs/a[@name='Kod_producenta']").text
-    data['ean13'] = single_product.find("attrs/a[@name='EAN']").text
-    data['price'] = single_product.get('price')
-    data['wholesale_price'] = str(round(float(data['price'])/price_ratio, 2))
-    data['name'] = single_product.find('name').text
-    data['link_rewrite'] = data['name'].lower().replace(' ', '-')
-    data['description'] = single_product.find('desc').text.split('div class')[0]
-    data['description_short'] = single_product.find('desc').text.split('</p><p>')[0]
+    for single_product in selecto:
+        data = default_data
 
-    data['meta_title'] = truncate_string(data['name'], 70)
-    data['meta_description'] = truncate_string(data['description'][3:].split('.')[0] + '.', 160)
+        data['id_category_default'] = 2
+        data['reference'] = single_product.find("attrs/a[@name='Kod_producenta']").text
+        data['ean13'] = single_product.find("attrs/a[@name='EAN']").text
+        data['price'] = single_product.get('price')
+        data['wholesale_price'] = str(round(float(data['price'])/price_ratio, 2))
+        data['name'] = single_product.find('name').text
+        data['link_rewrite'] = data['name'].lower().replace(' ', '-')
+        data['description'] = single_product.find('desc').text.split('div class')[0]
+        data['description_short'] = single_product.find('desc').text.split('</p><p>')[0]
 
-    for x in ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']:
-        data[x] = {'language': {'attrs': {'id': '2'}, 'value': data[x]}}
+        data['meta_title'] = truncate_string(data['name'], 70)
+        data['meta_description'] = truncate_string(data['description'][3:].split('.')[0] + '.', 160)
 
-    product_info = {'product': data}
-    print(product_info)
-    # prestashop.add('products', product_info)
+        for x in ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']:
+            data[x] = {'language': {'attrs': {'id': '2'}, 'value': data[x]}}
+
+        product_info = {'product': data}
+        print(product_info)
+        # prestashop.add('products', product_info)
 
     print('\nFunction completed')
 
 
 add_from_xml(file_name='luminosa_feed.xml', brand='Germaine de Capuccini')
-# prestashop.delete('products', 776)
+prestashop.delete('products', 778)
