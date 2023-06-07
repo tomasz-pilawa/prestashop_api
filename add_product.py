@@ -53,7 +53,7 @@ def add_product_from_csv(product):
     return data
 
 
-def add_from_xml(file_name, brand, mode='print', price_ratio=1.87, max_products=3):
+def add_from_xml(file_name, brand, mode='print', price_ratio=1.87, max_products=3, excluded_indexes=None):
 
     tree = ET.parse(file_name)
     root = tree.getroot()
@@ -73,9 +73,16 @@ def add_from_xml(file_name, brand, mode='print', price_ratio=1.87, max_products=
         if product_sku in sku_list:
             selected_products.remove(product)
 
+    if excluded_indexes:
+        selected_products_copy = selected_products[:]
+        for product in selected_products_copy:
+            product_id = int(product.get('id'))
+            if product_id in excluded_indexes:
+                selected_products.remove(product)
+
     if mode == 'print':
         print(f'\nThere are potentially {len(selected_products)} products to add from the XML file\n')
-        for p in selected_products:
+        for p in selected_products[:max_products]:
             print(p.find('name').text)
             print(p.get('id'))
             print(p.find("attrs/a[@name='Kod_producenta']").text)
@@ -116,5 +123,6 @@ def add_from_xml(file_name, brand, mode='print', price_ratio=1.87, max_products=
     print('\nFunction completed')
 
 
-add_from_xml(file_name='luminosa_feed.xml', brand='Germaine de Capuccini', mode='test', max_products=1)
+add_from_xml(file_name='luminosa_feed.xml', brand='Germaine de Capuccini', mode='print', max_products=50,
+             excluded_indexes=[575, 716, 541, 723, 724])
 # prestashop.delete('products', 778)
