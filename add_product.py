@@ -208,20 +208,6 @@ def add_from_xml(file_name, brand, mode='print', price_ratio=1.87, max_products=
 
                 prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
 
-
-
-                # modified_ad = prestashop.get('addresses', 15317)
-
-                # for k, v in modified_ad['address'].items():
-                #     print(f"'{k}': '{v}',")
-
-                # modified_ad['address'].update({'lastname': 'Modyfikowalinski'})
-                # prestashop.edit('addresses', modified_ad)
-
-                print(filename)
-                print(image_url)
-                print(product_id)
-
     print('\nFunction completed')
 
 

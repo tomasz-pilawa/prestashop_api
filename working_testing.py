@@ -118,7 +118,3 @@ def test_response(data):
 # print(test_response(link_product))
 # print(test_response(desc_product))
 # print(test_response(name_product))
-
-
-
-
