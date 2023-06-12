@@ -3,6 +3,7 @@ import json
 import csv
 from prestapyt import PrestaShopWebServiceDict
 import openai
+import requests
 
 api_url = os.getenv('quelinda_link')
 api_key = os.getenv('quelinda_pass')
@@ -116,9 +117,18 @@ def test_response(data):
 
 # print(test_response(link_product))
 # print(test_response(desc_product))
-print(test_response(name_product))
+# print(test_response(name_product))
 
+image_url = "https://luminosa.pl/img/p/8/0/7/807.jpg"
+filename = "807.jpg"
 
-# print(list(x['id'] for x in openai.Model.list()['data']))
+response = requests.get(image_url)
+response.raise_for_status()
+
+with open(filename, "wb") as file:
+    file.write(response.content)
+
+print("Image downloaded successfully!")
+
 
 

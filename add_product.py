@@ -4,6 +4,7 @@ import csv
 from prestapyt import PrestaShopWebServiceDict
 import xml.etree.ElementTree as ET
 import openai
+import requests
 import api_products as ap
 
 api_url = os.getenv('quelinda_link')
