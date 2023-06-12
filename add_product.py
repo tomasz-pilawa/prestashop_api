@@ -5,6 +5,7 @@ from prestapyt import PrestaShopWebServiceDict
 import xml.etree.ElementTree as ET
 import openai
 import requests
+import base64
 import api_products as ap
 
 api_url = os.getenv('quelinda_link')
@@ -188,11 +189,42 @@ def add_from_xml(file_name, brand, mode='print', price_ratio=1.87, max_products=
             print(product_info)
 
             if add_product == 1:
-                prestashop.add('products', product_info)
+                response = prestashop.add('products', product_info)
+
+                product_id = response['prestashop']['product']['id']
+                image_url = single_product.find("imgs/main").get('url')
+                filename = f"{data['link_rewrite']['language']['value']}-kosmetyki-urodama.jpg"
+
+                response = requests.get(image_url)
+                response.raise_for_status()
+
+                image_path = "images/" + filename
+
+                with open(image_path, "wb") as file:
+                    file.write(response.content)
+
+                with open(image_path, "rb") as file:
+                    image_content = file.read()
+
+                prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
+
+
+
+                # modified_ad = prestashop.get('addresses', 15317)
+
+                # for k, v in modified_ad['address'].items():
+                #     print(f"'{k}': '{v}',")
+
+                # modified_ad['address'].update({'lastname': 'Modyfikowalinski'})
+                # prestashop.edit('addresses', modified_ad)
+
+                print(filename)
+                print(image_url)
+                print(product_id)
 
     print('\nFunction completed')
 
 
-add_from_xml(file_name='luminosa_feed.xml', brand='Germaine de Capuccini', mode='chat', max_products=50,
-             included_indexes=[720, 718])
-# prestashop.delete('products', 778)
+add_from_xml(file_name='luminosa_feed.xml', brand='Germaine de Capuccini', mode='test', max_products=50, add_product=1,
+             included_indexes=[720])
+# prestashop.delete('products', [773, 774, 775, 776])

@@ -119,16 +119,6 @@ def test_response(data):
 # print(test_response(desc_product))
 # print(test_response(name_product))
 
-image_url = "https://luminosa.pl/img/p/8/0/7/807.jpg"
-filename = "807.jpg"
-
-response = requests.get(image_url)
-response.raise_for_status()
-
-with open(filename, "wb") as file:
-    file.write(response.content)
-
-print("Image downloaded successfully!")
 
 
 
