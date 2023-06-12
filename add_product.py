@@ -55,7 +55,7 @@ def add_product_from_csv(product):
     return data
 
 
-def add_from_xml(file_name, brand, mode='print', price_ratio=1.87, max_products=3,
+def add_from_xml(file_name, brand, mode='print', price_ratio=1.87, max_products=3, add_product=0,
                  excluded_indexes=None, included_indexes=None):
     tree = ET.parse(file_name)
     root = tree.getroot()
@@ -180,16 +180,13 @@ def add_from_xml(file_name, brand, mode='print', price_ratio=1.87, max_products=
                                                                      prompt=prompt_meta_description, max_tokens=500)
                 data['meta_description'] = response_meta_description.choices[0].text
 
-                print(data['name'])
-                print(data['description'])
-
             for x in ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']:
                 data[x] = {'language': {'attrs': {'id': '2'}, 'value': data[x]}}
 
             product_info = {'product': data}
             print(product_info)
 
-            if mode == 'add':
+            if add_product == 1:
                 prestashop.add('products', product_info)
 
     print('\nFunction completed')
