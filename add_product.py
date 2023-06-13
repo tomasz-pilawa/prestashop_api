@@ -56,20 +56,26 @@ def add_product_from_csv(product):
     return data
 
 
-def add_from_xml(file_name, brand, mode='print', price_ratio=1.87, max_products=3, add_product=0,
+def add_from_xml(file_name, brand=None, mode='print', price_ratio=1.87, max_products=3, add_product=0,
                  excluded_indexes=None, included_indexes=None):
     tree = ET.parse(file_name)
     root = tree.getroot()
 
     selected_products = []
 
-    for o in root.findall('o'):
-        o_brand = o.find("./attrs/a[@name='Producent']").text
-        if o_brand == brand:
-            selected_products.append(o)
-
-    with open('sku_mapped.json') as file:
-        sku_list = json.load(file)[brand]
+    if brand:
+        for o in root.findall('o'):
+            o_brand = o.find("./attrs/a[@name='Producent']").text
+            if o_brand == brand:
+                selected_products.append(o)
+        with open('sku_mapped.json') as file:
+            sku_list = json.load(file)[brand]
+    else:
+        selected_products = root.findall('o')
+        sku_list = []
+        with open('sku_mapped.json') as file:
+            for sku_brand in json.load(file).values():
+                sku_list += sku_brand
 
     for product in selected_products:
         product_sku = product.find("attrs/a[@name='Kod_producenta']").text
@@ -210,6 +216,6 @@ def add_from_xml(file_name, brand, mode='print', price_ratio=1.87, max_products=
     print('\nFunction completed')
 
 
-add_from_xml(file_name='luminosa_feed.xml', brand='Germaine de Capuccini', mode='test', max_products=50, add_product=1,
-             included_indexes=[720])
+add_from_xml(file_name='luminosa_feed.xml', mode='print', max_products=50, add_product=0)
+
 # prestashop.delete('products', [790, 791])
