@@ -5,7 +5,6 @@ from prestapyt import PrestaShopWebServiceDict
 import xml.etree.ElementTree as ET
 import openai
 import requests
-import base64
 import api_products as ap
 
 api_url = os.getenv('quelinda_link')
@@ -213,4 +212,4 @@ def add_from_xml(file_name, brand, mode='print', price_ratio=1.87, max_products=
 
 add_from_xml(file_name='luminosa_feed.xml', brand='Germaine de Capuccini', mode='test', max_products=50, add_product=1,
              included_indexes=[720])
-# prestashop.delete('products', [773, 774, 775, 776])
+# prestashop.delete('products', [790, 791])
