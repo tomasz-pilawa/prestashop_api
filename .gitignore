@@ -161,4 +161,3 @@ cython_debug/
 
 # Ignore the "images" folder
 /images
-categories.py
