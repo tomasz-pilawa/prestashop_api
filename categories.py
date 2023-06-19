@@ -2,9 +2,12 @@ import xml.etree.ElementTree as ET
 import random
 import os
 import openai
+from prestapyt import PrestaShopWebServiceDict
 
 
 openai.api_key = os.getenv('openai_api')
+api_url = os.getenv('quelinda_link')
+api_key = os.getenv('quelinda_pass')
 
 
 cat_1 = ['Pielęgnacja twarzy', 'Pielęgnacja ciała', 'Pielęgnacja i stylizacja włosów', 'Zestawy kosmetyków']
@@ -28,6 +31,17 @@ cat_1_2 = ['Kosmetyki do stóp', 'Peelingi do ciała', 'Wyszczuplanie i ujędrni
 
 cat_1_3 = ['Szampony do włosów', 'Odżywki do włosów', 'Maski do włosów', 'Kosmetyki do stylizacji włosów',
            'Olejki i serum do włosów', 'Ampułki do włosów']
+
+cat_presta_list = ['Root', 'Home',
+                   'Twarz', 'Okolice oczu', 'Ciało', 'Zestawy', 'Włosy', 'Stopy', 'Formuła', 'NA LATO',
+                   'nawilżające', 'odmładzające', 'złuszczające', 'trądzik', 'na przebarwienia',
+                   'odmładzające', 'nawilżające', 'wypełniające', 'cienie i obrzęki',
+                   'wyszczuplające', 'ujędrniające', 'cellulit', 'na rozstępy',
+                   'szampony', 'odżywki', 'maski', 'pielęgnacja', 'stylizacja', 'przeciwsłoneczne',
+                   'pielęgnacja', 'odświeżenie',
+                   'Krem', 'Serum', 'Ampułki', 'Balsam', 'Koncentrat błotny', 'Krem z filtrem SPF', 'Lakier',
+                   'Maska algowa', 'Maseczka do twarzy', 'Maska do włosów', 'Mus', 'Odżywka', 'Olejek', 'Peeling',
+                   'Puder', 'Szampon', 'Tonik', 'Żel', 'Mgiełka', 'Kolagen', 'peeling do ciała']
 
 cat_1_1t = cat_1_1_1 + cat_1_1_2 + cat_1_1[2:]
 
@@ -117,3 +131,14 @@ def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomnes
 
 
 # print(main_cat_classifier(max_products=3))
+
+
+def category_setter(cat_id=19):
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+
+    modified_ad = prestashop.get('addresses', cat_id)
+    modified_ad['address'].update({'lastname': 'Modyfikowalinski'})
+    prestashop.edit('addresses', modified_ad)
+
+
+category_setter()
