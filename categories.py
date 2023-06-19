@@ -3,6 +3,7 @@ import random
 import os
 import openai
 from prestapyt import PrestaShopWebServiceDict
+from unidecode import unidecode
 
 
 openai.api_key = os.getenv('openai_api')
@@ -133,12 +134,24 @@ def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomnes
 # print(main_cat_classifier(max_products=3))
 
 
-def category_setter(cat_id=19):
+def category_setter(cat_id=12):
+
     prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
-    modified_ad = prestashop.get('addresses', cat_id)
-    modified_ad['address'].update({'lastname': 'Modyfikowalinski'})
-    prestashop.edit('addresses', modified_ad)
+    modified_cat = prestashop.get('categories', cat_id)
+    print(modified_cat)
+
+    modified_cat['category']['name']['language']['value'] = 'Pielęgnacja Twarzy'
+
+    link_rewritten = unidecode(modified_cat['category']['name']['language']['value'].lower().replace(' ', '-'))
+    modified_cat['category']['link_rewrite']['language']['value'] = link_rewritten
+
+    print(modified_cat)
+
+    modified_cat['category'].pop('level_depth')
+    modified_cat['category'].pop('nb_products_recursive')
+
+    prestashop.edit('categories', modified_cat)
 
 
 category_setter()
