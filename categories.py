@@ -80,4 +80,40 @@ def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomn
         print(lst_2)
 
 
-simple_cat_classifier(max_products=3)
+# simple_cat_classifier(max_products=3)
+
+
+def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomness=1):
+
+    tree = ET.parse(file_name)
+    root = tree.getroot()
+
+    if randomness == 1:
+        selected_products = random.sample(root.findall('o'), max_products)
+    else:
+        selected_products = root.findall('o')[:max_products]
+
+    for p in selected_products:
+        p_name = p.find('name').text
+
+        print(f'\n{p_name}')
+
+        prompt = f"Classify the product {p_name} to only one, most relevant, main ecommerce category" \
+                 f"from the following choices: {cats_all}" \
+                 f"YOU CAN ONLY USE GIVEN CATEGORIES NAMES\n" \
+                 f"Focus on more specialized categories like anti-aging, wrinkles instead of moisturizing\n" \
+                 f"If it's a set, always classify as 'Zestawy kosmetyków'\n" \
+                 f"Always assign at least one category\n" \
+                 f"Respond with one-item list with the selected category without additional characters"
+
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=500, temperature=0)
+        generated_text = response.choices[0].text
+
+        x = generated_text.strip()
+        lst = [part.strip().replace('\n', '').replace(':', '') for part in x.split(',')]
+        lst_2 = [x for x in lst if x in cat_1+cats_all]
+
+        print(lst_2)
+
+
+# print(main_cat_classifier(max_products=3))
