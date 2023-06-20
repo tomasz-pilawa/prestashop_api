@@ -9,17 +9,17 @@ openai.api_key = os.getenv('openai_api')
 api_url = os.getenv('quelinda_link')
 api_key = os.getenv('quelinda_pass')
 
-cat_1 = ['Pielęgnacja twarzy', 'Pielęgnacja ciała', 'Pielęgnacja i stylizacja włosów', 'Zestawy kosmetyków']
+cat_1 = ['Pielęgnacja twarzy', 'Pielęgnacja ciała', 'Kosmetyki do włosów', 'Zestawy kosmetyków']
 
 # 8/6
 cat_1_1 = ['Kremy do twarzy', 'Serum do twarzy', 'Oczyszczanie i pielęgnacja', 'Kosmetyki pod oczy',
-           'Maseczki do twarzy', 'Peelingi do twarzy', 'Toniki i hydrolaty']
+           'Maseczki do twarzy', 'Peelingi do twarzy', 'Toniki i hydrolaty', 'Kolagen naturalny']
 
-cat_1_a = ['kosmetyki łagodzące', 'kosmetyki matujące', 'kosmetyki na trądzik', 'kosmetyki nawilżające',
-           'kosmetyki odżywcze', 'kosmetyki przeciwzmarszczkowe', 'kosmetyki liftingujące', 'kosmetyki wygładzające',
-           'kosmetyki regenerujące', 'kosmetyki rozświetlające', 'kosmetyki z filtrem UV', 'kosmetyki na przebarwienia',
-           'kosmetyki antyoksydacyjne', 'kosmetyki rewitalizujące', 'kosmetyki odmładzające',
-           'Kosmetyki ochronne przed zanieczyszczeniami', 'kosmetyki pod oczy']
+cat_1_a = ['Kosmetyki łagodzące', 'Kosmetyki matujące', 'Kosmetyki na trądzik', 'Kosmetyki nawilżające',
+           'Kosmetyki odżywcze', 'Kosmetyki na zmarszczki', 'Kosmetyki liftingujące', 'Kosmetyki wygładzające',
+           'Kosmetyki regenerujące', 'Kosmetyki rozświetlające', 'Kosmetyki z filtrem UV', 'Kosmetyki na przebarwienia',
+           'Kosmetyki antyoksydacyjne', 'Kosmetyki rewitalizujące', 'Kosmetyki odmładzające',
+           'Kosmetyki ochronne', 'Kosmetyki pod oczy', 'Kosmetyki Złuczające', 'Kosmetyki ']
 
 # 10
 cat_1_1_1 = ['Kremy łagodzące', 'Kremy matujące', 'Kremy przeciwtrądzikowe', 'Kremy nawilżające', 'Kremy odżywcze',
@@ -46,60 +46,6 @@ cat_presta_list = ['Root', 'Home',
                    'Krem', 'Serum', 'Ampułki', 'Balsam', 'Koncentrat błotny', 'Krem z filtrem SPF', 'Lakier',
                    'Maska algowa', 'Maseczka do twarzy', 'Maska do włosów', 'Mus', 'Odżywka', 'Olejek', 'Peeling',
                    'Puder', 'Szampon', 'Tonik', 'Żel', 'Mgiełka', 'Kolagen', 'peeling do ciała']
-
-new_cat_dict = {"1": "Root",
-                "2": "Home",
-                "12": "Twarz",
-                "13": "Okolice oczu",
-                "14": "Ciało",
-                "28": "Zestawy",
-                "31": "Włosy",
-                "41": "Formuła",
-                "38": "Stopy",
-                "60": "NA LATO",
-                "15": "nawilżające",
-                "16": "odmładzające",
-                "17": "złuszczające",
-                "18": "trądzik",
-                "19": "na przebarwienia",
-                "20": "odmładzające",
-                "21": "nawilżające",
-                "22": "wypełniające",
-                "23": "cienie i obrzęki",
-                "24": "wyszczuplające",
-                "25": "ujędrniające",
-                "26": "cellulit",
-                "27": "na rozstępy",
-                "32": "szampony",
-                "33": "odżywki",
-                "34": "maski",
-                "35": "pielęgnacja",
-                "36": "stylizacja",
-                "37": "przeciwsłoneczne",
-                "39": "pielęgnacja",
-                "40": "odświeżenie",
-                "42": "Krem",
-                "43": "Serum",
-                "44": "Ampułki",
-                "45": "Balsam",
-                "46": "Koncentrat błotny",
-                "47": "Krem z filtrem SPF",
-                "48": "Lakier",
-                "49": "Maska algowa",
-                "50": "Maseczka do twarzy",
-                "51": "Maska do włosów",
-                "52": "Mus",
-                "53": "Odżywka",
-                "54": "Olejek",
-                "55": "Peeling",
-                "56": "Puder",
-                "57": "Szampon",
-                "58": "Tonik",
-                "59": "Żel",
-                "61": "Mgiełka",
-                "62": "Kolagen",
-                "63": "peeling do ciała"
-                }
 
 cat_1_1t = cat_1_1_1 + cat_1_1_2 + cat_1_1[2:]
 
@@ -208,12 +154,4 @@ def category_setter(cat_id=12):
     # prestashop.edit('categories', modified_cat)
 
 
-# category_setter()
-
-print(new_cat_dict)
-
-# try_dict = {key: value for key, value in new_cat_dict.items()}
-# print(try_dict)
-
-# for x in new_cat_dict.keys():
-#     print(x)
+category_setter()

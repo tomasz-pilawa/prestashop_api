@@ -54,7 +54,8 @@ def get_manufacturers_dict():
 def get_categories_dict():
 
     category_ids = prestashop.search('categories')
-    category_names = [prestashop.get('categories', m)['category']['name']['language']['value'] for m in category_ids]
+    category_names = [[prestashop.get('categories', m)['category']['name']['language']['value'],
+                       prestashop.get('categories', m)['category']['id_parent']] for m in category_ids]
 
     category_dict = dict(zip(category_ids, category_names))
 
