@@ -5,11 +5,9 @@ import openai
 from prestapyt import PrestaShopWebServiceDict
 from unidecode import unidecode
 
-
 openai.api_key = os.getenv('openai_api')
 api_url = os.getenv('quelinda_link')
 api_key = os.getenv('quelinda_pass')
-
 
 cat_1 = ['Pielęgnacja twarzy', 'Pielęgnacja ciała', 'Pielęgnacja i stylizacja włosów', 'Zestawy kosmetyków']
 
@@ -17,10 +15,16 @@ cat_1 = ['Pielęgnacja twarzy', 'Pielęgnacja ciała', 'Pielęgnacja i stylizacj
 cat_1_1 = ['Kremy do twarzy', 'Serum do twarzy', 'Oczyszczanie i pielęgnacja', 'Kosmetyki pod oczy',
            'Maseczki do twarzy', 'Peelingi do twarzy', 'Toniki i hydrolaty']
 
+cat_1_a = ['kosmetyki łagodzące', 'kosmetyki matujące', 'kosmetyki na trądzik', 'kosmetyki nawilżające',
+           'kosmetyki odżywcze', 'kosmetyki przeciwzmarszczkowe', 'kosmetyki liftingujące', 'kosmetyki wygładzające',
+           'kosmetyki regenerujące', 'kosmetyki rozświetlające', 'kosmetyki z filtrem UV', 'kosmetyki na przebarwienia',
+           'kosmetyki antyoksydacyjne', 'kosmetyki rewitalizujące', 'kosmetyki odmładzające',
+           'Kosmetyki ochronne przed zanieczyszczeniami', 'kosmetyki pod oczy']
+
 # 10
 cat_1_1_1 = ['Kremy łagodzące', 'Kremy matujące', 'Kremy przeciwtrądzikowe', 'Kremy nawilżające', 'Kremy odżywcze',
              'Kremy przeciwzmarszczkowe', 'Kremy wygładzające', 'Kremy regenerujące', 'Kremy rozświetlające',
-             'Kremy z filtrem UV', 'kremy na przebarwienia']
+             'Kremy z filtrem UV', 'Kremy na przebarwienia']
 
 # 7
 cat_1_1_2 = ['Serum wygładzające', 'Serum liftingujące', 'Serum rozjaśniające', 'Serum antyoksydacyjne',
@@ -28,7 +32,6 @@ cat_1_1_2 = ['Serum wygładzające', 'Serum liftingujące', 'Serum rozjaśniają
 
 cat_1_2 = ['Kosmetyki do stóp', 'Peelingi do ciała', 'Wyszczuplanie i ujędrnianie', 'Koncentraty błotne',
            'Kosmetyki na cellulit']
-
 
 cat_1_3 = ['Szampony do włosów', 'Odżywki do włosów', 'Maski do włosów', 'Kosmetyki do stylizacji włosów',
            'Olejki i serum do włosów', 'Ampułki do włosów']
@@ -44,13 +47,66 @@ cat_presta_list = ['Root', 'Home',
                    'Maska algowa', 'Maseczka do twarzy', 'Maska do włosów', 'Mus', 'Odżywka', 'Olejek', 'Peeling',
                    'Puder', 'Szampon', 'Tonik', 'Żel', 'Mgiełka', 'Kolagen', 'peeling do ciała']
 
+new_cat_dict = {"1": "Root",
+                "2": "Home",
+                "12": "Twarz",
+                "13": "Okolice oczu",
+                "14": "Ciało",
+                "28": "Zestawy",
+                "31": "Włosy",
+                "41": "Formuła",
+                "38": "Stopy",
+                "60": "NA LATO",
+                "15": "nawilżające",
+                "16": "odmładzające",
+                "17": "złuszczające",
+                "18": "trądzik",
+                "19": "na przebarwienia",
+                "20": "odmładzające",
+                "21": "nawilżające",
+                "22": "wypełniające",
+                "23": "cienie i obrzęki",
+                "24": "wyszczuplające",
+                "25": "ujędrniające",
+                "26": "cellulit",
+                "27": "na rozstępy",
+                "32": "szampony",
+                "33": "odżywki",
+                "34": "maski",
+                "35": "pielęgnacja",
+                "36": "stylizacja",
+                "37": "przeciwsłoneczne",
+                "39": "pielęgnacja",
+                "40": "odświeżenie",
+                "42": "Krem",
+                "43": "Serum",
+                "44": "Ampułki",
+                "45": "Balsam",
+                "46": "Koncentrat błotny",
+                "47": "Krem z filtrem SPF",
+                "48": "Lakier",
+                "49": "Maska algowa",
+                "50": "Maseczka do twarzy",
+                "51": "Maska do włosów",
+                "52": "Mus",
+                "53": "Odżywka",
+                "54": "Olejek",
+                "55": "Peeling",
+                "56": "Puder",
+                "57": "Szampon",
+                "58": "Tonik",
+                "59": "Żel",
+                "61": "Mgiełka",
+                "62": "Kolagen",
+                "63": "peeling do ciała"
+                }
+
 cat_1_1t = cat_1_1_1 + cat_1_1_2 + cat_1_1[2:]
 
 cats_all = cat_1_1t + cat_1_2 + cat_1_3
 
 
 def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomness=1):
-
     tree = ET.parse(file_name)
     root = tree.getroot()
 
@@ -90,7 +146,7 @@ def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomn
 
         x = generated_text.strip()
         lst = [part.strip().replace('\n', '').replace(':', '') for part in x.split(',')]
-        lst_2 = [x for x in lst if x in cat_1+cats_all]
+        lst_2 = [x for x in lst if x in cat_1 + cats_all]
 
         print(lst_2)
 
@@ -99,7 +155,6 @@ def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomn
 
 
 def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomness=1):
-
     tree = ET.parse(file_name)
     root = tree.getroot()
 
@@ -126,7 +181,7 @@ def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomnes
 
         x = generated_text.strip()
         lst = [part.strip().replace('\n', '').replace(':', '') for part in x.split(',')]
-        lst_2 = [x for x in lst if x in cat_1+cats_all]
+        lst_2 = [x for x in lst if x in cat_1 + cats_all]
 
         print(lst_2)
 
@@ -135,7 +190,6 @@ def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomnes
 
 
 def category_setter(cat_id=12):
-
     prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
     modified_cat = prestashop.get('categories', cat_id)
@@ -151,7 +205,15 @@ def category_setter(cat_id=12):
     modified_cat['category'].pop('level_depth')
     modified_cat['category'].pop('nb_products_recursive')
 
-    prestashop.edit('categories', modified_cat)
+    # prestashop.edit('categories', modified_cat)
 
 
-category_setter()
+# category_setter()
+
+print(new_cat_dict)
+
+# try_dict = {key: value for key, value in new_cat_dict.items()}
+# print(try_dict)
+
+# for x in new_cat_dict.keys():
+#     print(x)
