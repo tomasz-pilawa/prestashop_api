@@ -183,6 +183,7 @@ def create_json_from_csv_cats(csv_name='cats_pairing_init.csv', version='0', dum
             'cat_body': [],
             'cat_hair': [],
             'cat_random': [],
+            'cat_other': [],
             'cat_old': []
         }
 
@@ -190,6 +191,7 @@ def create_json_from_csv_cats(csv_name='cats_pairing_init.csv', version='0', dum
 
             category_type = row['Type']
             category_name = row['NameNew']
+            categories['cat_old'].append(row['NameOld'])
 
             if category_type == 'main':
                 categories['cat_main'].append(category_name)
@@ -204,7 +206,9 @@ def create_json_from_csv_cats(csv_name='cats_pairing_init.csv', version='0', dum
             elif category_type == 'random':
                 categories['cat_random'].append(category_name)
             else:
-                categories['cat_old'].append(category_name)
+                categories['cat_other'].append(category_name)
+
+        categories['cat_old'] = [c for c in categories['cat_old'] if c not in ['None']]
 
         cats_classify_filename = f'categories_to_classify_{version}.json'
 
@@ -214,7 +218,7 @@ def create_json_from_csv_cats(csv_name='cats_pairing_init.csv', version='0', dum
         print('Categories to Clasify dumped into JSON too')
 
 
-# create_json_from_csv_cats(csv_name='cats_pairing_init.csv', dump_cats_classify=1)
+create_json_from_csv_cats(csv_name='cats_pairing_init.csv', dump_cats_classify=1)
 
 
 def dump_cats_to_file():
