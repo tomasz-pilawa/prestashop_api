@@ -13,7 +13,6 @@ api_key = os.getenv('quelinda_pass')
 
 cat_1 = ['Pielęgnacja twarzy', 'Pielęgnacja ciała', 'Kosmetyki do włosów', 'Zestawy kosmetyków']
 
-# 8/6
 cat_1_1 = ['Kremy do twarzy', 'Serum do twarzy', 'Oczyszczanie i pielęgnacja', 'Kosmetyki pod oczy',
            'Maseczki do twarzy', 'Peelingi do twarzy', 'Toniki i hydrolaty', 'Kolagen naturalny']
 
@@ -21,14 +20,12 @@ cat_1_a = ['Kosmetyki łagodzące', 'Kosmetyki matujące', 'Kosmetyki na trądzi
            'Kosmetyki odżywcze', 'Kosmetyki na zmarszczki', 'Kosmetyki liftingujące', 'Kosmetyki wygładzające',
            'Kosmetyki regenerujące', 'Kosmetyki rozświetlające', 'Kosmetyki z filtrem UV', 'Kosmetyki na przebarwienia',
            'Kosmetyki antyoksydacyjne', 'Kosmetyki rewitalizujące', 'Kosmetyki odmładzające',
-           'Kosmetyki ochronne', 'Kosmetyki pod oczy', 'Kosmetyki Złuczające', 'Kosmetyki ']
+           'Kosmetyki ochronne', 'Kosmetyki pod oczy', 'Kosmetyki Złuczające', 'Kosmetyki pod oczy']
 
-# 10
 cat_1_1_1 = ['Kremy łagodzące', 'Kremy matujące', 'Kremy przeciwtrądzikowe', 'Kremy nawilżające', 'Kremy odżywcze',
              'Kremy przeciwzmarszczkowe', 'Kremy wygładzające', 'Kremy regenerujące', 'Kremy rozświetlające',
              'Kremy z filtrem UV', 'Kremy na przebarwienia']
 
-# 7
 cat_1_1_2 = ['Serum wygładzające', 'Serum liftingujące', 'Serum rozjaśniające', 'Serum antyoksydacyjne',
              'Serum ujędrniające', 'Serum odmładzające', 'Serum rewitalizujące']
 
@@ -137,7 +134,7 @@ def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomnes
 # print(main_cat_classifier(max_products=3))
 
 
-def category_setter(cat_id=12):
+def category_tree_setter(cat_id=12):
 
     prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
@@ -157,7 +154,7 @@ def category_setter(cat_id=12):
     # prestashop.edit('categories', modified_cat)
 
 
-# category_setter()
+# category_tree_setter()
 
 
 def create_json_from_csv_cats(csv_name='cats_pairing_init.csv', version='0'):
@@ -165,17 +162,21 @@ def create_json_from_csv_cats(csv_name='cats_pairing_init.csv', version='0'):
     version = str(version)
     data = []
 
-    with open(csv_name, 'r') as file:
+    with open(csv_name, 'r', encoding='utf-8') as file:
         reader = csv.DictReader(file)
         for row in reader:
             data.append(row)
 
     json_name = f"{csv_name.split('_')[0]}_{csv_name.split('_')[1]}_v_{version}.json"
 
-    with open(json_name, 'w') as file:
-        json.dump(data, file, indent=4)
+    with open(json_name, 'w', encoding='utf-8') as file:
+        json.dump(data, file, indent=4, ensure_ascii=False)
 
     print('JSON file saved successfully')
 
 
 # create_json_from_csv_cats(csv_name='cats_pairing_init.csv')
+
+
+
+

@@ -131,3 +131,9 @@ def test_response(data):
 # print(w['name']['language']['value'])
 # print(w['associations']['categories']['category'])
 
+
+with open('cats_pairing_v_0.json', encoding='utf-8') as file:
+    reader = json.load(file)
+    for r in reader:
+        print(r)
+

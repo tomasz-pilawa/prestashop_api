@@ -4,11 +4,11 @@ ID,NameOld,ParentOld,NameNew,ParentNew,ChangeType,Type
 12,Twarz,2,Pielęgnacja twarzy,2,Name,home
 13,Okolice oczu,2,Kosmetyki pod oczy,12,NameParent,face_action
 14,Ciało,2,Pielęgnacja ciała,2,Name,main
-28,Zestawy,2,Zestawy kosmetyków,2,Name,main
+28,Zestawy,2,Zestawy kosmetyków,2,Name,random
 31,Włosy,2,Kosmetyki do włosów,2,Name,main
 41,Formuła,2,DEL,12,OrderRemove,del
 38,Stopy,2,Kosmetyki do stóp,14,NameParent,body
-60,NA LATO,2,NA LATO,2,None,home
+60,NA LATO,2,NA LATO,2,None,random
 15,nawilżające,12,Kosmetyki nawilżające,12,Name,face_action
 16,odmładzające,12,Kosmetyki odmładzające,12,Name,face_action
 17,złuszczające,12,Kosmetyki złuszczjące,12,Name,face_action
@@ -26,7 +26,7 @@ ID,NameOld,ParentOld,NameNew,ParentNew,ChangeType,Type
 33,odżywki,31,Odżywki do włosów,31,NameParent,hair
 34,maski,31,Maski do włosów,31,NameParent,hair
 35,pielęgnacja,31,DEL,DEL,Remove,del
-36,stylizacja,31,Kosmetyki do stylizacji włosów,31,NameParent,hair
+36,stylizacja,31,Stylizacja włosów,31,NameParent,hair
 37,przeciwsłoneczne,14,DEL,DEL,Remove,del
 39,pielęgnacja,38,DEL,DEL,Remove,del
 40,odświeżenie,38,DEL,DEL,Remove,del

@@ -21,7 +21,7 @@
         "ID": "12",
         "NameOld": "Twarz",
         "ParentOld": "2",
-        "NameNew": "Piel\u00c4\u2122gnacja twarzy",
+        "NameNew": "Pielęgnacja twarzy",
         "ParentNew": "2",
         "ChangeType": "Name",
         "Type": "home"
@@ -37,9 +37,9 @@
     },
     {
         "ID": "14",
-        "NameOld": "Cia\u0139\u201ao",
+        "NameOld": "Ciało",
         "ParentOld": "2",
-        "NameNew": "Piel\u00c4\u2122gnacja cia\u0139\u201aa",
+        "NameNew": "Pielęgnacja ciała",
         "ParentNew": "2",
         "ChangeType": "Name",
         "Type": "main"
@@ -48,23 +48,23 @@
         "ID": "28",
         "NameOld": "Zestawy",
         "ParentOld": "2",
-        "NameNew": "Zestawy kosmetyk\u0102\u0142w",
+        "NameNew": "Zestawy kosmetyków",
         "ParentNew": "2",
         "ChangeType": "Name",
-        "Type": "main"
+        "Type": "random"
     },
     {
         "ID": "31",
-        "NameOld": "W\u0139\u201aosy",
+        "NameOld": "Włosy",
         "ParentOld": "2",
-        "NameNew": "Kosmetyki do w\u0139\u201aos\u0102\u0142w",
+        "NameNew": "Kosmetyki do włosów",
         "ParentNew": "2",
         "ChangeType": "Name",
         "Type": "main"
     },
     {
         "ID": "41",
-        "NameOld": "Formu\u0139\u201aa",
+        "NameOld": "Formuła",
         "ParentOld": "2",
         "NameNew": "DEL",
         "ParentNew": "12",
@@ -75,7 +75,7 @@
         "ID": "38",
         "NameOld": "Stopy",
         "ParentOld": "2",
-        "NameNew": "Kosmetyki do st\u0102\u0142p",
+        "NameNew": "Kosmetyki do stóp",
         "ParentNew": "14",
         "ChangeType": "NameParent",
         "Type": "body"
@@ -87,40 +87,40 @@
         "NameNew": "NA LATO",
         "ParentNew": "2",
         "ChangeType": "None",
-        "Type": "home"
+        "Type": "random"
     },
     {
         "ID": "15",
-        "NameOld": "nawil\u0139\u013daj\u00c4\u2026ce",
+        "NameOld": "nawilżające",
         "ParentOld": "12",
-        "NameNew": "Kosmetyki nawil\u0139\u013daj\u00c4\u2026ce",
+        "NameNew": "Kosmetyki nawilżające",
         "ParentNew": "12",
         "ChangeType": "Name",
         "Type": "face_action"
     },
     {
         "ID": "16",
-        "NameOld": "odm\u0139\u201aadzaj\u00c4\u2026ce",
+        "NameOld": "odmładzające",
         "ParentOld": "12",
-        "NameNew": "Kosmetyki odm\u0139\u201aadzaj\u00c4\u2026ce",
+        "NameNew": "Kosmetyki odmładzające",
         "ParentNew": "12",
         "ChangeType": "Name",
         "Type": "face_action"
     },
     {
         "ID": "17",
-        "NameOld": "z\u0139\u201auszczaj\u00c4\u2026ce",
+        "NameOld": "złuszczające",
         "ParentOld": "12",
-        "NameNew": "Kosmetyki z\u0139\u201auszczj\u00c4\u2026ce",
+        "NameNew": "Kosmetyki złuszczjące",
         "ParentNew": "12",
         "ChangeType": "Name",
         "Type": "face_action"
     },
     {
         "ID": "18",
-        "NameOld": "tr\u00c4\u2026dzik",
+        "NameOld": "trądzik",
         "ParentOld": "12",
-        "NameNew": "Kosmetyki na tr\u00c4\u2026dzik",
+        "NameNew": "Kosmetyki na trądzik",
         "ParentNew": "12",
         "ChangeType": "Name",
         "Type": "face_action"
@@ -136,7 +136,7 @@
     },
     {
         "ID": "20",
-        "NameOld": "odm\u0139\u201aadzaj\u00c4\u2026ce",
+        "NameOld": "odmładzające",
         "ParentOld": "13",
         "NameNew": "DEL",
         "ParentNew": "DEL",
@@ -145,7 +145,7 @@
     },
     {
         "ID": "21",
-        "NameOld": "nawil\u0139\u013daj\u00c4\u2026ce",
+        "NameOld": "nawilżające",
         "ParentOld": "13",
         "NameNew": "DEL",
         "ParentNew": "DEL",
@@ -154,7 +154,7 @@
     },
     {
         "ID": "22",
-        "NameOld": "wype\u0139\u201aniaj\u00c4\u2026ce",
+        "NameOld": "wypełniające",
         "ParentOld": "13",
         "NameNew": "DEL",
         "ParentNew": "DEL",
@@ -163,7 +163,7 @@
     },
     {
         "ID": "23",
-        "NameOld": "cienie i obrz\u00c4\u2122ki",
+        "NameOld": "cienie i obrzęki",
         "ParentOld": "13",
         "NameNew": "DEL",
         "ParentNew": "DEL",
@@ -172,18 +172,18 @@
     },
     {
         "ID": "24",
-        "NameOld": "wyszczuplaj\u00c4\u2026ce",
+        "NameOld": "wyszczuplające",
         "ParentOld": "14",
-        "NameNew": "Kosmetyki wyszczuplaj\u00c4\u2026ce",
+        "NameNew": "Kosmetyki wyszczuplające",
         "ParentNew": "14",
         "ChangeType": "NameParent",
         "Type": "body"
     },
     {
         "ID": "25",
-        "NameOld": "uj\u00c4\u2122drniaj\u00c4\u2026ce",
+        "NameOld": "ujędrniające",
         "ParentOld": "14",
-        "NameNew": "Kosmetyki uj\u00c4\u2122drniaj\u00c4\u2026ce",
+        "NameNew": "Kosmetyki ujędrniające",
         "ParentNew": "14",
         "ChangeType": "NameParent",
         "Type": "body"
@@ -199,7 +199,7 @@
     },
     {
         "ID": "27",
-        "NameOld": "na rozst\u00c4\u2122py",
+        "NameOld": "na rozstępy",
         "ParentOld": "14",
         "NameNew": "DEL",
         "ParentNew": "DEL",
@@ -210,16 +210,16 @@
         "ID": "32",
         "NameOld": "szampony",
         "ParentOld": "31",
-        "NameNew": "Szampony do w\u0139\u201aos\u0102\u0142w",
+        "NameNew": "Szampony do włosów",
         "ParentNew": "31",
         "ChangeType": "NameParent",
         "Type": "hair"
     },
     {
         "ID": "33",
-        "NameOld": "od\u0139\u013dywki",
+        "NameOld": "odżywki",
         "ParentOld": "31",
-        "NameNew": "Od\u0139\u013dywki do w\u0139\u201aos\u0102\u0142w",
+        "NameNew": "Odżywki do włosów",
         "ParentNew": "31",
         "ChangeType": "NameParent",
         "Type": "hair"
@@ -228,14 +228,14 @@
         "ID": "34",
         "NameOld": "maski",
         "ParentOld": "31",
-        "NameNew": "Maski do w\u0139\u201aos\u0102\u0142w",
+        "NameNew": "Maski do włosów",
         "ParentNew": "31",
         "ChangeType": "NameParent",
         "Type": "hair"
     },
     {
         "ID": "35",
-        "NameOld": "piel\u00c4\u2122gnacja",
+        "NameOld": "pielęgnacja",
         "ParentOld": "31",
         "NameNew": "DEL",
         "ParentNew": "DEL",
@@ -246,14 +246,14 @@
         "ID": "36",
         "NameOld": "stylizacja",
         "ParentOld": "31",
-        "NameNew": "Kosmetyki do stylizacji w\u0139\u201aos\u0102\u0142w",
+        "NameNew": "Stylizacja włosów",
         "ParentNew": "31",
         "ChangeType": "NameParent",
         "Type": "hair"
     },
     {
         "ID": "37",
-        "NameOld": "przeciws\u0139\u201aoneczne",
+        "NameOld": "przeciwsłoneczne",
         "ParentOld": "14",
         "NameNew": "DEL",
         "ParentNew": "DEL",
@@ -262,7 +262,7 @@
     },
     {
         "ID": "39",
-        "NameOld": "piel\u00c4\u2122gnacja",
+        "NameOld": "pielęgnacja",
         "ParentOld": "38",
         "NameNew": "DEL",
         "ParentNew": "DEL",
@@ -271,7 +271,7 @@
     },
     {
         "ID": "40",
-        "NameOld": "od\u0139\u203awie\u0139\u013denie",
+        "NameOld": "odświeżenie",
         "ParentOld": "38",
         "NameNew": "DEL",
         "ParentNew": "DEL",
@@ -298,9 +298,9 @@
     },
     {
         "ID": "44",
-        "NameOld": "Ampu\u0139\u201aki",
+        "NameOld": "Ampułki",
         "ParentOld": "41",
-        "NameNew": "Ampu\u0139\u201aki do w\u0139\u201aos\u0102\u0142w",
+        "NameNew": "Ampułki do włosów",
         "ParentNew": "31",
         "ChangeType": "NameParent",
         "Type": "hair"
@@ -309,16 +309,16 @@
         "ID": "45",
         "NameOld": "Balsam",
         "ParentOld": "41",
-        "NameNew": "Oczyszczanie i piel\u00c4\u2122gnacja",
+        "NameNew": "Oczyszczanie i pielęgnacja",
         "ParentNew": "12",
         "ChangeType": "NameParent",
         "Type": "face_form"
     },
     {
         "ID": "46",
-        "NameOld": "Koncentrat b\u0139\u201aotny",
+        "NameOld": "Koncentrat błotny",
         "ParentOld": "41",
-        "NameNew": "Koncentraty b\u0139\u201aotne",
+        "NameNew": "Koncentraty błotne",
         "ParentNew": "14",
         "ChangeType": "Name",
         "Type": "body"
@@ -361,7 +361,7 @@
     },
     {
         "ID": "51",
-        "NameOld": "Maska do w\u0139\u201aos\u0102\u0142w",
+        "NameOld": "Maska do włosów",
         "ParentOld": "41",
         "NameNew": "DEL",
         "ParentNew": "DEL",
@@ -379,7 +379,7 @@
     },
     {
         "ID": "53",
-        "NameOld": "Od\u0139\u013dywka",
+        "NameOld": "Odżywka",
         "ParentOld": "41",
         "NameNew": "DEL",
         "ParentNew": "DEL",
@@ -390,7 +390,7 @@
         "ID": "54",
         "NameOld": "Olejek",
         "ParentOld": "41",
-        "NameNew": "Olejki i serum do w\u0139\u201aos\u0102\u0142w",
+        "NameNew": "Olejki i serum do włosów",
         "ParentNew": "31",
         "ChangeType": "NameParent",
         "Type": "hair"
@@ -433,7 +433,7 @@
     },
     {
         "ID": "59",
-        "NameOld": "\u0139\u00bbel",
+        "NameOld": "Żel",
         "ParentOld": "41",
         "NameNew": "DEL",
         "ParentNew": "DEL",
@@ -442,7 +442,7 @@
     },
     {
         "ID": "61",
-        "NameOld": "Mgie\u0139\u201aka",
+        "NameOld": "Mgiełka",
         "ParentOld": "41",
         "NameNew": "DEL",
         "ParentNew": "DEL",
@@ -460,9 +460,9 @@
     },
     {
         "ID": "63",
-        "NameOld": "peeling do cia\u0139\u201aa",
+        "NameOld": "peeling do ciała",
         "ParentOld": "14",
-        "NameNew": "Peelingi do cia\u0139\u201aa",
+        "NameNew": "Peelingi do ciała",
         "ParentNew": "14",
         "ChangeType": "NameParent",
         "Type": "body"
@@ -471,7 +471,7 @@
         "ID": "64",
         "NameOld": "None",
         "ParentOld": "0",
-        "NameNew": "Kosmetyki \u0139\u201aagodz\u00c4\u2026ce",
+        "NameNew": "Kosmetyki łagodzące",
         "ParentNew": "12",
         "ChangeType": "Add",
         "Type": "face_action"
@@ -480,7 +480,7 @@
         "ID": "65",
         "NameOld": "None",
         "ParentOld": "0",
-        "NameNew": "Kosmetyki matuj\u00c4\u2026ce",
+        "NameNew": "Kosmetyki matujące",
         "ParentNew": "12",
         "ChangeType": "Add",
         "Type": "face_action"
@@ -489,7 +489,7 @@
         "ID": "66",
         "NameOld": "None",
         "ParentOld": "0",
-        "NameNew": "Kosmetyki od\u0139\u013dywcze",
+        "NameNew": "Kosmetyki odżywcze",
         "ParentNew": "12",
         "ChangeType": "Add",
         "Type": "face_action"
@@ -507,7 +507,7 @@
         "ID": "68",
         "NameOld": "None",
         "ParentOld": "0",
-        "NameNew": "Kosmetyki liftinguj\u00c4\u2026ce",
+        "NameNew": "Kosmetyki liftingujące",
         "ParentNew": "12",
         "ChangeType": "Add",
         "Type": "face_action"
@@ -516,7 +516,7 @@
         "ID": "69",
         "NameOld": "None",
         "ParentOld": "0",
-        "NameNew": "Kosmetyki wyg\u0139\u201aadzaj\u00c4\u2026ce",
+        "NameNew": "Kosmetyki wygładzające",
         "ParentNew": "12",
         "ChangeType": "Add",
         "Type": "face_action"
@@ -525,7 +525,7 @@
         "ID": "70",
         "NameOld": "None",
         "ParentOld": "0",
-        "NameNew": "Kosmetyki regeneruj\u00c4\u2026ce",
+        "NameNew": "Kosmetyki regenerujące",
         "ParentNew": "12",
         "ChangeType": "Add",
         "Type": "face_action"
@@ -534,7 +534,7 @@
         "ID": "71",
         "NameOld": "None",
         "ParentOld": "0",
-        "NameNew": "Kosmetyki roz\u0139\u203awietlaj\u00c4\u2026ce",
+        "NameNew": "Kosmetyki rozświetlające",
         "ParentNew": "12",
         "ChangeType": "Add",
         "Type": "face_action"
@@ -552,7 +552,7 @@
         "ID": "73",
         "NameOld": "None",
         "ParentOld": "0",
-        "NameNew": "Kosmetyki rewitalizuj\u00c4\u2026ce",
+        "NameNew": "Kosmetyki rewitalizujące",
         "ParentNew": "12",
         "ChangeType": "Add",
         "Type": "face_action"
