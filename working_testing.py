@@ -122,12 +122,12 @@ def test_response(data):
 
 # Getting categories list ############################3
 
-cats_indexes = prestashop.search('categories')
-# print(cats_indexes)
-
-cats_names = [prestashop.get('categories', x)['category']['name']['language']['value'] for x in cats_indexes]
-print(cats_names)
+# cats_indexes = prestashop.search('categories')
+#
+# cats_names = [prestashop.get('categories', x)['category']['name']['language']['value'] for x in cats_indexes]
+# print(cats_names)
 
 # w = prestashop.get('categories', 12)['category']
 # print(w['name']['language']['value'])
 # print(w['associations']['categories']['category'])
+

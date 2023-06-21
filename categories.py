@@ -1,6 +1,8 @@
 import xml.etree.ElementTree as ET
 import random
 import os
+import json
+import csv
 import openai
 from prestapyt import PrestaShopWebServiceDict
 from unidecode import unidecode
@@ -136,6 +138,7 @@ def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomnes
 
 
 def category_setter(cat_id=12):
+
     prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
     modified_cat = prestashop.get('categories', cat_id)
@@ -154,4 +157,25 @@ def category_setter(cat_id=12):
     # prestashop.edit('categories', modified_cat)
 
 
-category_setter()
+# category_setter()
+
+
+def create_json_from_csv_cats(csv_name='cats_pairing_init.csv', version='0'):
+
+    version = str(version)
+    data = []
+
+    with open(csv_name, 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            data.append(row)
+
+    json_name = f"{csv_name.split('_')[0]}_{csv_name.split('_')[1]}_v_{version}.json"
+
+    with open(json_name, 'w') as file:
+        json.dump(data, file, indent=4)
+
+    print('JSON file saved successfully')
+
+
+# create_json_from_csv_cats(csv_name='cats_pairing_init.csv')

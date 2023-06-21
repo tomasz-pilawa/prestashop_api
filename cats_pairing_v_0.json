@@ -1,0 +1,569 @@
+[
+    {
+        "ID": "1",
+        "NameOld": "Root",
+        "ParentOld": "0",
+        "NameNew": "Root",
+        "ParentNew": "0",
+        "ChangeType": "None",
+        "Type": "home"
+    },
+    {
+        "ID": "2",
+        "NameOld": "Home",
+        "ParentOld": "1",
+        "NameNew": "Home",
+        "ParentNew": "1",
+        "ChangeType": "None",
+        "Type": "home"
+    },
+    {
+        "ID": "12",
+        "NameOld": "Twarz",
+        "ParentOld": "2",
+        "NameNew": "Piel\u00c4\u2122gnacja twarzy",
+        "ParentNew": "2",
+        "ChangeType": "Name",
+        "Type": "home"
+    },
+    {
+        "ID": "13",
+        "NameOld": "Okolice oczu",
+        "ParentOld": "2",
+        "NameNew": "Kosmetyki pod oczy",
+        "ParentNew": "12",
+        "ChangeType": "NameParent",
+        "Type": "face_action"
+    },
+    {
+        "ID": "14",
+        "NameOld": "Cia\u0139\u201ao",
+        "ParentOld": "2",
+        "NameNew": "Piel\u00c4\u2122gnacja cia\u0139\u201aa",
+        "ParentNew": "2",
+        "ChangeType": "Name",
+        "Type": "main"
+    },
+    {
+        "ID": "28",
+        "NameOld": "Zestawy",
+        "ParentOld": "2",
+        "NameNew": "Zestawy kosmetyk\u0102\u0142w",
+        "ParentNew": "2",
+        "ChangeType": "Name",
+        "Type": "main"
+    },
+    {
+        "ID": "31",
+        "NameOld": "W\u0139\u201aosy",
+        "ParentOld": "2",
+        "NameNew": "Kosmetyki do w\u0139\u201aos\u0102\u0142w",
+        "ParentNew": "2",
+        "ChangeType": "Name",
+        "Type": "main"
+    },
+    {
+        "ID": "41",
+        "NameOld": "Formu\u0139\u201aa",
+        "ParentOld": "2",
+        "NameNew": "DEL",
+        "ParentNew": "12",
+        "ChangeType": "OrderRemove",
+        "Type": "del"
+    },
+    {
+        "ID": "38",
+        "NameOld": "Stopy",
+        "ParentOld": "2",
+        "NameNew": "Kosmetyki do st\u0102\u0142p",
+        "ParentNew": "14",
+        "ChangeType": "NameParent",
+        "Type": "body"
+    },
+    {
+        "ID": "60",
+        "NameOld": "NA LATO",
+        "ParentOld": "2",
+        "NameNew": "NA LATO",
+        "ParentNew": "2",
+        "ChangeType": "None",
+        "Type": "home"
+    },
+    {
+        "ID": "15",
+        "NameOld": "nawil\u0139\u013daj\u00c4\u2026ce",
+        "ParentOld": "12",
+        "NameNew": "Kosmetyki nawil\u0139\u013daj\u00c4\u2026ce",
+        "ParentNew": "12",
+        "ChangeType": "Name",
+        "Type": "face_action"
+    },
+    {
+        "ID": "16",
+        "NameOld": "odm\u0139\u201aadzaj\u00c4\u2026ce",
+        "ParentOld": "12",
+        "NameNew": "Kosmetyki odm\u0139\u201aadzaj\u00c4\u2026ce",
+        "ParentNew": "12",
+        "ChangeType": "Name",
+        "Type": "face_action"
+    },
+    {
+        "ID": "17",
+        "NameOld": "z\u0139\u201auszczaj\u00c4\u2026ce",
+        "ParentOld": "12",
+        "NameNew": "Kosmetyki z\u0139\u201auszczj\u00c4\u2026ce",
+        "ParentNew": "12",
+        "ChangeType": "Name",
+        "Type": "face_action"
+    },
+    {
+        "ID": "18",
+        "NameOld": "tr\u00c4\u2026dzik",
+        "ParentOld": "12",
+        "NameNew": "Kosmetyki na tr\u00c4\u2026dzik",
+        "ParentNew": "12",
+        "ChangeType": "Name",
+        "Type": "face_action"
+    },
+    {
+        "ID": "19",
+        "NameOld": "na przebarwienia",
+        "ParentOld": "12",
+        "NameNew": "Kosmetyki na przebarwienia",
+        "ParentNew": "12",
+        "ChangeType": "Name",
+        "Type": "face_action"
+    },
+    {
+        "ID": "20",
+        "NameOld": "odm\u0139\u201aadzaj\u00c4\u2026ce",
+        "ParentOld": "13",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "21",
+        "NameOld": "nawil\u0139\u013daj\u00c4\u2026ce",
+        "ParentOld": "13",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "22",
+        "NameOld": "wype\u0139\u201aniaj\u00c4\u2026ce",
+        "ParentOld": "13",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "23",
+        "NameOld": "cienie i obrz\u00c4\u2122ki",
+        "ParentOld": "13",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "24",
+        "NameOld": "wyszczuplaj\u00c4\u2026ce",
+        "ParentOld": "14",
+        "NameNew": "Kosmetyki wyszczuplaj\u00c4\u2026ce",
+        "ParentNew": "14",
+        "ChangeType": "NameParent",
+        "Type": "body"
+    },
+    {
+        "ID": "25",
+        "NameOld": "uj\u00c4\u2122drniaj\u00c4\u2026ce",
+        "ParentOld": "14",
+        "NameNew": "Kosmetyki uj\u00c4\u2122drniaj\u00c4\u2026ce",
+        "ParentNew": "14",
+        "ChangeType": "NameParent",
+        "Type": "body"
+    },
+    {
+        "ID": "26",
+        "NameOld": "cellulit",
+        "ParentOld": "14",
+        "NameNew": "Kosmetyki na cellulit",
+        "ParentNew": "14",
+        "ChangeType": "NameParent",
+        "Type": "body"
+    },
+    {
+        "ID": "27",
+        "NameOld": "na rozst\u00c4\u2122py",
+        "ParentOld": "14",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "32",
+        "NameOld": "szampony",
+        "ParentOld": "31",
+        "NameNew": "Szampony do w\u0139\u201aos\u0102\u0142w",
+        "ParentNew": "31",
+        "ChangeType": "NameParent",
+        "Type": "hair"
+    },
+    {
+        "ID": "33",
+        "NameOld": "od\u0139\u013dywki",
+        "ParentOld": "31",
+        "NameNew": "Od\u0139\u013dywki do w\u0139\u201aos\u0102\u0142w",
+        "ParentNew": "31",
+        "ChangeType": "NameParent",
+        "Type": "hair"
+    },
+    {
+        "ID": "34",
+        "NameOld": "maski",
+        "ParentOld": "31",
+        "NameNew": "Maski do w\u0139\u201aos\u0102\u0142w",
+        "ParentNew": "31",
+        "ChangeType": "NameParent",
+        "Type": "hair"
+    },
+    {
+        "ID": "35",
+        "NameOld": "piel\u00c4\u2122gnacja",
+        "ParentOld": "31",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "36",
+        "NameOld": "stylizacja",
+        "ParentOld": "31",
+        "NameNew": "Kosmetyki do stylizacji w\u0139\u201aos\u0102\u0142w",
+        "ParentNew": "31",
+        "ChangeType": "NameParent",
+        "Type": "hair"
+    },
+    {
+        "ID": "37",
+        "NameOld": "przeciws\u0139\u201aoneczne",
+        "ParentOld": "14",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "39",
+        "NameOld": "piel\u00c4\u2122gnacja",
+        "ParentOld": "38",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "40",
+        "NameOld": "od\u0139\u203awie\u0139\u013denie",
+        "ParentOld": "38",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "42",
+        "NameOld": "Krem",
+        "ParentOld": "41",
+        "NameNew": "Kremy do twarzy",
+        "ParentNew": "12",
+        "ChangeType": "NameParent",
+        "Type": "face_form"
+    },
+    {
+        "ID": "43",
+        "NameOld": "Serum",
+        "ParentOld": "41",
+        "NameNew": "Serum do twarzy",
+        "ParentNew": "12",
+        "ChangeType": "NameParent",
+        "Type": "face_form"
+    },
+    {
+        "ID": "44",
+        "NameOld": "Ampu\u0139\u201aki",
+        "ParentOld": "41",
+        "NameNew": "Ampu\u0139\u201aki do w\u0139\u201aos\u0102\u0142w",
+        "ParentNew": "31",
+        "ChangeType": "NameParent",
+        "Type": "hair"
+    },
+    {
+        "ID": "45",
+        "NameOld": "Balsam",
+        "ParentOld": "41",
+        "NameNew": "Oczyszczanie i piel\u00c4\u2122gnacja",
+        "ParentNew": "12",
+        "ChangeType": "NameParent",
+        "Type": "face_form"
+    },
+    {
+        "ID": "46",
+        "NameOld": "Koncentrat b\u0139\u201aotny",
+        "ParentOld": "41",
+        "NameNew": "Koncentraty b\u0139\u201aotne",
+        "ParentNew": "14",
+        "ChangeType": "Name",
+        "Type": "body"
+    },
+    {
+        "ID": "47",
+        "NameOld": "Krem z filtrem SPF",
+        "ParentOld": "41",
+        "NameNew": "Kosmetyki z filtrem UV",
+        "ParentNew": "12",
+        "ChangeType": "NameParent",
+        "Type": "face_action"
+    },
+    {
+        "ID": "48",
+        "NameOld": "Lakier",
+        "ParentOld": "41",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "49",
+        "NameOld": "Maska algowa",
+        "ParentOld": "41",
+        "NameNew": "Maski algowe do twarzy",
+        "ParentNew": "12",
+        "ChangeType": "NameParent",
+        "Type": "face_form"
+    },
+    {
+        "ID": "50",
+        "NameOld": "Maseczka do twarzy",
+        "ParentOld": "41",
+        "NameNew": "Maseczki do twarzy",
+        "ParentNew": "12",
+        "ChangeType": "NameParent",
+        "Type": "face_form"
+    },
+    {
+        "ID": "51",
+        "NameOld": "Maska do w\u0139\u201aos\u0102\u0142w",
+        "ParentOld": "41",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "52",
+        "NameOld": "Mus",
+        "ParentOld": "41",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "53",
+        "NameOld": "Od\u0139\u013dywka",
+        "ParentOld": "41",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "54",
+        "NameOld": "Olejek",
+        "ParentOld": "41",
+        "NameNew": "Olejki i serum do w\u0139\u201aos\u0102\u0142w",
+        "ParentNew": "31",
+        "ChangeType": "NameParent",
+        "Type": "hair"
+    },
+    {
+        "ID": "55",
+        "NameOld": "Peeling",
+        "ParentOld": "41",
+        "NameNew": "Peelingi do twarzy",
+        "ParentNew": "12",
+        "ChangeType": "NameParent",
+        "Type": "face_form"
+    },
+    {
+        "ID": "56",
+        "NameOld": "Puder",
+        "ParentOld": "41",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "57",
+        "NameOld": "Szampon",
+        "ParentOld": "41",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "58",
+        "NameOld": "Tonik",
+        "ParentOld": "41",
+        "NameNew": "Toniki i hydrolaty",
+        "ParentNew": "12",
+        "ChangeType": "NameParent",
+        "Type": "face_form"
+    },
+    {
+        "ID": "59",
+        "NameOld": "\u0139\u00bbel",
+        "ParentOld": "41",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "61",
+        "NameOld": "Mgie\u0139\u201aka",
+        "ParentOld": "41",
+        "NameNew": "DEL",
+        "ParentNew": "DEL",
+        "ChangeType": "Remove",
+        "Type": "del"
+    },
+    {
+        "ID": "62",
+        "NameOld": "Kolagen",
+        "ParentOld": "41",
+        "NameNew": "Kolagen naturalny",
+        "ParentNew": "12",
+        "ChangeType": "NameParent",
+        "Type": "face_form"
+    },
+    {
+        "ID": "63",
+        "NameOld": "peeling do cia\u0139\u201aa",
+        "ParentOld": "14",
+        "NameNew": "Peelingi do cia\u0139\u201aa",
+        "ParentNew": "14",
+        "ChangeType": "NameParent",
+        "Type": "body"
+    },
+    {
+        "ID": "64",
+        "NameOld": "None",
+        "ParentOld": "0",
+        "NameNew": "Kosmetyki \u0139\u201aagodz\u00c4\u2026ce",
+        "ParentNew": "12",
+        "ChangeType": "Add",
+        "Type": "face_action"
+    },
+    {
+        "ID": "65",
+        "NameOld": "None",
+        "ParentOld": "0",
+        "NameNew": "Kosmetyki matuj\u00c4\u2026ce",
+        "ParentNew": "12",
+        "ChangeType": "Add",
+        "Type": "face_action"
+    },
+    {
+        "ID": "66",
+        "NameOld": "None",
+        "ParentOld": "0",
+        "NameNew": "Kosmetyki od\u0139\u013dywcze",
+        "ParentNew": "12",
+        "ChangeType": "Add",
+        "Type": "face_action"
+    },
+    {
+        "ID": "67",
+        "NameOld": "None",
+        "ParentOld": "0",
+        "NameNew": "Kosmetyki na zmarszczki",
+        "ParentNew": "12",
+        "ChangeType": "Add",
+        "Type": "face_action"
+    },
+    {
+        "ID": "68",
+        "NameOld": "None",
+        "ParentOld": "0",
+        "NameNew": "Kosmetyki liftinguj\u00c4\u2026ce",
+        "ParentNew": "12",
+        "ChangeType": "Add",
+        "Type": "face_action"
+    },
+    {
+        "ID": "69",
+        "NameOld": "None",
+        "ParentOld": "0",
+        "NameNew": "Kosmetyki wyg\u0139\u201aadzaj\u00c4\u2026ce",
+        "ParentNew": "12",
+        "ChangeType": "Add",
+        "Type": "face_action"
+    },
+    {
+        "ID": "70",
+        "NameOld": "None",
+        "ParentOld": "0",
+        "NameNew": "Kosmetyki regeneruj\u00c4\u2026ce",
+        "ParentNew": "12",
+        "ChangeType": "Add",
+        "Type": "face_action"
+    },
+    {
+        "ID": "71",
+        "NameOld": "None",
+        "ParentOld": "0",
+        "NameNew": "Kosmetyki roz\u0139\u203awietlaj\u00c4\u2026ce",
+        "ParentNew": "12",
+        "ChangeType": "Add",
+        "Type": "face_action"
+    },
+    {
+        "ID": "72",
+        "NameOld": "None",
+        "ParentOld": "0",
+        "NameNew": "Kosmetyki antyoksydacyjne",
+        "ParentNew": "12",
+        "ChangeType": "Add",
+        "Type": "face_action"
+    },
+    {
+        "ID": "73",
+        "NameOld": "None",
+        "ParentOld": "0",
+        "NameNew": "Kosmetyki rewitalizuj\u00c4\u2026ce",
+        "ParentNew": "12",
+        "ChangeType": "Add",
+        "Type": "face_action"
+    },
+    {
+        "ID": "74",
+        "NameOld": "None",
+        "ParentOld": "0",
+        "NameNew": "Kosmetyki ochronne",
+        "ParentNew": "12",
+        "ChangeType": "Add",
+        "Type": "face_action"
+    }
+]
