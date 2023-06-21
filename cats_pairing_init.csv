@@ -1,7 +1,7 @@
 ID,NameOld,ParentOld,NameNew,ParentNew,ChangeType,Type
 1,Root,0,Root,0,None,home
 2,Home,1,Home,1,None,home
-12,Twarz,2,Pielęgnacja twarzy,2,Name,home
+12,Twarz,2,Pielęgnacja twarzy,2,Name,main
 13,Okolice oczu,2,Kosmetyki pod oczy,12,NameParent,face_action
 14,Ciało,2,Pielęgnacja ciała,2,Name,main
 28,Zestawy,2,Zestawy kosmetyków,2,Name,random

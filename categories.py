@@ -157,7 +157,7 @@ def category_tree_setter(cat_id=12):
 # category_tree_setter()
 
 
-def create_json_from_csv_cats(csv_name='cats_pairing_init.csv', version='0'):
+def create_json_from_csv_cats(csv_name='cats_pairing_init.csv', version='0', dump_cats_classify=0):
 
     version = str(version)
     data = []
@@ -174,8 +174,47 @@ def create_json_from_csv_cats(csv_name='cats_pairing_init.csv', version='0'):
 
     print('JSON file saved successfully')
 
+    if dump_cats_classify == 1:
 
-# create_json_from_csv_cats(csv_name='cats_pairing_init.csv')
+        categories = {
+            'cat_main': [],
+            'cat_face_form': [],
+            'cat_face_action': [],
+            'cat_body': [],
+            'cat_hair': [],
+            'cat_random': [],
+            'cat_old': []
+        }
+
+        for row in data:
+
+            category_type = row['Type']
+            category_name = row['NameNew']
+
+            if category_type == 'main':
+                categories['cat_main'].append(category_name)
+            elif category_type == 'face_form':
+                categories['cat_face_form'].append(category_name)
+            elif category_type == 'face_action':
+                categories['cat_face_action'].append(category_name)
+            elif category_type == 'body':
+                categories['cat_body'].append(category_name)
+            elif category_type == 'hair':
+                categories['cat_hair'].append(category_name)
+            elif category_type == 'random':
+                categories['cat_random'].append(category_name)
+            else:
+                categories['cat_old'].append(category_name)
+
+        cats_classify_filename = f'categories_to_classify_{version}.json'
+
+        with open(cats_classify_filename, 'w', encoding='utf-8') as json_file:
+            json.dump(categories, json_file, ensure_ascii=False)
+
+        print('Categories to Clasify dumped into JSON too')
+
+
+# create_json_from_csv_cats(csv_name='cats_pairing_init.csv', dump_cats_classify=1)
 
 
 def dump_cats_to_file():
@@ -235,6 +274,6 @@ def dump_cats_to_file():
         json.dump(categories, json_file, ensure_ascii=False)
 
 
-dump_cats_to_file()
+# dump_cats_to_file()
 
 
