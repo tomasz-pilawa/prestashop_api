@@ -60,11 +60,12 @@ def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomn
     else:
         selected_products = root.findall('o')[:max_products]
 
-    # print(f'\nThere are potentially {len(selected_products)} products to add from the XML file\n')
-    # for p in selected_products:
-    #     print(p.find('name').text)
-    #     print(p.get('id'))
-    #     print(p.find("attrs/a[@name='Kod_producenta']").text)
+    with open('categories_to_classify_0.json', encoding='utf-8') as file:
+        cats = json.load(file)
+
+    cats_all = [value for key, values in cats.items() if key not in ["cat_other", "cat_old"] for value in values]
+    # print(cats)
+    # print(cats_all)
 
     for p in selected_products:
         p_name = p.find('name').text
@@ -73,30 +74,43 @@ def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomn
 
         print(f'\n{p_name}')
 
-        prompt = f"Classify the product {p_name} to one of the main categories: {cat_1}" \
-                 f"and minimum number of relatable subcategories.\n" \
-                 f"If it's not a set, than choose only from one subcategories set:" \
-                 f"{cat_1_2}, {cat_1_3}, {cat_1_1}\n" \
-                 f"Determine if it's a cream or a serum. " \
-                 f"-If it's a cream, chose 1-3 most relevant only from this set: {cat_1_1_1}." \
-                 f"-If it's a serum, chose 1-3 most relevant only from this set: {cat_1_1_2}.\n" \
-                 f"If it's not a set, you can never have 'serum' and 'krem' subcategories together" \
-                 f"If it's a set, you can classify more freely." \
-                 f"\n IMPORTANT: It's better to classify to less categories, but more accurately AND " \
-                 f"YOU CAN ONLY USE GIVEN SUBCATEGORIES NAMES\n" \
-                 f"Respond with one comma separated list without additional characters"
+        prompt = f"1. Classify the product {p_name} to one of the MAIN categories: {cats['cat_main']}" \
+                 f"2. If it's a face cosmetic classify to at least one FORM subcategory: {cats['cat_face_form']}" \
+                 f"and also classify to at least one ACTION  subcategory: {cats['cat_face_action']}" \
+                 f"3. If it's a body (not face) cosmetic than classify to 1-3 body subcategory: {cats['cat_body']}" \
+                 f"4. If it's a hair cosmetic than classify to one and only one hair subcategory: {cats['cat_hair']}" \
+                 f"5. Classify to one of those {cats['cat_random']}, only if applicable." \
+                 f"\n IMPORTANT: YOU CAN ONLY USE GIVEN SUBCATEGORIES NAMES - remain case sensitive.\n" \
+                 f"VERY IMPORTANT: For face care cosmetics, ensure you select at least one MAIN category AND " \
+                 f"one FORM subcategory AND one ACTION subcategory (a minimum of 3 classifications in total)." \
+                 f"For hair and body cosmetics, select at least one main category and the respective subcategory." \
+                 f"Respond with a comma-separated list of the selected subcategories without any additional" \
+                 f"characters, in a python format. No additional words, no redundant interpunction, no new lines" \
+                 f"e.g. [Pielęgnacja Twarzy, Kremy do twarzy, Kosmetyki nawilżające'"
 
-        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=500, temperature=0)
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=400, temperature=0.3)
         generated_text = response.choices[0].text
+        print(generated_text)
 
-        x = generated_text.strip()
-        lst = [part.strip().replace('\n', '').replace(':', '') for part in x.split(',')]
-        lst_2 = [x for x in lst if x in cat_1 + cats_all]
+        product_classification = []
 
-        print(lst_2)
+        # generated_text = generated_text.split("\n\n", 1)[1]
+
+        for part in generated_text.split(","):
+            category_name = part.strip()
+            if category_name in cats_all:
+                product_classification.append(category_name)
+
+        print(product_classification)
+
+        # x = generated_text.strip()
+        # lst = [part.strip().replace('\n', '').replace(':', '') for part in x.split(',')]
+        # lst_2 = [x for x in lst if x in cat_1 + cats_all]
+        #
+        # print(lst_2)
 
 
-# simple_cat_classifier(max_products=3)
+simple_cat_classifier(max_products=5)
 
 
 def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomness=1):
