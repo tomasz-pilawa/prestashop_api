@@ -155,24 +155,31 @@ def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomnes
 # print(main_cat_classifier(max_products=3))
 
 
-def category_tree_setter(cat_id=12):
+def category_tree_setter(mode='initial'):
 
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+    if mode == 'initial':
 
-    modified_cat = prestashop.get('categories', cat_id)
-    print(modified_cat)
+        cat_id = 12
 
-    modified_cat['category']['name']['language']['value'] = 'Pielęgnacja Twarzy'
+        prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
-    link_rewritten = unidecode(modified_cat['category']['name']['language']['value'].lower().replace(' ', '-'))
-    modified_cat['category']['link_rewrite']['language']['value'] = link_rewritten
+        modified_cat = prestashop.get('categories', cat_id)
+        print(modified_cat)
 
-    print(modified_cat)
+        modified_cat['category']['name']['language']['value'] = 'Pielęgnacja Twarzy'
 
-    modified_cat['category'].pop('level_depth')
-    modified_cat['category'].pop('nb_products_recursive')
+        link_rewritten = unidecode(modified_cat['category']['name']['language']['value'].lower().replace(' ', '-'))
+        modified_cat['category']['link_rewrite']['language']['value'] = link_rewritten
 
-    # prestashop.edit('categories', modified_cat)
+        print(modified_cat)
+
+        modified_cat['category'].pop('level_depth')
+        modified_cat['category'].pop('nb_products_recursive')
+
+        # prestashop.edit('categories', modified_cat)
+
+    if mode == 'from_dict':
+        print("serious stuff")
 
 
 # category_tree_setter()
