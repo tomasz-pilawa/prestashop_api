@@ -85,3 +85,17 @@ def get_products_2(brand=None, to_print=0):
 
     else:
         print("None brand given or the brand doesn't exist")
+
+
+def update_products_json():
+    indexes = prestashop.search('products')
+    indexes_selected = indexes[:10]
+    products_list = [prestashop.get('products', y)['product'] for y in indexes_selected]
+    return products_list
+
+
+products = update_products_json()
+print(len(products))
+print(type(products))
+print(type(products[0]))
+print(products)
