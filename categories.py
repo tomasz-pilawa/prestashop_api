@@ -199,7 +199,7 @@ def category_tree_setter(mode='initial', changes_file=None):
             cat_to_modify['category'].pop('level_depth')
             cat_to_modify['category'].pop('nb_products_recursive')
 
-            # prestashop.edit('categories', cat_to_modify)
+            prestashop.edit('categories', cat_to_modify)
 
         parent_change = [p for p in changes if p['ChangeType'] in ['NameParent', 'OrderRemove']]
 
@@ -213,17 +213,17 @@ def category_tree_setter(mode='initial', changes_file=None):
             cat_to_modify['category'].pop('level_depth')
             cat_to_modify['category'].pop('nb_products_recursive')
 
-            # prestashop.edit('categories', cat_to_modify)
+            prestashop.edit('categories', cat_to_modify)
 
-        remove_change = [r for r in changes if r['ChangeType'] in ['OrderRemove', 'Remove']]
-
-        for cat in remove_change:
-            prestashop.delete('categories', cat['ID'])
-
+        '''
+        IT WORKS, BUT PRODUCTS FROM THOSE CATEGORIES ARE DELETED
         
+        remove_change = [r for r in changes if r['ChangeType'] in ['OrderRemove', 'Remove']]
+        sorted_remove_change = sorted(remove_change, key=lambda x: x['ID'], reverse=True)
 
-
-
+        for cat in sorted_remove_change:
+            prestashop.delete('categories', cat['ID'])
+        '''
 
 
 category_tree_setter(mode='from_dict', changes_file='cats_pairing_v_0.json')
