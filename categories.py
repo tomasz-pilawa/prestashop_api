@@ -155,7 +155,7 @@ def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomnes
 # print(main_cat_classifier(max_products=3))
 
 
-def category_tree_setter(mode='initial'):
+def category_tree_setter(mode='initial', changes_file=None):
 
     if mode == 'initial':
 
@@ -179,10 +179,54 @@ def category_tree_setter(mode='initial'):
         # prestashop.edit('categories', modified_cat)
 
     if mode == 'from_dict':
-        print("serious stuff")
+
+        with open(changes_file, encoding='utf-8') as file:
+            changes = json.load(file)
+
+        # print(changes)
+
+        prestashop = PrestaShopWebServiceDict(api_url, api_key)
+
+        name_change = [n for n in changes if n['ChangeType'] in ['Name', 'NameParent']]
+
+        for cat in name_change:
+            cat_to_modify = prestashop.get('categories', cat['ID'])
+            cat_to_modify['category']['name']['language']['value'] = cat['NameNew']
+
+            link_rewritten = unidecode(cat_to_modify['category']['name']['language']['value'].lower().replace(' ', '-'))
+            cat_to_modify['category']['link_rewrite']['language']['value'] = link_rewritten
+
+            cat_to_modify['category'].pop('level_depth')
+            cat_to_modify['category'].pop('nb_products_recursive')
+
+            # prestashop.edit('categories', cat_to_modify)
+
+        parent_change = [p for p in changes if p['ChangeType'] in ['NameParent', 'OrderRemove']]
+
+        for cat in parent_change:
+            cat_to_modify = prestashop.get('categories', cat['ID'])
+            cat_to_modify['category']['id_parent'] = cat['ParentNew']
+
+            link_rewritten = unidecode(cat_to_modify['category']['name']['language']['value'].lower().replace(' ', '-'))
+            cat_to_modify['category']['link_rewrite']['language']['value'] = link_rewritten
+
+            cat_to_modify['category'].pop('level_depth')
+            cat_to_modify['category'].pop('nb_products_recursive')
+
+            # prestashop.edit('categories', cat_to_modify)
+
+        remove_change = [r for r in changes if r['ChangeType'] in ['OrderRemove', 'Remove']]
+
+        for cat in remove_change:
+            prestashop.delete('categories', cat['ID'])
+
+        
 
 
-# category_tree_setter()
+
+
+
+category_tree_setter(mode='from_dict', changes_file='cats_pairing_v_0.json')
 
 
 def create_json_from_csv_cats(csv_name='cats_pairing_init.csv', version='0', dump_cats_classify=0):
