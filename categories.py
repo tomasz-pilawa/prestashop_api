@@ -64,8 +64,6 @@ def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomn
         cats = json.load(file)
 
     cats_all = [value for key, values in cats.items() if key not in ["cat_other", "cat_old"] for value in values]
-    # print(cats)
-    # print(cats_all)
 
     for p in selected_products:
         p_name = p.find('name').text
@@ -88,7 +86,7 @@ def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomn
                  f"characters, new lines, or reduntant signs like []. etc. It should be easy to use in python." \
                  f"FORMAT EXAMPLE: Pielęgnacja Twarzy, Kremy do twarzy, Kosmetyki nawilżające"
 
-        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=400, temperature=0.3)
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=200, temperature=0.2)
         generated_text = response.choices[0].text
         print(generated_text)
 
@@ -100,6 +98,10 @@ def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomn
             category_name = part.strip()
             if category_name in cats_all:
                 product_classification.append(category_name)
+
+        # extract main category
+        product_main_cat = product_classification[-1]
+        print(f'Kategoria główna: {product_main_cat}')
 
         print(product_classification)
 
@@ -114,6 +116,9 @@ def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomn
 
 
 def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomness=1):
+
+    # this function is depreciated as main cat will be extracted from categories_classifier
+
     tree = ET.parse(file_name)
     root = tree.getroot()
 
@@ -127,7 +132,8 @@ def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomnes
 
         print(f'\n{p_name}')
 
-        prompt = f"Classify the product {p_name} to only one, most relevant, main ecommerce category" \
+        prompt = f"Firstly, decided{p_name}" \
+                 f"to only one, most relevant, main ecommerce category" \
                  f"from the following choices: {cats_all}" \
                  f"YOU CAN ONLY USE GIVEN CATEGORIES NAMES\n" \
                  f"Focus on more specialized categories like anti-aging, wrinkles instead of moisturizing\n" \
@@ -135,8 +141,9 @@ def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomnes
                  f"Always assign at least one category\n" \
                  f"Respond with one-item list with the selected category without additional characters"
 
-        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=500, temperature=0)
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=200, temperature=0.2)
         generated_text = response.choices[0].text
+        print(generated_text)
 
         x = generated_text.strip()
         lst = [part.strip().replace('\n', '').replace(':', '') for part in x.split(',')]
