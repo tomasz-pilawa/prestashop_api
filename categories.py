@@ -84,9 +84,9 @@ def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomn
                  f"VERY IMPORTANT: For face care cosmetics, ensure you select at least one MAIN category AND " \
                  f"one FORM subcategory AND one ACTION subcategory (a minimum of 3 classifications in total)." \
                  f"For hair and body cosmetics, select at least one main category and the respective subcategory." \
-                 f"Respond with a comma-separated list of the selected subcategories without any additional" \
-                 f"characters, in a python format. No additional words, no redundant interpunction, no new lines" \
-                 f"e.g. [Pielęgnacja Twarzy, Kremy do twarzy, Kosmetyki nawilżające'"
+                 f"Always respond with a comma-separated list of the selected subcategories without any additional" \
+                 f"characters, new lines, or reduntant signs like []. etc. It should be easy to use in python." \
+                 f"FORMAT EXAMPLE: Pielęgnacja Twarzy, Kremy do twarzy, Kosmetyki nawilżające"
 
         response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=400, temperature=0.3)
         generated_text = response.choices[0].text
@@ -94,7 +94,7 @@ def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomn
 
         product_classification = []
 
-        # generated_text = generated_text.split("\n\n", 1)[1]
+        generated_text = generated_text.split("\n\n", 1)[1]
 
         for part in generated_text.split(","):
             category_name = part.strip()
@@ -110,7 +110,7 @@ def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomn
         # print(lst_2)
 
 
-simple_cat_classifier(max_products=5)
+# simple_cat_classifier(max_products=5)
 
 
 def main_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomness=1):
