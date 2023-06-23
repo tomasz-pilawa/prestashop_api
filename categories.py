@@ -214,13 +214,14 @@ def category_tree_setter(mode='initial', changes_file=None):
             prestashop.edit('categories', cat_to_modify)
 
         '''
-        IT WORKS, BUT PRODUCTS FROM THOSE CATEGORIES ARE DELETED
-        
+        # IT WORKS, BUT PRODUCTS FROM THOSE CATEGORIES ARE DELETED
+
         remove_change = [r for r in changes if r['ChangeType'] in ['OrderRemove', 'Remove']]
         sorted_remove_change = sorted(remove_change, key=lambda x: x['ID'], reverse=True)
 
         for cat in sorted_remove_change:
             prestashop.delete('categories', cat['ID'])
+        
         '''
 
         add_change = [a for a in changes if a['ChangeType'] == 'Add']
