@@ -183,8 +183,6 @@ def category_tree_setter(mode='initial', changes_file=None):
         with open(changes_file, encoding='utf-8') as file:
             changes = json.load(file)
 
-        # print(changes)
-
         prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
         name_change = [n for n in changes if n['ChangeType'] in ['Name', 'NameParent']]
@@ -224,6 +222,25 @@ def category_tree_setter(mode='initial', changes_file=None):
         for cat in sorted_remove_change:
             prestashop.delete('categories', cat['ID'])
         '''
+
+        add_change = [a for a in changes if a['ChangeType'] == 'Add']
+
+        for cat in add_change:
+
+            link_rewritten = unidecode(cat['NameNew'].lower().replace(' ', '-'))
+
+            cat_data = prestashop.get('categories', options={'schema': 'blank'})
+            cat_data['category'].update({'id_parent': cat['ParentNew'],
+                                         'active': '1',
+                                         'name': {'language': {'attrs': {'id': '2'}, 'value': cat['NameNew']}},
+                                         'link_rewrite': {'language': {'attrs': {'id': '2'}, 'value': link_rewritten}}
+                                         })
+
+            cat_data['category'].pop('id')
+
+            # prestashop.add('categories', cat_data)
+
+        # prestashop.delete('categories', list(range(65, 76)))
 
 
 category_tree_setter(mode='from_dict', changes_file='cats_pairing_v_0.json')
