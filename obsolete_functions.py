@@ -115,8 +115,8 @@ def get_products(id_list=(37, 10), brand=None):         # obsolete function
 
 def get_products_2(brand=None, to_print=0):
 
-    with open('brands_mapped.json') as file:
-        data = json.load(file)
+    with open('data/brands_dict.json', encoding='utf-8') as file:
+        data = json.load(file)['brand_index']
 
     if brand in list(data.keys()):
         print(f"The brand exists. Processing the data...")
