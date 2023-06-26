@@ -91,6 +91,10 @@ def update_products_json():
     indexes = prestashop.search('products')
     indexes_selected = indexes[:10]
     products_list = [prestashop.get('products', y)['product'] for y in indexes_selected]
+
+    with open('data/all_products.json', 'w') as file:
+        json.dump(products_list, file)
+
     return products_list
 
 
