@@ -159,7 +159,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# Ignore the "images" folder
+# Data to ignore
 /images
 /data
 obsolete_functions.py
