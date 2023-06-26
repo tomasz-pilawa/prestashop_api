@@ -29,19 +29,16 @@ def add_product(file_name, brand=None, mode='print', price_ratio=1.87, max_produ
 
     selected_products = []
 
+    with open('data/brands_dict.json', encoding='utf-8') as file:
+        sku_list = json.load(file)['skus']
+
     if brand:
         for o in root.findall('o'):
             o_brand = o.find("./attrs/a[@name='Producent']").text
             if o_brand == brand:
                 selected_products.append(o)
-        with open('sku_mapped.json') as file:
-            sku_list = json.load(file)[brand]
     else:
         selected_products = root.findall('o')
-        sku_list = []
-        with open('sku_mapped.json') as file:
-            for sku_brand in json.load(file).values():
-                sku_list += sku_brand
 
     for product in selected_products:
         product_sku = product.find("attrs/a[@name='Kod_producenta']").text
