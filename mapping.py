@@ -50,34 +50,34 @@ def update_products_json(max_products=10, brand_update=None):
 
 def update_brands_dict():
 
-    idx = prestashop.search('products')
+    with open('data/all_products.json', encoding='utf-8') as file:
+        data = json.load(file)
 
-    products_list = [prestashop.get('products', y)['product'] for y in idx[:10]]
-    indexes = []
-    skus = []
-    brands = []
+    brands = list(
+        set([product['manufacturer_name']['value'] for product in data if product['manufacturer_name']['value']]))
+    skus = list(set([product['reference'] for product in data]))
+    indexes = list(set([product['id'] for product in data]))
 
-    for product in products_list:
-        indexes.append(product['id'])
-        skus.append(product['reference'])
-        if not product['manufacturer_name']['value']:
-            product['manufacturer_name']['value'] = 'Z_MISSING'
-        brands.append(product['manufacturer_name']['value'])
+    skus_list = {}
+    indexes_list = {}
 
-    brands_dict ={}
+    for b in brands:
+        unique_sku = [product['reference'] for product in data if product['manufacturer_name']['value'] == b]
+        unique_index = [product['id'] for product in data if product['manufacturer_name']['value'] == b]
+        skus_list[b] = unique_sku
+        indexes_list[b] = unique_index
 
-    indexes_dict = {}
-    for brand, product in zip(brands, indexes):
-        indexes_dict.setdefault(brand, []).append(int(product))
-    brands_dict['indexes'] = indexes_dict
+    seen_brands = set()
+    brand_ids = []
 
-    skus_dict = {}
-    for brand, product in zip(brands, skus):
-        skus_dict.setdefault(brand, []).append(product)
-    brands_dict['skus'] = skus_dict
+    for product in data:
+        brand = product['manufacturer_name']['value']
+        if brand and brand not in seen_brands:
+            brand_ids.append({brand: product['id_manufacturer']})
+            seen_brands.add(brand)
 
-    brands_dict['all_sku'] = skus
-    brands_dict['all_index'] = indexes
+    brands_dict = {'brands': brands, 'skus': skus, 'indexes': indexes, 'brand_sku': skus_list,
+                   'brand_index': indexes_list, 'brand_id': brand_ids}
 
     with open('data/brands_dict.json', mode='w', encoding='utf-8') as file:
         json.dump(brands_dict, file)
