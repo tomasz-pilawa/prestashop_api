@@ -162,4 +162,4 @@ cython_debug/
 # Data to ignore
 /images
 /data
-obsolete_functions.py
+api_products.py
