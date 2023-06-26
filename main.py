@@ -16,8 +16,12 @@ api_key = os.getenv('quelinda_pass')
 # product_test = 'random_product.csv'
 # editing.add_product(product_test)
 
-# categories.create_json_from_csv_cats(csv_name='cats_pairing_init.csv', dump_cats_classify=1)
 
 # NEW STAGE (CLEANING CODE)
-# mapping.update_products_json(max_products=30, brand_update='Filorga')
 
+# mapping.create_category_dicts(csv_name='cats_pairing_init.csv', update_classification_dict=1)
+
+# only use when new csv is provided (rollback database to 22/06) - needs to uncomment add and fix delete
+# mapping.set_categories_tree(changes_file='cats_pairing_v_0.json')
+
+# mapping.update_products_json(max_products=30, brand_update='Filorga')

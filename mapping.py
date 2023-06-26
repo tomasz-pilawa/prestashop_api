@@ -1,6 +1,9 @@
 import os
 import json
+import csv
 from prestapyt import PrestaShopWebServiceDict
+from unidecode import unidecode
+
 
 api_url = os.getenv('quelinda_link')
 api_key = os.getenv('quelinda_pass')
@@ -125,3 +128,129 @@ def update_products_json(max_products=10, brand_update=None):
             json.dump(product_list, file)
     else:
         print(f'There were no more new products to add. Total number of products now is {len(product_list)}')
+
+
+def create_category_dicts(csv_name='cats_pairing_init.csv', version='0', update_classification_dict=0):
+
+    version = str(version)
+    data = []
+
+    with open(f'data/{csv_name}', 'r', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            data.append(row)
+
+    json_name = f"{csv_name.split('_')[0]}_{csv_name.split('_')[1]}_v_{version}.json"
+
+    with open(f'data/{json_name}', 'w', encoding='utf-8') as file:
+        json.dump(data, file, indent=4, ensure_ascii=False)
+
+    print('JSON file saved successfully')
+
+    if update_classification_dict == 1:
+
+        categories = {
+            'cat_main': [],
+            'cat_face_form': [],
+            'cat_face_action': [],
+            'cat_body': [],
+            'cat_hair': [],
+            'cat_random': [],
+            'cat_other': [],
+            'cat_old': []
+        }
+
+        for row in data:
+
+            category_type = row['Type']
+            category_name = row['NameNew']
+            categories['cat_old'].append(row['NameOld'])
+
+            if category_type == 'main':
+                categories['cat_main'].append(category_name)
+            elif category_type == 'face_form':
+                categories['cat_face_form'].append(category_name)
+            elif category_type == 'face_action':
+                categories['cat_face_action'].append(category_name)
+            elif category_type == 'body':
+                categories['cat_body'].append(category_name)
+            elif category_type == 'hair':
+                categories['cat_hair'].append(category_name)
+            elif category_type == 'random':
+                categories['cat_random'].append(category_name)
+            else:
+                categories['cat_other'].append(category_name)
+
+        categories['cat_old'] = [c for c in categories['cat_old'] if c not in ['None']]
+
+        cats_classify_filename = f'categories_to_classify_{version}.json'
+
+        with open(f'data/{cats_classify_filename}', 'w', encoding='utf-8') as json_file:
+            json.dump(categories, json_file, ensure_ascii=False)
+
+        print('Categories to Clasify dumped into JSON too')
+
+
+def set_categories_tree(changes_file=None):
+
+    with open(f'data/{changes_file}', encoding='utf-8') as file:
+        changes = json.load(file)
+
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+
+    name_change = [n for n in changes if n['ChangeType'] in ['Name', 'NameParent']]
+
+    for cat in name_change:
+        cat_to_modify = prestashop.get('categories', cat['ID'])
+        cat_to_modify['category']['name']['language']['value'] = cat['NameNew']
+
+        link_rewritten = unidecode(cat_to_modify['category']['name']['language']['value'].lower().replace(' ', '-'))
+        cat_to_modify['category']['link_rewrite']['language']['value'] = link_rewritten
+
+        cat_to_modify['category'].pop('level_depth')
+        cat_to_modify['category'].pop('nb_products_recursive')
+
+        prestashop.edit('categories', cat_to_modify)
+
+    parent_change = [p for p in changes if p['ChangeType'] in ['NameParent', 'OrderRemove']]
+
+    for cat in parent_change:
+        cat_to_modify = prestashop.get('categories', cat['ID'])
+        cat_to_modify['category']['id_parent'] = cat['ParentNew']
+
+        link_rewritten = unidecode(cat_to_modify['category']['name']['language']['value'].lower().replace(' ', '-'))
+        cat_to_modify['category']['link_rewrite']['language']['value'] = link_rewritten
+
+        cat_to_modify['category'].pop('level_depth')
+        cat_to_modify['category'].pop('nb_products_recursive')
+
+        prestashop.edit('categories', cat_to_modify)
+
+    '''
+    # IT WORKS, BUT PRODUCTS FROM THOSE CATEGORIES ARE DELETED
+
+    remove_change = [r for r in changes if r['ChangeType'] in ['OrderRemove', 'Remove']]
+    sorted_remove_change = sorted(remove_change, key=lambda x: x['ID'], reverse=True)
+
+    for cat in sorted_remove_change:
+        prestashop.delete('categories', cat['ID'])
+
+    '''
+
+    add_change = [a for a in changes if a['ChangeType'] == 'Add']
+
+    for cat in add_change:
+        link_rewritten = unidecode(cat['NameNew'].lower().replace(' ', '-'))
+
+        cat_data = prestashop.get('categories', options={'schema': 'blank'})
+        cat_data['category'].update({'id_parent': cat['ParentNew'],
+                                     'active': '1',
+                                     'name': {'language': {'attrs': {'id': '2'}, 'value': cat['NameNew']}},
+                                     'link_rewrite': {'language': {'attrs': {'id': '2'}, 'value': link_rewritten}}
+                                     })
+
+        cat_data['category'].pop('id')
+
+        # prestashop.add('categories', cat_data)
+
+    # prestashop.delete('categories', list(range(65, 76)))
