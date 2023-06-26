@@ -87,7 +87,7 @@ def get_products_2(brand=None, to_print=0):
         print("None brand given or the brand doesn't exist")
 
 
-def update_products_json(max_products=10):
+def update_products_json(max_products=10, brand_update=None):
 
     with open('data/all_products.json', encoding='utf-8') as file:
         product_list = json.load(file)
@@ -97,6 +97,19 @@ def update_products_json(max_products=10):
 
     indexes_unique = [index for index in indexes_site if index not in indexes_data]
     indexes_selected = indexes_unique[:max_products]
+
+    if brand_update:
+        indexes_brand = [int(p['id']) for p in product_list if brand_update == p['manufacturer_name']['value']]
+        updated_products_list = [prestashop.get('products', x)['product'] for x in indexes_brand]
+
+        for updated_product in updated_products_list:
+            for i, existing_product in enumerate(product_list):
+                if int(existing_product['id']) == updated_product['id']:
+                    product_list[i] = updated_product
+                    break
+        print(f'Updated {len(updated_products_list)} products for brand "{brand_update}"')
+    else:
+        print(f'There were no products to update for brand "{brand_update}"')
 
     if len(indexes_selected) > 0:
         new_products_list = [prestashop.get('products', y)['product'] for y in indexes_selected]
@@ -108,4 +121,5 @@ def update_products_json(max_products=10):
         with open('data/all_products.json', 'w', encoding='utf-8') as file:
             json.dump(product_list, file)
     else:
-        print(f'There were no more products to add. Total number of products is {len(product_list)}')
+        print(f'There were no more new products to add. Total number of products now is {len(product_list)}')
+

@@ -23,5 +23,5 @@ api_key = os.getenv('quelinda_pass')
 # categories.create_json_from_csv_cats(csv_name='cats_pairing_init.csv', dump_cats_classify=1)
 
 # NEW STAGE (CLEANING CODE)
-# ap.update_products_json(max_products=30)
+ap.update_products_json(max_products=30, brand_update='Filorga')
 
