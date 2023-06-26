@@ -22,7 +22,7 @@ def classify_category(file_name='luminosa_feed.xml', max_products=5, randomness=
     else:
         selected_products = root.findall('o')[:max_products]
 
-    with open('categories_to_classify_0.json', encoding='utf-8') as file:
+    with open('data/categories_to_classify_0.json', encoding='utf-8') as file:
         cats = json.load(file)
 
     cats_all = [value for key, values in cats.items() if key not in ["cat_other", "cat_old"] for value in values]

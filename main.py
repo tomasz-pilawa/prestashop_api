@@ -24,3 +24,5 @@ api_key = os.getenv('quelinda_pass')
 
 # editing.add_product(file_name='luminosa_feed.xml', mode='test', max_products=5, edit_presta=0,
 #                     brand='Germaine de Capuccini')
+
+mapping.update_brands_dict()

@@ -48,6 +48,41 @@ def update_products_json(max_products=10, brand_update=None):
         print(f'There were no more new products to add. Total number of products now is {len(product_list)}')
 
 
+def update_brands_dict():
+
+    idx = prestashop.search('products')
+
+    products_list = [prestashop.get('products', y)['product'] for y in idx[:10]]
+    indexes = []
+    skus = []
+    brands = []
+
+    for product in products_list:
+        indexes.append(product['id'])
+        skus.append(product['reference'])
+        if not product['manufacturer_name']['value']:
+            product['manufacturer_name']['value'] = 'Z_MISSING'
+        brands.append(product['manufacturer_name']['value'])
+
+    brands_dict ={}
+
+    indexes_dict = {}
+    for brand, product in zip(brands, indexes):
+        indexes_dict.setdefault(brand, []).append(int(product))
+    brands_dict['indexes'] = indexes_dict
+
+    skus_dict = {}
+    for brand, product in zip(brands, skus):
+        skus_dict.setdefault(brand, []).append(product)
+    brands_dict['skus'] = skus_dict
+
+    brands_dict['all_sku'] = skus
+    brands_dict['all_index'] = indexes
+
+    with open('data/brands_dict.json', mode='w', encoding='utf-8') as file:
+        json.dump(brands_dict, file)
+
+
 def create_category_dicts(csv_name='cats_pairing_init.csv', version='0', update_classification_dict=0):
 
     version = str(version)
