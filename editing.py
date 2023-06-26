@@ -72,8 +72,8 @@ def add_product(file_name, brand=None, mode='print', price_ratio=1.87, max_produ
 
     if mode == 'test' or mode == 'chat':
 
-        with open('default_product_values.json') as def_file:
-            default_data = json.load(def_file)
+        default_data = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404", "condition": "new",
+                        "show_price": "1", "indexed": "1", "visibility": "both"}
 
         with open('manufacturers_dict.json') as man_file:
             default_data['id_manufacturer'] = json.load(man_file)[brand]
@@ -179,7 +179,5 @@ def add_product(file_name, brand=None, mode='print', price_ratio=1.87, max_produ
                 prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
 
     print('\nFunction completed')
-
-# add_from_xml(file_name='luminosa_feed.xml', mode='print', max_products=50, edit_presta=0)
 
 # prestashop.delete('products', [790, 791])

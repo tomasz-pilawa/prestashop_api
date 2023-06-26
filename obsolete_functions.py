@@ -148,8 +148,8 @@ def add_product_from_csv(product):
     data['wholesale_price'] = str(round(int(data['price']) / 1.87, 2))
     data['link_rewrite'] = data['name'].lower().replace(' ', '-')
 
-    with open('default_product_values.json') as def_file:
-        default_values = json.load(def_file)
+    default_values = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404", "condition": "new",
+                    "show_price": "1", "indexed": "1", "visibility": "both"}
 
     data.update(default_values)
 
