@@ -12,7 +12,8 @@ api_url = os.getenv('quelinda_link')
 api_key = os.getenv('quelinda_pass')
 
 
-def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomness=1):
+def classify_category(file_name='luminosa_feed.xml', max_products=5, randomness=1):
+
     tree = ET.parse(file_name)
     root = tree.getroot()
 
@@ -67,10 +68,4 @@ def simple_cat_classifier(file_name='luminosa_feed.xml', max_products=5, randomn
         print(product_classification)
 
 
-# simple_cat_classifier(max_products=5)
-
-
-
-
-
-# category_tree_setter(mode='from_dict', changes_file='cats_pairing_v_0.json')
+# classify_category(max_products=5)
