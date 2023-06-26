@@ -162,3 +162,4 @@ cython_debug/
 # Ignore the "images" folder
 /images
 /data
+obsolete_functions.py
