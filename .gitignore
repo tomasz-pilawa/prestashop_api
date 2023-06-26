@@ -162,4 +162,3 @@ cython_debug/
 # Data to ignore
 /images
 /data
-api_products.py
