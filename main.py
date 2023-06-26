@@ -12,20 +12,15 @@ api_key = os.getenv('quelinda_pass')
 # mapping.get_manufacturers_dict()
 # mapping.get_categories_dict()
 
-# product_test = 'random_product.csv'
-# editing.add_product(product_test)
-
 
 # NEW STAGE (CLEANING CODE)
 
-# mapping.create_category_dicts(csv_name='cats_pairing_init.csv', update_classification_dict=1)
-
 # only use when new csv is provided (rollback database to 22/06) - needs to uncomment add and fix delete
+# mapping.create_category_dicts(csv_name='cats_pairing_init.csv', update_classification_dict=1)
 # mapping.set_categories_tree(changes_file='cats_pairing_v_0.json')
 
 # mapping.update_products_json(max_products=30, brand_update='Filorga')
+# mapping.update_products_json(max_products=30)
 
 # editing.add_product(file_name='luminosa_feed.xml', mode='test', max_products=5, edit_presta=0,
 #                     brand='Germaine de Capuccini')
-
-# prestashop.delete('products', [790, 791])
