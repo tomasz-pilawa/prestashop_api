@@ -87,19 +87,25 @@ def get_products_2(brand=None, to_print=0):
         print("None brand given or the brand doesn't exist")
 
 
-def update_products_json():
-    indexes = prestashop.search('products')
-    indexes_selected = indexes[:10]
-    products_list = [prestashop.get('products', y)['product'] for y in indexes_selected]
+def update_products_json(max_products=10):
 
-    with open('data/all_products.json', 'w') as file:
-        json.dump(products_list, file)
+    with open('data/all_products.json', encoding='utf-8') as file:
+        product_list = json.load(file)
 
-    return products_list
+    indexes_site = prestashop.search('products')
+    indexes_data = [int(p['id']) for p in product_list]
 
+    indexes_unique = [index for index in indexes_site if index not in indexes_data]
+    indexes_selected = indexes_unique[:max_products]
 
-products = update_products_json()
-print(len(products))
-print(type(products))
-print(type(products[0]))
-print(products)
+    if len(indexes_selected) > 0:
+        new_products_list = [prestashop.get('products', y)['product'] for y in indexes_selected]
+
+        product_list.extend(new_products_list)
+
+        print(f'Added {len(indexes_selected)} products. Total products in the data file now: {len(product_list)}')
+
+        with open('data/all_products.json', 'w', encoding='utf-8') as file:
+            json.dump(product_list, file)
+    else:
+        print(f'There were no more products to add. Total number of products is {len(product_list)}')

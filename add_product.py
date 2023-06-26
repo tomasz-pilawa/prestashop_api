@@ -216,6 +216,6 @@ def add_from_xml(file_name, brand=None, mode='print', price_ratio=1.87, max_prod
     print('\nFunction completed')
 
 
-add_from_xml(file_name='luminosa_feed.xml', mode='print', max_products=50, add_product=0)
+# add_from_xml(file_name='luminosa_feed.xml', mode='print', max_products=50, add_product=0)
 
 # prestashop.delete('products', [790, 791])
