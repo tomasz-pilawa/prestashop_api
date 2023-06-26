@@ -68,12 +68,12 @@ def update_brands_dict():
         indexes_list[b] = unique_index
 
     seen_brands = set()
-    brand_ids = []
+    brand_ids = {}
 
     for product in data:
         brand = product['manufacturer_name']['value']
         if brand and brand not in seen_brands:
-            brand_ids.append({brand: product['id_manufacturer']})
+            brand_ids[brand] = product['id_manufacturer']
             seen_brands.add(brand)
 
     brands_dict = {'brands': brands, 'skus': skus, 'indexes': indexes, 'brand_sku': skus_list,

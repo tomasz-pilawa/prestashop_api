@@ -72,8 +72,8 @@ def add_product(file_name, brand=None, mode='print', price_ratio=1.87, max_produ
         default_data = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404", "condition": "new",
                         "show_price": "1", "indexed": "1", "visibility": "both"}
 
-        with open('manufacturers_dict.json') as man_file:
-            default_data['id_manufacturer'] = json.load(man_file)[brand]
+        with open('data/brands_dict.json', encoding='utf-8') as file:
+            default_data['id_manufacturer'] = json.load(file)['brand_id'][brand]
 
         for single_product in selected_products[:max_products]:
             data = default_data

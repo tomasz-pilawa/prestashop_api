@@ -141,8 +141,8 @@ def add_product_from_csv(product):
         row = next(reader)
         data = dict(zip(header, row))
 
-    with open('manufacturers_dict.json') as man_file:
-        id_manufacturer = json.load(man_file)[data['manufacturer_name']]
+    with open('data/brands_dict.json', encoding='utf-8') as file:
+        id_manufacturer = json.load(file)['brand_id'][data['manufacturer_name']]
 
     data['id_manufacturer'] = id_manufacturer
     data['wholesale_price'] = str(round(int(data['price']) / 1.87, 2))
