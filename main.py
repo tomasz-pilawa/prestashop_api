@@ -1,6 +1,6 @@
 import mapping
 import json
-import add_product as add_p
+import editing
 import csv
 import os
 import categories
@@ -14,10 +14,10 @@ api_key = os.getenv('quelinda_pass')
 # mapping.get_categories_dict()
 
 # product_test = 'random_product.csv'
-# add_p.add_product_from_csv(product_test)
+# editing.add_product(product_test)
 
 # categories.create_json_from_csv_cats(csv_name='cats_pairing_init.csv', dump_cats_classify=1)
 
 # NEW STAGE (CLEANING CODE)
-mapping.update_products_json(max_products=30, brand_update='Filorga')
+# mapping.update_products_json(max_products=30, brand_update='Filorga')
 

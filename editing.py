@@ -22,8 +22,8 @@ def truncate_string(text, max_length=70):
     return truncated_text
 
 
-def add_from_xml(file_name, brand=None, mode='print', price_ratio=1.87, max_products=3, add_product=0,
-                 excluded_indexes=None, included_indexes=None):
+def add_product(file_name, brand=None, mode='print', price_ratio=1.87, max_products=3, edit_presta=0,
+                excluded_indexes=None, included_indexes=None):
     tree = ET.parse(file_name)
     root = tree.getroot()
 
@@ -96,7 +96,6 @@ def add_from_xml(file_name, brand=None, mode='print', price_ratio=1.87, max_prod
                 data['meta_description'] = truncate_string(data['description'][3:].split('.')[0] + '.', 160)
 
             if mode == 'chat':
-
                 prompt_description = f"Write ecommerce SEO product description {data['name']} " \
                                      f"everything in polish, around 2500 characters total\n" \
                                      f"styling as on luminosa.pl" \
@@ -159,7 +158,7 @@ def add_from_xml(file_name, brand=None, mode='print', price_ratio=1.87, max_prod
             product_info = {'product': data}
             print(product_info)
 
-            if add_product == 1:
+            if edit_presta == 1:
                 response = prestashop.add('products', product_info)
 
                 product_id = response['prestashop']['product']['id']
@@ -181,7 +180,6 @@ def add_from_xml(file_name, brand=None, mode='print', price_ratio=1.87, max_prod
 
     print('\nFunction completed')
 
-
-# add_from_xml(file_name='luminosa_feed.xml', mode='print', max_products=50, add_product=0)
+# add_from_xml(file_name='luminosa_feed.xml', mode='print', max_products=50, edit_presta=0)
 
 # prestashop.delete('products', [790, 791])
