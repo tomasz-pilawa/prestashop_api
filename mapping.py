@@ -8,10 +8,10 @@ from unidecode import unidecode
 api_url = os.getenv('quelinda_link')
 api_key = os.getenv('quelinda_pass')
 
-prestashop = PrestaShopWebServiceDict(api_url, api_key)
-
 
 def update_products_json(max_products=10, brand_update=None):
+
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
     with open('data/all_products.json', encoding='utf-8') as file:
         product_list = json.load(file)
@@ -179,16 +179,13 @@ def set_categories_tree(changes_file=None):
 
         prestashop.edit('categories', cat_to_modify)
 
-    '''
-    # IT WORKS, BUT PRODUCTS FROM THOSE CATEGORIES ARE DELETED
+    reassign_categories_setter(initial_mode=1)
 
     remove_change = [r for r in changes if r['ChangeType'] in ['OrderRemove', 'Remove']]
     sorted_remove_change = sorted(remove_change, key=lambda x: x['ID'], reverse=True)
 
     for cat in sorted_remove_change:
         prestashop.delete('categories', cat['ID'])
-
-    '''
 
     add_change = [a for a in changes if a['ChangeType'] == 'Add']
 
@@ -204,6 +201,47 @@ def set_categories_tree(changes_file=None):
 
         cat_data['category'].pop('id')
 
-        # prestashop.add('categories', cat_data)
+        prestashop.add('categories', cat_data)
 
     # prestashop.delete('categories', list(range(65, 76)))
+
+
+def reassign_categories_setter(initial_mode=1, cats_to_reassign=None, cats_substitutes=None):
+
+    with open('data/all_products.json', encoding='utf-8') as file:
+        data = json.load(file)
+
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+
+    if initial_mode == 1:
+        # initial values from the first setting up of the categories tree
+        cats_to_reassign = [20, 21, 22, 23, 27, 35, 37, 39, 40]
+        cats_substitutes = [13, 13, 13, 13, 14, 44, 47, 38, 38]
+
+    cats_mapped = list(zip(cats_to_reassign, cats_substitutes))
+
+    for cat in cats_mapped:
+        products_cat_x = [p for p in data if p['id_category_default'] == str(cat[0])]
+        # print(f'Category {cat[0]} is main category in {len(products_cat_X)} instances')
+
+        for x in products_cat_x:
+            x['id_category_default'] = str(cat[1])
+
+            product_edit = prestashop.get('products', x['id'])
+
+            product_edit['product']['id_category_default'] = x['id_category_default']
+
+            product_edit['product'].pop('manufacturer_name')
+            product_edit['product'].pop('quantity')
+
+            product_edit['product']['position_in_category']['value'] = str(1)
+
+            # print(product_edit)
+
+            prestashop.edit('products', product_edit)
+
+
+
+
+
+

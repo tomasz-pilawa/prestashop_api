@@ -16,7 +16,7 @@ api_key = os.getenv('quelinda_pass')
 
 # NEW STAGE (CLEANING CODE)
 
-# only use when new csv is provided (rollback database to 22/06) - needs to uncomment add and fix delete
+# only use when new csv is provided (rollback database to 22/06)
 # mapping.create_category_dicts(csv_name='cats_pairing_init.csv', update_classification_dict=1)
 # mapping.set_categories_tree(changes_file='cats_pairing_v_0.json')
 
