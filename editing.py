@@ -24,7 +24,9 @@ def truncate_string(text, max_length=70):
 
 def add_product(file_name, brand=None, mode='print', price_ratio=1.87, max_products=3, edit_presta=0,
                 excluded_indexes=None, included_indexes=None):
-    tree = ET.parse(file_name)
+
+    # this one actually gets XML from the file
+    tree = ET.parse(f'data/{file_name}')
     root = tree.getroot()
 
     selected_products = []

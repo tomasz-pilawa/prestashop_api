@@ -16,14 +16,16 @@ api_key = os.getenv('quelinda_pass')
 
 # NEW STAGE (CLEANING CODE)
 
-# only use when new csv is provided (rollback database to 22/06)
+# Only use when new csv is provided (rollback database to 22/06)
 # mapping.create_category_dicts(csv_name='cats_pairing_init.csv', update_classification_dict=1)
 # mapping.set_categories_tree(changes_file='cats_pairing_v_0.json')
+
+# Fetching xml_files from the web
+# mapping.get_xml_from_web(source='luminosa')
 
 # mapping.update_products_json(max_products=30, brand_update='Filorga')
 # mapping.update_products_json(max_products=30)
 # mapping.update_brands_dict()
 
-#
 # editing.add_product(file_name='luminosa_feed.xml', mode='test', max_products=5, edit_presta=0,
 #                     brand='Mesoestetic')

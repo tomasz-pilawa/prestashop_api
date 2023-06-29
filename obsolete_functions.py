@@ -4,6 +4,8 @@ import csv
 from prestapyt import PrestaShopWebServiceDict
 import openai
 import requests
+import xml.etree.ElementTree as ET
+import json
 
 api_url = os.getenv('quelinda_link')
 api_key = os.getenv('quelinda_pass')
@@ -281,4 +283,39 @@ def update_brands_dict():
 
     with open('data/brands_dict.json', mode='w', encoding='utf-8') as file:
         json.dump(brands_dict, file)
+
+
+def get_xml_obsolete(source='luminosa', from_web=0):
+
+    if from_web == 1:
+        with open(f'data/xml_urls.json') as file:
+            url = json.load(file)[source]
+        response = requests.get(url)
+        if response.status_code == 200:
+            with open(f'data/{source}_feed.xml', 'wb') as file:
+                file.write(response.content)
+            print("File saved successfully!")
+        else:
+            print("Failed to fetch the XML file!")
+
+    # OLD FUNCTIONALITY THAT IS NOT BEING USED NOW
+
+    brand = "Germaine de Capuccini"
+    selected_products = []
+
+    tree = ET.parse(f'data/luminosa_feed.xml')
+    root = tree.getroot()
+
+    for o in root.findall('o'):
+        producent = o.find("./attrs/a[@name='Producent']").text
+        if producent == brand:
+            selected_products.append(o)
+
+    for product in selected_products:
+        name = product.find('name').text
+        sku = product.find("attrs/a[@name='Kod_producenta']").text
+        print(name)
+        print(sku)
+
+    # print(ET.tostring(selected_products[3], encoding='unicode', method='xml'))
 

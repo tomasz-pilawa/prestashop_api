@@ -1,6 +1,7 @@
 import os
 import json
 import csv
+import requests
 from prestapyt import PrestaShopWebServiceDict
 from unidecode import unidecode
 
@@ -241,7 +242,15 @@ def reassign_categories_setter(initial_mode=1, cats_to_reassign=None, cats_subst
             prestashop.edit('products', product_edit)
 
 
+def get_xml_from_web(source='luminosa'):
 
-
-
+    with open(f'data/xml_urls.json') as file:
+        url = json.load(file)[source]
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(f'data/{source}_feed.xml', 'wb') as file:
+            file.write(response.content)
+        print("File saved successfully!")
+    else:
+        print("Failed to fetch the XML file!")
 

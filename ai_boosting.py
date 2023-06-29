@@ -14,7 +14,7 @@ api_key = os.getenv('quelinda_pass')
 
 def classify_category(file_name='luminosa_feed.xml', max_products=5, randomness=1):
 
-    tree = ET.parse(file_name)
+    tree = ET.parse(f'data/{file_name}')
     root = tree.getroot()
 
     if randomness == 1:
