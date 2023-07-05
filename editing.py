@@ -6,10 +6,10 @@ import xml.etree.ElementTree as ET
 import openai
 import requests
 
-api_url = os.getenv('quelinda_link')
-api_key = os.getenv('quelinda_pass')
+api_url = os.getenv('urodama_link')
+api_key = os.getenv('urodama_pass')
 
-openai.api_key = os.getenv('openai_api')
+# openai.api_key = os.getenv('openai_api')
 
 prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
@@ -22,9 +22,58 @@ def truncate_string(text, max_length=70):
     return truncated_text
 
 
+def select_products_xml(source='luminosa', mode=None, data=None, print_info=None):
+    tree = ET.parse(f'data/{source}_feed.xml')
+    root = tree.getroot()
+
+    selected_products = root.findall('o')
+
+    with open('data/brands_dict.json', encoding='utf-8') as file:
+        sku_list = json.load(file)['skus']
+
+    for product in selected_products:
+        product_sku = product.find("attrs/a[@name='Kod_producenta']").text
+        if product_sku in sku_list:
+            selected_products.remove(product)
+
+    if mode == 'brands':
+        products_temp = [product for product in selected_products
+                         if product.find("attrs/a[@name='Producent']").text in data]
+        selected_products = products_temp
+
+    elif mode == 'exclude':
+        products_temp = [product for product in selected_products if int(product.get('id')) not in data]
+        selected_products = products_temp
+
+    elif mode == 'include':
+        products_temp = [product for product in selected_products if int(product.get('id')) in data]
+        selected_products = products_temp
+
+    if print_info:
+        print(f'\nThere are potentially {len(selected_products)} products to add from the XML file\n')
+        for p in selected_products:
+            print(p.find('name').text)
+            print(p.get('id'))
+            print(p.find("attrs/a[@name='Kod_producenta']").text)
+
+    selected_ids = [int(p.get('id')) for p in selected_products]
+    print(selected_ids)
+
+    return selected_ids, selected_products
+
+
+# select_products_xml(source='luminosa', mode='brands', data=['Essente', 'Mesoestetic'], print_info=1)
+# select_products_xml(source='luminosa', mode='brands', data=['Mesoestetic'], print_info=1)
+# select_products_xml(source='luminosa', mode='exclude', data=[716, 31, 711, 535, 723, 55, 536, 724, 741], print_info=1)
+# select_products_xml(source='luminosa', mode='include', data=[716, 31, 711, 535, 723, 55, 536, 724, 741], print_info=1)
+
+# ids, products = select_products_xml(source='luminosa', print_info=1)
+# for element in products[:5]:
+#     print(ET.tostring(element, encoding='unicode'))
+
+
 def add_product(file_name, brand=None, mode='print', price_ratio=1.87, max_products=3, edit_presta=0,
                 excluded_indexes=None, included_indexes=None):
-
     # this one actually gets XML from the file
     tree = ET.parse(f'data/{file_name}')
     root = tree.getroot()
