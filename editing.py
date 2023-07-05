@@ -108,10 +108,12 @@ def process_products(product_list, max_products=5):
         data['meta_title'] = truncate_string(data['name'], 70)
         data['meta_description'] = truncate_string(data['description'][3:].split('.')[0] + '.', 160)
 
+        data['image_url'] = single_product.find("imgs/main").get('url')
+
         # print(data)
         processed_products.append(data)
 
-    return data
+    return processed_products
 
 
 # products = select_products_xml(source='luminosa', print_info=1)
@@ -129,35 +131,38 @@ def add_with_photo(product_list):
         product_info = {'product': single_product}
         print(product_info)
 
-        response = prestashop.add('products', product_info)
-
-        product_id = response['prestashop']['product']['id']
-        indexes_added.append(product_id)
+        # response = prestashop.add('products', product_info)
+        # product_id = response['prestashop']['product']['id']
+        # indexes_added.append(product_id)
 
 
         # sraka bo single product jest gdzies tam
-        image_url = single_product.find("imgs/main").get('url')
-        filename = f"{data['link_rewrite']['language']['value']}-kosmetyki-urodama.jpg"
+        image_url = single_product['image_url']
+        print(single_product)
 
-        response = requests.get(image_url)
-        response.raise_for_status()
-
-        image_path = "images/" + filename
-
-        with open(image_path, "wb") as file:
-            file.write(response.content)
-
-        with open(image_path, "rb") as file:
-            image_content = file.read()
-
-        prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
+        # filename = f"{data['link_rewrite']['language']['value']}-kosmetyki-urodama.jpg"
+        # response = requests.get(image_url)
+        # response.raise_for_status()
+        #
+        # image_path = "images/" + filename
+        #
+        # with open(image_path, "wb") as file:
+        #     file.write(response.content)
+        #
+        # with open(image_path, "rb") as file:
+        #     image_content = file.read()
+        #
+        # prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
 
     print(indexes_added)
     print('SUCCESS')
 
 
 products = select_products_xml(source='luminosa', print_info=1)
-process_products(products, max_products=10)
+products = process_products(products, max_products=5)
+print('PRINTING PRODUCTS BELOW:')
+print(products)
+add_with_photo(products)
 
 
 def add_product(file_name, brand=None, mode='print', price_ratio=1.87, max_products=3, edit_presta=0,
