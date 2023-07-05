@@ -6,6 +6,8 @@ import xml.etree.ElementTree as ET
 import openai
 import requests
 
+import ai_boosting
+
 api_url = os.getenv('urodama_link')
 api_key = os.getenv('urodama_pass')
 
@@ -56,10 +58,10 @@ def select_products_xml(source='luminosa', mode=None, data=None, print_info=None
             print(p.get('id'))
             print(p.find("attrs/a[@name='Kod_producenta']").text)
 
-    selected_ids = [int(p.get('id')) for p in selected_products]
-    print(selected_ids)
+        selected_ids = [int(p.get('id')) for p in selected_products]
+        print(selected_ids)
 
-    return selected_ids, selected_products
+    return selected_products
 
 
 # select_products_xml(source='luminosa', mode='brands', data=['Essente', 'Mesoestetic'], print_info=1)
@@ -67,9 +69,54 @@ def select_products_xml(source='luminosa', mode=None, data=None, print_info=None
 # select_products_xml(source='luminosa', mode='exclude', data=[716, 31, 711, 535, 723, 55, 536, 724, 741], print_info=1)
 # select_products_xml(source='luminosa', mode='include', data=[716, 31, 711, 535, 723, 55, 536, 724, 741], print_info=1)
 
-# ids, products = select_products_xml(source='luminosa', print_info=1)
+# products = select_products_xml(source='luminosa', print_info=1)
 # for element in products[:5]:
 #     print(ET.tostring(element, encoding='unicode'))
+
+
+def process_products(product_list, max_products=5):
+
+    default_data = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404", "condition": "new",
+                    "show_price": "1", "indexed": "1", "visibility": "both"}
+
+    with open('data/brands_dict.json', encoding='utf-8') as file:
+        manufacturer_dict = json.load(file)['brand_id']
+
+    price_ratio = 1.87
+
+    processed_products = []
+
+    for single_product in product_list[:max_products]:
+        data = default_data
+
+        data['reference'] = single_product.find("attrs/a[@name='Kod_producenta']").text
+        data['ean13'] = single_product.find("attrs/a[@name='EAN']").text
+        data['price'] = single_product.get('price')
+        data['wholesale_price'] = str(round(float(data['price']) / price_ratio, 2))
+        data['name'] = single_product.find('name').text
+
+        if single_product.find("attrs/a[@name='Producent']").text in list(manufacturer_dict.keys()):
+            data['id_manufacturer'] = manufacturer_dict[single_product.find("attrs/a[@name='Producent']").text]
+        else:
+            data.pop('id_manufacturer', None)
+
+        data['id_category_default'] = 2
+        data['link_rewrite'] = data['name'].lower().replace(' ', '-')
+
+        data['description'] = single_product.find('desc').text.split('div class')[0]
+        data['description_short'] = single_product.find('desc').text.split('</p><p>')[0]
+        data['meta_title'] = truncate_string(data['name'], 70)
+        data['meta_description'] = truncate_string(data['description'][3:].split('.')[0] + '.', 160)
+
+        # print(data)
+        processed_products.append(data)
+
+    return data
+
+
+# products = select_products_xml(source='luminosa', print_info=1)
+# process_products(products, max_products=10)
+
 
 
 def add_product(file_name, brand=None, mode='print', price_ratio=1.87, max_products=3, edit_presta=0,
