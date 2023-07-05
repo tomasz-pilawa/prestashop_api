@@ -319,3 +319,15 @@ def get_xml_obsolete(source='luminosa', from_web=0):
 
     # print(ET.tostring(selected_products[3], encoding='unicode', method='xml'))
 
+
+def create_csv_file(file_path):
+    headers = ['ID_u', 'ref', 'nazwa', 'active', 'brand', 'wprowadzony', 'Comments', 'Sales 2021', 'Sales 2022',
+               'COST NET', 'PRICE']
+
+    with open(file_path, mode='w', encoding='utf-8', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(headers)
+
+
+create_csv_file('data/logs/added_products_raw.csv')
+

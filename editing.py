@@ -129,40 +129,39 @@ def add_with_photo(product_list):
             single_product[x] = {'language': {'attrs': {'id': '2'}, 'value': single_product[x]}}
 
         product_info = {'product': single_product}
-        print(product_info)
 
-        # response = prestashop.add('products', product_info)
-        # product_id = response['prestashop']['product']['id']
-        # indexes_added.append(product_id)
-
-
-        # sraka bo single product jest gdzies tam
-        image_url = single_product['image_url']
         print(single_product)
 
-        # filename = f"{data['link_rewrite']['language']['value']}-kosmetyki-urodama.jpg"
-        # response = requests.get(image_url)
-        # response.raise_for_status()
-        #
-        # image_path = "images/" + filename
-        #
-        # with open(image_path, "wb") as file:
-        #     file.write(response.content)
-        #
-        # with open(image_path, "rb") as file:
-        #     image_content = file.read()
-        #
-        # prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
+        response = prestashop.add('products', product_info)
+        product_id = response['prestashop']['product']['id']
+        indexes_added.append(product_id)
 
+        image_url = single_product['image_url']
+        response = requests.get(image_url)
+        response.raise_for_status()
+
+        filename = f"{single_product['link_rewrite']['language']['value']}-kosmetyki-urodama.jpg"
+        image_path = "images/" + filename
+
+        with open(image_path, "wb") as file:
+            file.write(response.content)
+
+        with open(image_path, "rb") as file:
+            image_content = file.read()
+
+        prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
+
+    print('SUCCESS!!! Indexes added:')
     print(indexes_added)
-    print('SUCCESS')
+
+    return indexes_added
 
 
 products = select_products_xml(source='luminosa', print_info=1)
-products = process_products(products, max_products=5)
-print('PRINTING PRODUCTS BELOW:')
-print(products)
-add_with_photo(products)
+products = process_products(products, max_products=3)
+# add_with_photo(products)
+
+# prestashop.delete('products', [790, 791])
 
 
 def add_product(file_name, brand=None, mode='print', price_ratio=1.87, max_products=3, edit_presta=0,
@@ -320,5 +319,3 @@ def add_product(file_name, brand=None, mode='print', price_ratio=1.87, max_produ
                 prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
 
     print('\nFunction completed')
-
-# prestashop.delete('products', [790, 791])
