@@ -5,6 +5,7 @@ from prestapyt import PrestaShopWebServiceDict
 import xml.etree.ElementTree as ET
 import openai
 import requests
+from datetime import datetime
 
 import ai_boosting
 
@@ -87,7 +88,7 @@ def process_products(product_list, max_products=5):
     processed_products = []
 
     for single_product in product_list[:max_products]:
-        data = default_data
+        data = dict(default_data)
 
         data['reference'] = single_product.find("attrs/a[@name='Kod_producenta']").text
         data['ean13'] = single_product.find("attrs/a[@name='EAN']").text
@@ -129,6 +130,7 @@ def add_with_photo(product_list):
             single_product[x] = {'language': {'attrs': {'id': '2'}, 'value': single_product[x]}}
 
         product_info = {'product': single_product}
+        product_info['product'].pop('image_url')
 
         print(single_product)
 
@@ -157,9 +159,37 @@ def add_with_photo(product_list):
     return indexes_added
 
 
-products = select_products_xml(source='luminosa', print_info=1)
-products = process_products(products, max_products=3)
+def write_to_csv(file_path, product_dict):
+
+    row_data = {
+        'ID_u': '',
+        'ref': product_dict['reference'],
+        'nazwa': product_dict['name'],
+        'active': product_dict['state'],
+        'brand': '',
+        'wprowadzony': datetime.now().strftime("%d-%m-%Y %H:%M"),
+        'Comments': product_dict['ean13'],
+        'Sales 2021': 0,
+        'Sales 2022': 0,
+        'COST NET': product_dict['wholesale_price'],
+        'PRICE': product_dict['price']
+    }
+
+    with open(file_path, mode='a', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=row_data.keys())
+
+        writer.writerow(row_data)
+
+
+products = select_products_xml(source='luminosa', print_info=0)
+products_2 = process_products(products, max_products=3)
 # add_with_photo(products)
+
+# TESTING WRITING LOGS
+# print(products_2)
+for x in products_2:
+    print(x)
+    write_to_csv(file_path='data/logs/added_products_raw.csv', product_dict=x)
 
 # prestashop.delete('products', [790, 791])
 

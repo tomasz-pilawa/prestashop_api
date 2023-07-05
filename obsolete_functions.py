@@ -329,5 +329,5 @@ def create_csv_file(file_path):
         writer.writerow(headers)
 
 
-create_csv_file('data/logs/added_products_raw.csv')
+# create_csv_file('data/logs/added_products_raw.csv')
 
