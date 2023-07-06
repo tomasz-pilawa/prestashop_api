@@ -130,8 +130,9 @@ def add_with_photo(product_list):
         print(single_product)
 
         response = prestashop.add('products', product_info)
-        product_id = response['prestashop']['product']['id']
-        indexes_added.append(int(product_id))
+        product_id = int(response['prestashop']['product']['id'])
+        indexes_added.append(product_id)
+        single_product['product_id'] = product_id
 
         image_url = single_product['image_url']
         response = requests.get(image_url)
@@ -159,7 +160,7 @@ def add_with_photo(product_list):
 def write_to_csv(file_path, product_dict):
 
     row_data = {
-        'ID_u': '',
+        'ID_u': product_dict['product_id'],
         'ref': product_dict['reference'],
         'nazwa': product_dict['name']['language']['value'],
         'active': product_dict['state'],
@@ -184,12 +185,16 @@ def add_product_from_xml():
     add_with_photo(products)
 
 
-def fix_added_products_from_xml():
+def fix_added_products_api():
+    # fix_data_from_csv() ---> should pass the name forward
+    # write_descriptions() ---> should encapsulate prompts and inserting properly
+    # classify() ---> should encapsulate prompts and inserting properly
+    # update_dicts()
     pass
 
 
 # add_product_from_xml()
-# prestashop.delete('products', [779, 780, 781, 782, 783, 784, 785])
+# prestashop.delete('products', [786, 787])
 
 
 def add_product(file_name, brand=None, mode='print', price_ratio=1.87, max_products=3, edit_presta=0,
