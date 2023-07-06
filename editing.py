@@ -216,24 +216,28 @@ def fix_data_from_csv(file_path):
     return fixed_ids
 
 
-def add_product_from_xml():
-    products = select_products_xml(source='luminosa', print_info=0)
-    products = process_products(products, max_products=2)
+def add_product_from_xml(select_source=None, select_mode=None, select_ids=None, process_max_products=2):
+    products = select_products_xml(source=select_source, mode=select_mode, data=select_ids)
+    products = process_products(products, max_products=process_max_products)
     add_with_photo(products)
 
 
-def improve_products(file_path_fix=None, indexes_list=None, boost_ai=None):
-
+def improve_products(file_path_fix=None, indexes_list=None, classify_ai=None, descriptions_ai=None):
     # the function can either fix products from csv or fix from csv & boost description (new products) or only boost_ai
+
     if file_path_fix:
         fix_data_from_csv(file_path=file_path_fix)
     else:
+        # here needs to go a list of indices INT either from running select_products previously (own XML) or json_dict
         print(indexes_list)
 
-    if boost_ai:
+    if classify_ai:
+        pass
+        # classify() ---> should encapsulate prompts and inserting properly
+
+    if descriptions_ai:
         pass
         # write_descriptions() ---> should encapsulate prompts and inserting properly
-        # classify() ---> should encapsulate prompts and inserting properly
 
     # update_dicts()
 
@@ -241,9 +245,9 @@ def improve_products(file_path_fix=None, indexes_list=None, boost_ai=None):
 
 
 # improve_products(file_path_fix='data/logs/__dummy_testing_change.csv')
+# improve_products(
 
-
-# add_product_from_xml()
+# add_product_from_xml(select_source='luminosa', process_max_products=2)
 # prestashop.delete('products', [786, 787])
 
 
