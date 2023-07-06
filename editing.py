@@ -179,18 +179,67 @@ def write_to_csv(file_path, product_dict):
         writer.writerow(row_data)
 
 
+def fix_data_from_csv(file_path):
+
+    fixed_ids = []
+
+    with open(file_path, encoding='utf-8', newline='') as file:
+        reader = list(csv.DictReader(file))
+
+    for r in reader:
+        product = prestashop.get('products', r['ID_u'])
+
+        product['product']['reference'] = r['ref']
+        product['product']['name']['language']['value'] = r['nazwa']
+        product['product']['ean13'] = r['Comments']
+
+        product['product']['price'] = r['PRICE'].strip().replace(',', '.')
+        product['product']['wholesale_price'] = r['COST NET'].strip().replace(',', '.')
+
+        with open('data/brands_dict.json', encoding='utf-8') as file:
+            manufacturer_dict = json.load(file)['brand_id']
+
+        product['product']['id_manufacturer'] = manufacturer_dict[r['brand']]
+
+        product['product'].pop('manufacturer_name')
+        product['product'].pop('quantity')
+        if int(product['product']['position_in_category']['value']) < 1:
+            product['product']['position_in_category']['value'] = str(1)
+
+        fixed_ids.append(int(r['ID_u']))
+
+        print(product)
+        prestashop.edit('products', product)
+
+    print('FINISHED FIXING')
+
+    return fixed_ids
+
+
 def add_product_from_xml():
     products = select_products_xml(source='luminosa', print_info=0)
     products = process_products(products, max_products=2)
     add_with_photo(products)
 
 
-def fix_added_products_api():
-    # fix_data_from_csv() ---> should pass the name forward
-    # write_descriptions() ---> should encapsulate prompts and inserting properly
-    # classify() ---> should encapsulate prompts and inserting properly
+def improve_products(file_path_fix=None, indexes_list=None, boost_ai=None):
+
+    if file_path_fix:
+        fix_data_from_csv(file_path=file_path_fix)
+    else:
+        print(indexes_list)
+
+    if boost_ai:
+        pass
+        # write_descriptions() ---> should encapsulate prompts and inserting properly
+        # classify() ---> should encapsulate prompts and inserting properly
+
     # update_dicts()
+
     pass
+
+
+# improve_products(file_path_fix='data/logs/__dummy_testing_change.csv')
 
 
 # add_product_from_xml()
