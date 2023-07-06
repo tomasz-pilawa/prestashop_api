@@ -8,8 +8,8 @@ from prestapyt import PrestaShopWebServiceDict
 from unidecode import unidecode
 
 openai.api_key = os.getenv('openai_api')
-api_url = os.getenv('quelinda_link')
-api_key = os.getenv('quelinda_pass')
+api_url = os.getenv('urodama_link')
+api_key = os.getenv('urodama_pass')
 
 
 def classify_category_tester(file_name='luminosa_feed.xml', max_products=5, randomness=1):
@@ -69,3 +69,50 @@ def classify_category_tester(file_name='luminosa_feed.xml', max_products=5, rand
 
 
 # classify_category_tester(max_products=5)
+
+
+def classify_categories(product_ids_list):
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+
+    with open('data/categories_to_classify_0.json', encoding='utf-8') as file:
+        cats = json.load(file)
+    cats_all = [value for key, values in cats.items() if key not in ["cat_other", "cat_old"] for value in values]
+
+    for product_id in product_ids_list:
+        product = prestashop.get('products', product_id)
+
+        # it is used inside the prompt
+        product_name = product['product']['name']['language']['value']
+
+        with open('data/prompts/classify_product.txt', 'r', encoding='utf-8') as file:
+            prompt_template = file.read().strip()
+        prompt = prompt_template.format(product_name=product_name, cats=cats)
+
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=200, temperature=0.2)
+        generated_text = response.choices[0].text
+        # print(generated_text)
+
+        product_classification = []
+
+        for part in generated_text.split(","):
+            category_name = part.strip()
+            if category_name in cats_all:
+                product_classification.append(category_name)
+
+        # extract main category
+        product_main_cat = product_classification[-1]
+        print(f'Kategoria główna: {product_main_cat}')
+        print(product_classification)
+
+        print('EVERYTHING WORKS EXCEPT THAT NOW CATEGORIES DICT WOULD BE NEEDED TO PAIR THEM UP')
+
+        product['product'].pop('manufacturer_name')
+        product['product'].pop('quantity')
+        if int(product['product']['position_in_category']['value']) < 1:
+            product['product']['position_in_category']['value'] = str(1)
+
+        # print(product)
+
+
+
+classify_categories(product_ids_list=[771, 772])

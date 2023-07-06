@@ -223,8 +223,8 @@ def add_product_from_xml(select_source=None, select_mode=None, select_ids=None, 
 
 
 def improve_products(file_path_fix=None, indexes_list=None, classify_ai=None, descriptions_ai=None):
-    # the function can either fix products from csv or fix from csv & boost description (new products) or only boost_ai
 
+    # the function can either fix products from csv or fix from csv & boost description (new products) or only boost_ai
     if file_path_fix:
         fix_data_from_csv(file_path=file_path_fix)
     else:
@@ -244,8 +244,7 @@ def improve_products(file_path_fix=None, indexes_list=None, classify_ai=None, de
     pass
 
 
-# improve_products(file_path_fix='data/logs/__dummy_testing_change.csv')
-# improve_products(
+# improve_products(file_path_fix='data/logs/__dummy_testing_change.csv', classify_ai=1)
 
 # add_product_from_xml(select_source='luminosa', process_max_products=2)
 # prestashop.delete('products', [786, 787])
