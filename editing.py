@@ -224,6 +224,7 @@ def add_product_from_xml():
 
 def improve_products(file_path_fix=None, indexes_list=None, boost_ai=None):
 
+    # the function can either fix products from csv or fix from csv & boost description (new products) or only boost_ai
     if file_path_fix:
         fix_data_from_csv(file_path=file_path_fix)
     else:
