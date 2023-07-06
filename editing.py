@@ -65,14 +65,11 @@ def select_products_xml(source='luminosa', mode=None, data=None, print_info=None
     return selected_products
 
 
+# EXAMPLES OF USAGE OF THIS FUNCTION
 # select_products_xml(source='luminosa', mode='brands', data=['Essente', 'Mesoestetic'], print_info=1)
 # select_products_xml(source='luminosa', mode='brands', data=['Mesoestetic'], print_info=1)
 # select_products_xml(source='luminosa', mode='exclude', data=[716, 31, 711, 535, 723, 55, 536, 724, 741], print_info=1)
 # select_products_xml(source='luminosa', mode='include', data=[716, 31, 711, 535, 723, 55, 536, 724, 741], print_info=1)
-
-# products = select_products_xml(source='luminosa', print_info=1)
-# for element in products[:5]:
-#     print(ET.tostring(element, encoding='unicode'))
 
 
 def process_products(product_list, max_products=5):
@@ -117,26 +114,24 @@ def process_products(product_list, max_products=5):
     return processed_products
 
 
-# products = select_products_xml(source='luminosa', print_info=1)
-# process_products(products, max_products=10)
-
-
 def add_with_photo(product_list):
 
     indexes_added = []
 
     for single_product in product_list:
+
         for x in ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']:
             single_product[x] = {'language': {'attrs': {'id': '2'}, 'value': single_product[x]}}
 
-        product_info = {'product': single_product}
+        # this prevents mutability to occur (passing by reference as they are the same object in memory)
+        product_info = {'product': dict(single_product)}
         product_info['product'].pop('image_url')
 
         print(single_product)
 
         response = prestashop.add('products', product_info)
         product_id = response['prestashop']['product']['id']
-        indexes_added.append(product_id)
+        indexes_added.append(int(product_id))
 
         image_url = single_product['image_url']
         response = requests.get(image_url)
@@ -153,6 +148,8 @@ def add_with_photo(product_list):
 
         prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
 
+        write_to_csv(file_path='data/logs/added_products_raw.csv', product_dict=single_product)
+
     print('SUCCESS!!! Indexes added:')
     print(indexes_added)
 
@@ -164,7 +161,7 @@ def write_to_csv(file_path, product_dict):
     row_data = {
         'ID_u': '',
         'ref': product_dict['reference'],
-        'nazwa': product_dict['name'],
+        'nazwa': product_dict['name']['language']['value'],
         'active': product_dict['state'],
         'brand': '',
         'wprowadzony': datetime.now().strftime("%d-%m-%Y %H:%M"),
@@ -181,17 +178,18 @@ def write_to_csv(file_path, product_dict):
         writer.writerow(row_data)
 
 
-products = select_products_xml(source='luminosa', print_info=0)
-products_2 = process_products(products, max_products=3)
-# add_with_photo(products)
+def add_product_from_xml():
+    products = select_products_xml(source='luminosa', print_info=0)
+    products = process_products(products, max_products=2)
+    add_with_photo(products)
 
-# TESTING WRITING LOGS
-# print(products_2)
-for x in products_2:
-    print(x)
-    write_to_csv(file_path='data/logs/added_products_raw.csv', product_dict=x)
 
-# prestashop.delete('products', [790, 791])
+def fix_added_products_from_xml():
+    pass
+
+
+# add_product_from_xml()
+# prestashop.delete('products', [779, 780, 781, 782, 783, 784, 785])
 
 
 def add_product(file_name, brand=None, mode='print', price_ratio=1.87, max_products=3, edit_presta=0,
