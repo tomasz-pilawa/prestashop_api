@@ -5,13 +5,11 @@ import requests
 from prestapyt import PrestaShopWebServiceDict
 from unidecode import unidecode
 
-
-api_url = os.getenv('quelinda_link')
-api_key = os.getenv('quelinda_pass')
+api_url = os.getenv('urodama_link')
+api_key = os.getenv('urodama_pass')
 
 
 def update_products_json(max_products=10, brand_update=None):
-
     prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
     with open('data/all_products.json', encoding='utf-8') as file:
@@ -48,9 +46,10 @@ def update_products_json(max_products=10, brand_update=None):
     else:
         print(f'There were no more new products to add. Total number of products now is {len(product_list)}')
 
+    print('FINISHED UPDATING ALL PRODUCTS JSON')
+
 
 def update_brands_dict():
-
     with open('data/all_products.json', encoding='utf-8') as file:
         data = json.load(file)
 
@@ -83,9 +82,59 @@ def update_brands_dict():
     with open('data/brands_dict.json', mode='w', encoding='utf-8') as file:
         json.dump(brands_dict, file)
 
+    print('UPDATED BRANDS DICT')
+
+
+def update_cats_dict(update_cats_to_classify=0):
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+
+    with open('data/cats_dict.json', encoding='utf-8') as file:
+        full_dict = json.load(file)
+
+    # This is basic, workable functionality that ads simple cats_name_id into a cats_dict for classification purposes
+    all_cats_ids = prestashop.search('categories')
+    cats_list = [prestashop.get('categories', cat_id)['category'] for cat_id in all_cats_ids]
+    cats_dict = {cat['name']['language']['value']: cat['id'] for cat in cats_list}
+    # print(cats_dict)
+    full_dict['cats_name_id'] = cats_dict
+
+    # Updates categories to classify dict in a right format for classification prompts for chatgpt
+    if update_cats_to_classify:
+        mains = ['Pielęgnacja twarzy', 'Pielęgnacja ciała', 'Kosmetyki do włosów']
+        randoms = ['Zestawy kosmetyków', 'NA LATO']
+
+        face_all_id = [category['id'] for category in
+                       prestashop.get('categories', 12)['category']['associations']['categories']['category']]
+        face_all_list = [prestashop.get('categories', cat_id)['category']['name']['language']['value']
+                         for cat_id in face_all_id]
+        face_action = [cat for cat in face_all_list if cat.startswith('Kosmetyki')]
+        face_form = [cat for cat in face_all_list if not cat.startswith('Kosmetyki')]
+
+        body_all_id = [category['id'] for category in
+                       prestashop.get('categories', 14)['category']['associations']['categories']['category']]
+        body = [prestashop.get('categories', cat_id)['category']['name']['language']['value']
+                for cat_id in body_all_id]
+        hair_all_id = [category['id'] for category in
+                       prestashop.get('categories', 31)['category']['associations']['categories']['category']]
+        hair = [prestashop.get('categories', cat_id)['category']['name']['language']['value']
+                for cat_id in hair_all_id]
+
+        full_dict['cats_classify'] = {'cat_main': mains, 'cat_random': randoms, 'cat_face_form': face_form,
+                                      'cat_face_action': face_action, 'cat_body': body, 'cat_hair': hair}
+
+    with open('data/cats_dict.json', mode='w', encoding='utf-8') as file:
+        json.dump(full_dict, file, indent=4, ensure_ascii=False)
+
+    print('UPDATED CATS DICT')
+
+
+# update_cats_dict(update_cats_to_classify=0)
+
+
+# FUNCTIONS BELOW ARE SUPPOSED TO BE USED ONLY ONE WHILE SETTING UP THE ENVIRONMENT AFTER MIGRATION
+
 
 def create_category_dicts(csv_name='cats_pairing_init.csv', version='0', update_classification_dict=0):
-
     version = str(version)
     data = []
 
@@ -146,7 +195,6 @@ def create_category_dicts(csv_name='cats_pairing_init.csv', version='0', update_
 
 
 def set_categories_tree(changes_file=None):
-
     with open(f'data/{changes_file}', encoding='utf-8') as file:
         changes = json.load(file)
 
@@ -208,7 +256,6 @@ def set_categories_tree(changes_file=None):
 
 
 def reassign_categories_setter(initial_mode=1, cats_to_reassign=None, cats_substitutes=None):
-
     with open('data/all_products.json', encoding='utf-8') as file:
         data = json.load(file)
 
@@ -243,7 +290,6 @@ def reassign_categories_setter(initial_mode=1, cats_to_reassign=None, cats_subst
 
 
 def get_xml_from_web(source='luminosa'):
-
     with open(f'data/xml_urls.json') as file:
         url = json.load(file)[source]
     response = requests.get(url)
@@ -253,4 +299,3 @@ def get_xml_from_web(source='luminosa'):
         print("File saved successfully!")
     else:
         print("Failed to fetch the XML file!")
-

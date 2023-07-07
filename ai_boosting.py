@@ -105,6 +105,7 @@ def classify_categories(product_ids_list):
         print(product_classification)
 
         print('EVERYTHING WORKS EXCEPT THAT NOW CATEGORIES DICT WOULD BE NEEDED TO PAIR THEM UP')
+        print('REMEMBER TO ADD HOME CATEGORY AS WELL FOR EVERY PRODUCT')
 
         product['product'].pop('manufacturer_name')
         product['product'].pop('quantity')
