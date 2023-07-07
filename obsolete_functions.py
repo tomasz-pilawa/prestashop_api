@@ -7,14 +7,92 @@ import requests
 import xml.etree.ElementTree as ET
 import json
 
-api_url = os.getenv('quelinda_link')
-api_key = os.getenv('quelinda_pass')
+api_url = os.getenv('urodama_link')
+api_key = os.getenv('urodama_pass')
 
 prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
 openai.api_key = os.getenv('openai_api')
 
-name_product = 'Kolagen Naturalny Colway PLATINUM 200ml'
+
+def fix_prices(limit=2, file=None):
+
+    """
+    Function that takes xml of an old shop with correct prices and updates them on the new shop.
+    It was an ad-hoc emergency script that needed to update all the prices quickly as there were errors in migration.
+    Limit parameter can be used for testing
+    """
+
+    tree = ET.parse(f'data/temp/{file}')
+    root = tree.getroot()
+
+    all_products = root.findall('o')
+
+    for p in all_products[:limit]:
+        p_name = p.find('name').text
+        p_id = int(p.get('id'))
+        p_price = p.get('price')
+
+        product = prestashop.get('products', p_id)
+
+        product['product']['price'] = p_price
+
+        product['product'].pop('manufacturer_name')
+        product['product'].pop('quantity')
+
+        if int(product['product']['position_in_category']['value']) < 1:
+            product['product']['position_in_category']['value'] = str(1)
+
+        product['product']['price'] = p_price
+        print(product['product'])
+
+        prestashop.edit('products', product)
+
+
+# fix_prices(limit=800, file='new_prices_urodama_07_2023.xml')
+
+
+def fix_stock(file_old=None, file_new=None):
+
+    """
+    Similarly to fix_prices function, this one was created ad-hoc to quickly correct some mistakes in database migration
+    It takes to xml-files and compares the ids of the products on both of them.
+    Based on that, it disables products directly on the new shop API so the data is coherent
+    """
+
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+
+    tree_old = ET.parse(f'data/temp/{file_old}')
+    root_old = tree_old.getroot()
+    all_products_old = root_old.findall('o')
+    indexes_old = [int(p.get('id')) for p in all_products_old]
+
+    tree_new = ET.parse(f'data/temp/{file_new}')
+    root_new = tree_new.getroot()
+    all_products_new = root_new.findall('o')
+    indexes_new = [int(p.get('id')) for p in all_products_new]
+
+    indexes_to_disable = [i for i in indexes_new if i not in indexes_old]
+    products_to_disable = [p for p in all_products_new if int(p.get('id')) in indexes_to_disable]
+
+    for p in products_to_disable:
+        p_id = int(p.get('id'))
+
+        product = prestashop.get('products', p_id)
+
+        product['product']['active'] = 0
+        product['product'].pop('manufacturer_name')
+        product['product'].pop('quantity')
+
+        if int(product['product']['position_in_category']['value']) < 1:
+            product['product']['position_in_category']['value'] = str(1)
+
+        print(product['product'])
+
+        prestashop.edit('products', product)
+
+
+# fix_stock(file_old='new_prices_urodama_07_2023.xml', file_new='ceneo_urodama_after_update_too_many.xml')
 
 
 def test_response(data):
@@ -169,19 +247,6 @@ def add_product_from_csv(product):
     return data
 
 
-def get_categories_dict():
-    # very obsolete function, not used anywhere when moved
-
-    category_ids = prestashop.search('categories')
-    category_names = [[prestashop.get('categories', m)['category']['name']['language']['value'],
-                       prestashop.get('categories', m)['category']['id_parent']] for m in category_ids]
-
-    category_dict = dict(zip(category_ids, category_names))
-
-    with open('data/categories_dict.json', 'w') as file:
-        json.dump(category_dict, file)
-
-
 def get_init_sku_dict():
     # move all functionality to new brands_dict
 
@@ -232,20 +297,6 @@ def get_init_brand_dict():
         json.dump(result, file)
 
     return result
-
-
-def get_manufacturers_dict():
-    # move all functionality to new brands_dict
-
-    manufacturer_ids = prestashop.search('manufacturers')
-    manufacturer_names = [prestashop.get('manufacturers', m)['manufacturer']['name'] for m in manufacturer_ids]
-
-    manufacturer_dict = dict(zip(manufacturer_names, manufacturer_ids))
-
-    with open('data/manufacturers_dict.json', 'w') as file:
-        json.dump(manufacturer_dict, file)
-
-    return manufacturer_dict
 
 
 def update_brands_dict():
