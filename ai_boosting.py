@@ -22,7 +22,7 @@ def classify_category_tester(file_name='luminosa_feed.xml', max_products=5, rand
     else:
         selected_products = root.findall('o')[:max_products]
 
-    with open('data/categories_to_classify_0.json', encoding='utf-8') as file:
+    with open('data/temp/categories_to_classify_0.json', encoding='utf-8') as file:
         cats = json.load(file)
 
     cats_all = [value for key, values in cats.items() if key not in ["cat_other", "cat_old"] for value in values]
@@ -74,7 +74,7 @@ def classify_category_tester(file_name='luminosa_feed.xml', max_products=5, rand
 def classify_categories(product_ids_list):
     prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
-    with open('data/categories_to_classify_0.json', encoding='utf-8') as file:
+    with open('data/temp/categories_to_classify_0.json', encoding='utf-8') as file:
         cats = json.load(file)
     cats_all = [value for key, values in cats.items() if key not in ["cat_other", "cat_old"] for value in values]
 
@@ -116,4 +116,4 @@ def classify_categories(product_ids_list):
 
 
 
-classify_categories(product_ids_list=[771, 772])
+# classify_categories(product_ids_list=[771, 772])

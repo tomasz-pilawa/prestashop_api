@@ -26,6 +26,20 @@ def truncate_string(text, max_length=70):
 
 
 def select_products_xml(source='luminosa', mode=None, data=None, print_info=None):
+
+    """
+    EXAMPLES OF USAGE OF THIS FUNCTION
+    select_products_xml(source='luminosa', mode='brands', data=['Essente', 'Mesoestetic'], print_info=1)
+    select_products_xml(source='luminosa', mode='brands', data=['Mesoestetic'], print_info=1)
+    select_products_xml(source='luminosa', mode='exclude', data=[716, 31, 711, 535, 723, 55], print_info=1)
+    select_products_xml(source='luminosa', mode='include', data=[716, 31, 711, 535, 723, 55], print_info=1)
+    :param source:
+    :param mode:
+    :param data:
+    :param print_info:
+    :return:
+    """
+
     tree = ET.parse(f'data/{source}_feed.xml')
     root = tree.getroot()
 
@@ -63,13 +77,6 @@ def select_products_xml(source='luminosa', mode=None, data=None, print_info=None
         print(selected_ids)
 
     return selected_products
-
-
-# EXAMPLES OF USAGE OF THIS FUNCTION
-# select_products_xml(source='luminosa', mode='brands', data=['Essente', 'Mesoestetic'], print_info=1)
-# select_products_xml(source='luminosa', mode='brands', data=['Mesoestetic'], print_info=1)
-# select_products_xml(source='luminosa', mode='exclude', data=[716, 31, 711, 535, 723, 55, 536, 724, 741], print_info=1)
-# select_products_xml(source='luminosa', mode='include', data=[716, 31, 711, 535, 723, 55, 536, 724, 741], print_info=1)
 
 
 def process_products(product_list, max_products=5):
@@ -225,10 +232,12 @@ def add_product_from_xml(select_source=None, select_mode=None, select_ids=None, 
 def improve_products(file_path_fix=None, indexes_list=None, classify_ai=None, descriptions_ai=None):
 
     # the function can either fix products from csv or fix from csv & boost description (new products) or only boost_ai
+    # NEW LOGIC SO THAT EVERY CHANGE IS FROM CSV
     if file_path_fix:
         fix_data_from_csv(file_path=file_path_fix)
     else:
         # here needs to go a list of indices INT either from running select_products previously (own XML) or json_dict
+        print('CAN LOAD INDEXES FROM BRANDS DICTS FOR BRAND MODE - CHANGE INDEXES_LIST TO BRAND NAME + LIMITS?/IDS')
         print(indexes_list)
 
     if classify_ai:

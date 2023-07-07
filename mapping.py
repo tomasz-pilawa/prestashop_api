@@ -80,7 +80,7 @@ def update_brands_dict():
                    'brand_index': indexes_list, 'brand_id': brand_ids}
 
     with open('data/brands_dict.json', mode='w', encoding='utf-8') as file:
-        json.dump(brands_dict, file)
+        json.dump(brands_dict, file, indent=4, ensure_ascii=False)
 
     print('UPDATED BRANDS DICT')
 
