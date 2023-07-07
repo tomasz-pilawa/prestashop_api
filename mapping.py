@@ -134,18 +134,31 @@ def update_cats_dict(update_cats_to_classify=0):
 # FUNCTIONS BELOW ARE SUPPOSED TO BE USED ONLY ONE WHILE SETTING UP THE ENVIRONMENT AFTER MIGRATION
 
 
-def create_category_dicts(csv_name='cats_pairing_init.csv', version='0', update_classification_dict=0):
+def create_category_dicts(csv_name='cats_pairing_init.csv', version='0', update_classification_dict=1):
+    """
+    This function is meant to be used only once after migration from one version to another.
+
+    It takes the csv file containing old categories list with the changes to be made.
+    The changes may be: changing the name, changing parent category, changing the name and the parent.
+    Some categories may be completely deleted, some may be added from scratch and some may remain unchanged.
+
+    The function does two things:
+    1. It converts a csv into workable python dict and saves it into json (this is needed only once in a lifetime)
+    2. It throws dict of categories divided into groups like cat_main, cat_face_action, cat_hair, etc. that are needed
+    for classification prompts (there is a newer version of that function that works faster and is more universal)
+    """
+
     version = str(version)
     data = []
 
-    with open(f'data/{csv_name}', 'r', encoding='utf-8') as file:
+    with open(f'data/temp/{csv_name}', 'r', encoding='utf-8') as file:
         reader = csv.DictReader(file)
         for row in reader:
             data.append(row)
 
     json_name = f"{csv_name.split('_')[0]}_{csv_name.split('_')[1]}_v_{version}.json"
 
-    with open(f'data/{json_name}', 'w', encoding='utf-8') as file:
+    with open(f'data/temp/{json_name}', 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
 
     print('JSON file saved successfully')
@@ -188,14 +201,29 @@ def create_category_dicts(csv_name='cats_pairing_init.csv', version='0', update_
 
         cats_classify_filename = f'categories_to_classify_{version}.json'
 
-        with open(f'data/{cats_classify_filename}', 'w', encoding='utf-8') as json_file:
+        with open(f'data/temp/{cats_classify_filename}', 'w', encoding='utf-8') as json_file:
             json.dump(categories, json_file, ensure_ascii=False)
 
         print('Categories to Clasify dumped into JSON too')
 
 
 def set_categories_tree(changes_file=None):
-    with open(f'data/{changes_file}', encoding='utf-8') as file:
+
+    """
+    This function is meant to be used only once after migration from one version to another.
+
+    It takes the json file containing old categories list with the changes to be made.
+    The changes may be: changing the name, changing parent category, changing the name and the parent.
+    Some categories may be completely deleted, some may be added from scratch and some may remain unchanged.
+
+    It does all the changes directly via Prestashop API. It handles name and/or parent changes as well as
+    adds completely new categories and removes redundant ones.
+    It uses the function reassign_categories_setter so that the products which main category is being removed are
+    being moved up the category tree before, so they are not left without main category.
+
+    """
+
+    with open(f'data/temp/{changes_file}', encoding='utf-8') as file:
         changes = json.load(file)
 
     prestashop = PrestaShopWebServiceDict(api_url, api_key)
@@ -256,6 +284,17 @@ def set_categories_tree(changes_file=None):
 
 
 def reassign_categories_setter(initial_mode=1, cats_to_reassign=None, cats_substitutes=None):
+
+    """
+    The function was created to encapsulate one separate functionality of set_categories_tree functionality,
+    however it can be used in future to easily reassign all products from one category to a different category.
+    It gets a list with categories from which all products will be moved and a list of categories to which all the
+    products from the 1st list will be assigned.
+    Obviously the order is important as products from n-th category of the 1-st list will be assigned exactly to
+    the n-th element of the 2-nd list. Both lists have to have the same number of elements.
+    The initial_mode provides the lists for the first and only use of set_categories_tree function.
+    """
+
     with open('data/all_products.json', encoding='utf-8') as file:
         data = json.load(file)
 
@@ -290,6 +329,13 @@ def reassign_categories_setter(initial_mode=1, cats_to_reassign=None, cats_subst
 
 
 def get_xml_from_web(source='luminosa'):
+
+    """
+    It gets up-to-date product feed from the xml file posted on the web and saves it to local data directory.
+    Source argument indicates from which shop the xml should be up updated.
+    XML urls are taken from the separate dictionaries.
+    """
+
     with open(f'data/xml_urls.json') as file:
         url = json.load(file)[source]
     response = requests.get(url)
