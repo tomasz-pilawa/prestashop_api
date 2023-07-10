@@ -83,5 +83,5 @@ def classify_categories(product_ids_list):
     print('FINISHED PRODUCTS CLASSIFICATION')
 
 
-# classify_categories(product_ids_list=[771, 772])
-# classify_categories(product_ids_list=[771])
+def write_description(product_ids_list):
+    pass
