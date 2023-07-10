@@ -229,20 +229,12 @@ def add_product_from_xml(select_source=None, select_mode=None, select_ids=None, 
     add_with_photo(products)
 
 
-def improve_products(file_path_fix=None, indexes_list=None, classify_ai=None, descriptions_ai=None, features_ai=None):
+def improve_products(file_path_fix=None, classify_ai=None, descriptions_ai=None, features_ai=None):
 
-    # the function can either fix products from csv or fix from csv & boost description (new products) or only boost_ai
-    # NEW LOGIC SO THAT EVERY CHANGE IS FROM CSV
-    if file_path_fix:
-        fix_data_from_csv(file_path=file_path_fix)
-    else:
-        # here needs to go a list of indices INT either from running select_products previously (own XML) or json_dict
-        print('CAN LOAD INDEXES FROM BRANDS DICTS FOR BRAND MODE - CHANGE INDEXES_LIST TO BRAND NAME + LIMITS?/IDS')
-        print(indexes_list)
+    products_ids = fix_data_from_csv(file_path=file_path_fix)
 
     if classify_ai:
-        pass
-        # classify() ---> should encapsulate prompts and inserting properly
+        ai_boosting.classify_categories(products_ids)
 
     if descriptions_ai:
         pass
