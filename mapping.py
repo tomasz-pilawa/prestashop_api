@@ -42,7 +42,7 @@ def update_products_json(max_products=10, brand_update=None):
         print(f'Added {len(indexes_selected)} products. Total products in the data file now: {len(product_list)}')
 
         with open('data/all_products.json', 'w', encoding='utf-8') as file:
-            json.dump(product_list, file)
+            json.dump(product_list, file, indent=4, ensure_ascii=False)
     else:
         print(f'There were no more new products to add. Total number of products now is {len(product_list)}')
 

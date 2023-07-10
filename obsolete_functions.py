@@ -247,6 +247,19 @@ def add_product_from_csv(product):
     return data
 
 
+def pair_sku_id():
+    """
+    It's designed to be used once to pair SKU and ID in the new show after migration.
+    """
+    with open('data/all_products.json', encoding='utf-8') as file:
+        data = json.load(file)
+    result = {product['reference']:product['id'] for product in data}
+    print(result)
+
+
+# pair_sku_id()
+
+
 def get_init_sku_dict():
     # move all functionality to new brands_dict
 

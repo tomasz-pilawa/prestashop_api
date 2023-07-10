@@ -218,7 +218,7 @@ def fix_data_from_csv(file_path):
         print(product)
         prestashop.edit('products', product)
 
-    print('FINISHED FIXING')
+    print('FINISHED FIXING FROM CSV')
 
     return fixed_ids
 
@@ -229,7 +229,7 @@ def add_product_from_xml(select_source=None, select_mode=None, select_ids=None, 
     add_with_photo(products)
 
 
-def improve_products(file_path_fix=None, indexes_list=None, classify_ai=None, descriptions_ai=None):
+def improve_products(file_path_fix=None, indexes_list=None, classify_ai=None, descriptions_ai=None, features_ai=None):
 
     # the function can either fix products from csv or fix from csv & boost description (new products) or only boost_ai
     # NEW LOGIC SO THAT EVERY CHANGE IS FROM CSV
@@ -247,6 +247,10 @@ def improve_products(file_path_fix=None, indexes_list=None, classify_ai=None, de
     if descriptions_ai:
         pass
         # write_descriptions() ---> should encapsulate prompts and inserting properly
+
+    if features_ai:
+        pass
+        # configure_features() ---> should encapsulate prompts and inserting properly
 
     # update_dicts()
 
