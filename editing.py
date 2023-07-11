@@ -18,6 +18,9 @@ prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
 
 def truncate_string(text, max_length=70):
+    """
+    Truncates the string to 70 characters max. Necessary due to limits on Prestashop Meta Title variable.
+    """
     if len(text) > max_length:
         truncated_text = text[:max_length - 3] + "..."
     else:
@@ -26,18 +29,12 @@ def truncate_string(text, max_length=70):
 
 
 def select_products_xml(source='luminosa', mode=None, data=None, print_info=None):
-
     """
     EXAMPLES OF USAGE OF THIS FUNCTION
     select_products_xml(source='luminosa', mode='brands', data=['Essente', 'Mesoestetic'], print_info=1)
     select_products_xml(source='luminosa', mode='brands', data=['Mesoestetic'], print_info=1)
     select_products_xml(source='luminosa', mode='exclude', data=[716, 31, 711, 535, 723, 55], print_info=1)
     select_products_xml(source='luminosa', mode='include', data=[716, 31, 711, 535, 723, 55], print_info=1)
-    :param source:
-    :param mode:
-    :param data:
-    :param print_info:
-    :return:
     """
 
     tree = ET.parse(f'data/{source}_feed.xml')
@@ -80,6 +77,16 @@ def select_products_xml(source='luminosa', mode=None, data=None, print_info=None
 
 
 def process_products(product_list, max_products=5):
+    """
+    The function takes list of products in XML tree format and converts it to simpler python list of dictionaries
+    with only necessary attributes that are needed for adding a new product via Prestashop API.
+    :param product_list: XML tree
+            List of products in XML tree format that would be processed and converted to simpler list of dictionaries
+    :param max_products: integer
+            Limits the number of products to be processed. Used mostly during development
+    :return: processed_products: list of dictionaries
+            All necessary data for the products to be added to Prestashop. Should be passed to add_with_photo function
+    """
 
     default_data = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404", "condition": "new",
                     "show_price": "1", "indexed": "1", "visibility": "both"}
