@@ -6,6 +6,8 @@ import openai
 import requests
 import xml.etree.ElementTree as ET
 import json
+import random
+import re
 
 api_url = os.getenv('urodama_link')
 api_key = os.getenv('urodama_pass')
@@ -332,6 +334,22 @@ def classify_category_tester(file_name='luminosa_feed.xml', max_products=5, rand
 # classify_category_tester(max_products=5)
 
 
+def token_counter():
+    idxs = random.sample(range(30, 750), 20)
+    max_tokens = 0
+
+    for idx in idxs:
+        print(idx)
+        product = prestashop.get('products', idx)
+        print(product['product']['name']['language']['value'])
+        token_count = len(re.findall(r'\S+', product['product']['description']['language']['value']))
+        print(token_count)
+        if token_count > max_tokens:
+            max_tokens = int(token_count)
+
+    print(f'MAXIMUM TOKEN COUNT IN THIS RANDOM SET IS {max_tokens}')
+
+
 def test_response(data):
     prompt = f"Make 400 characters short product description for ecommerce for {data}" \
              f"It should be in Polish, in 5 bullet points saying what the product is, for which skin, " \
@@ -346,6 +364,38 @@ def test_response(data):
 
 
 # print(test_response('Kolagen Naturalny Colway PLATINUM 200ml'))
+
+def write_descriptions(product_ids_list):
+    """
+    unfinished function which created descriptions separately - now combined to safe tokens as not name but description
+    is passed inside the prompt for accuracy
+    """
+    for product_id in product_ids_list:
+        product = prestashop.get('products', product_id)
+        # product_name = product['product']['name']['language']['value']
+        product_name = product['product']['name']['language']['value']
+        print(product)
+        print(product_name)
+
+        # write and edit short description
+        with open('data/prompts/write_short_description.txt', 'r', encoding='utf-8') as file:
+            prompt_template = file.read().strip()
+        prompt_short = prompt_template.format(product_name=product_name)
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt_short,
+                                            max_tokens=500, temperature=0.2)
+        print(response.choices[0].text.strip())
+
+        product['product']['description_short']['language']['value'] = response.choices[0].text
+
+        # write and edit long description
+        with open('data/prompts/write_description.txt', 'r', encoding='utf-8') as file:
+            prompt_template = file.read().strip()
+        prompt_long = prompt_template.format(product_name=product_name)
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt_long,
+                                            max_tokens=2000, temperature=0.2)
+        print(response.choices[0].text.strip())
+
+        product['product']['description']['language']['value'] = response.choices[0].text
 
 
 def dump_cats_to_file():

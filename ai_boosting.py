@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 import random
 import os
 import json
+import re
 import csv
 import openai
 from prestapyt import PrestaShopWebServiceDict
@@ -13,8 +14,17 @@ api_key = os.getenv('urodama_pass')
 
 
 def classify_categories(product_ids_list):
+    """
+    The function takes list of product IDS and classifies them to predefined categories using chat-gpt API.
+    It pairs the names of the categories with their IDs in the shop and directly reassigns them via Prestashop API.
+    It adds associations both in categories and products tables, which is necessary.
+    It assigns main category and all categories.
+    :param product_ids_list: list of integers (must be valid Prestashop product ids)
+    :return: prints success message (it operates directly on products and doesn't return anything
+    """
     prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
+    print('BASED ON WRITE DESCRIPTIONS EXPERIENCES, MAYBE ITS BETTER TO CLASSIFY BASED ON SHORT DESC?')
     with open('data/temp/categories_to_classify_0.json', encoding='utf-8') as file:
         cats = json.load(file)
     cats_all = [value for key, values in cats.items() if key not in ["cat_other", "cat_old"] for value in values]
@@ -83,5 +93,61 @@ def classify_categories(product_ids_list):
     print('FINISHED PRODUCTS CLASSIFICATION')
 
 
-def write_description(product_ids_list):
-    pass
+def write_descriptions(product_ids_list):
+    """
+    The function takes list of product IDS & improves short description, description, meta title & meta description.
+    It uses chat-gpt API to accomplish that and directly edits given products via Prestashop API.
+    :param product_ids_list: list of integers (must be valid Prestashop product ids)
+    :return: prints success message (it operates directly on products and doesn't return anything
+
+    """
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+
+    for product_id in product_ids_list:
+        product = prestashop.get('products', product_id)
+        product_name = product['product']['name']['language']['value']
+        product_desc = product['product']['description']['language']['value']
+        # print(product)
+        print(product_name)
+
+        with open('data/prompts/write_descriptions.txt', 'r', encoding='utf-8') as file:
+            prompt_template = file.read().strip()
+        prompt = prompt_template.format(product_name=product_name, product_desc=product_desc)
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=2000, temperature=0.2)
+        print(f"TOKENS USED: {response['usage']['total_tokens']}")
+        # print(response.choices[0].text.strip())
+
+        description_short = response.choices[0].text.strip().split('*****')[0].replace('SHORT DESCRIPTION', '').strip()
+        description = response.choices[0].text.strip().split('*****')[1].replace('LONG DESCRIPTION', '').strip()
+        # print(description_short)
+        # print(description)
+
+        product['product']['description_short']['language']['value'] = description_short
+        product['product']['description']['language']['value'] = description
+
+        with open('data/prompts/write_meta.txt', 'r', encoding='utf-8') as file:
+            prompt_template = file.read().strip()
+        prompt = prompt_template.format(product_name=product_name, product_desc=description_short)
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1000, temperature=0.1)
+        print(f"TOKENS USED: {response['usage']['total_tokens']}")
+        print(response.choices[0].text.strip())
+
+        meta_title = response.choices[0].text.strip().split('*****')[0].replace('META TITLE', '').strip()
+        meta_description = response.choices[0].text.strip().split('*****')[1].replace('META DESCRIPTION', '').strip()
+        # print(meta_title)
+        # print(meta_description)
+
+        product['product']['meta_description']['language']['value'] = meta_description
+        product['product']['meta_title']['language']['value'] = meta_title
+
+        product['product'].pop('manufacturer_name')
+        product['product'].pop('quantity')
+        if int(product['product']['position_in_category']['value']) < 1:
+            product['product']['position_in_category']['value'] = str(1)
+
+        prestashop.edit('products', product)
+
+    print('FINISHED WRITING PRODUCT DESCRIPTIONS')
+
+
+# write_descriptions([346])
