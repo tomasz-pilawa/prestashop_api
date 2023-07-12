@@ -44,21 +44,26 @@ def select_products_xml(source='luminosa', mode=None, data=None, print_info=None
     selected_products = root.findall('o')
 
     with open('data/brands_dict.json', encoding='utf-8') as file:
-        sku_list = json.load(file)['skus']
-        ean_list = json.load(file)['eans']
+        lists = json.load(file)
+    sku_list = lists['skus']
+    ean_list = lists['eans']
 
     for product in selected_products:
-        product_sku = product.find("attrs/a[@name='Kod_producenta']").text
-        if product_sku in sku_list:
-            selected_products.remove(product)
+        if product.find("attrs/a[@name='Kod_producenta']"):
+            product_sku = product.find("attrs/a[@name='Kod_producenta']").text
+            if product_sku in sku_list:
+                selected_products.remove(product)
     for product in selected_products:
-        product_ean = product.find("attrs/a[@name='EAN']").text
-        if product_ean in ean_list:
-            selected_products.remove(product)
+        if product.find("attrs/a[@name='EAN']"):
+            product_ean = product.find("attrs/a[@name='EAN']").text
+            if product_ean in ean_list:
+                selected_products.remove(product)
+    print(len(selected_products))
+    print('AFTER CONDITIONS')
 
     if mode == 'brands':
         products_temp = [product for product in selected_products
-                         if product.find("attrs/a[@name='Producent']").text in data]
+                         if product.find("attrs/a[@name='Producent']").text.strip() in data]
         selected_products = products_temp
 
     elif mode == 'exclude':
@@ -71,15 +76,26 @@ def select_products_xml(source='luminosa', mode=None, data=None, print_info=None
 
     if print_info:
         print(f'\nThere are potentially {len(selected_products)} products to add from the XML file\n')
+        print('PRODUCT NAME, SHOP ID, SKU, EAN, PRICE, LINK')
         for p in selected_products:
-            print(p.find('name').text)
-            print(p.get('id'))
-            print(p.find("attrs/a[@name='Kod_producenta']").text)
+            if p.find("attrs/a[@name='Kod_producenta']"):
+                sku = p.find("attrs/a[@name='Kod_producenta']").text
+            else:
+                sku = ''
+            if p.find("attrs/a[@name='EAN']"):
+                ean = p.find("attrs/a[@name='EAN']").text
+            else:
+                ean = ''
+            print(f"{p.find('name').text},{p.get('id')},{sku},{ean},{p.get('price')},{p.get('url')}")
 
         selected_ids = [int(p.get('id')) for p in selected_products]
         print(selected_ids)
 
     return selected_products
+
+
+# select_products_xml(source='luminosa', mode='brands', data=['Germaine de Capuccini', 'Mesoestetic'], print_info=1)
+# select_products_xml(source='ampari', mode='brands', data=['Helen Seward'], print_info=1)
 
 
 def process_products(product_list, max_products=5):

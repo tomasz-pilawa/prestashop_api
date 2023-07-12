@@ -4,6 +4,7 @@ import csv
 import requests
 from prestapyt import PrestaShopWebServiceDict
 from unidecode import unidecode
+import xml.etree.ElementTree as ET
 
 api_url = os.getenv('urodama_link')
 api_key = os.getenv('urodama_pass')
@@ -358,8 +359,15 @@ def get_xml_from_web(source='luminosa'):
         url = json.load(file)[source]
     response = requests.get(url)
     if response.status_code == 200:
+        xml_content = response.content
+        if source == 'ampari':
+            root = ET.fromstring(xml_content)
+            attrs_elements = root.findall('.//attrs/a[@name="Kod producenta"]')
+            for elem in attrs_elements:
+                elem.attrib['name'] = 'Kod_producenta'
+            xml_content = ET.tostring(root)
         with open(f'data/{source}_feed.xml', 'wb') as file:
-            file.write(response.content)
+            file.write(xml_content)
         print("File saved successfully!")
     else:
         print("Failed to fetch the XML file!")
