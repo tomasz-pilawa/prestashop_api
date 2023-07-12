@@ -79,6 +79,7 @@ def update_brands_dict():
     brands = list(
         set([product['manufacturer_name']['value'] for product in data if product['manufacturer_name']['value']]))
     skus = list(set([product['reference'] for product in data]))
+    eans = list(set([product['ean13'] for product in data if len(product['ean13']) > 5]))
     indexes = list(set([product['id'] for product in data]))
 
     skus_list = {}
@@ -99,8 +100,8 @@ def update_brands_dict():
             brand_ids[brand] = product['id_manufacturer']
             seen_brands.add(brand)
 
-    brands_dict = {'brands': brands, 'skus': skus, 'indexes': indexes, 'brand_sku': skus_list,
-                   'brand_index': indexes_list, 'brand_id': brand_ids}
+    brands_dict = {'brand_id': brand_ids, 'brands': brands, 'skus': skus, 'eans': eans, 'indexes': indexes,
+                   'brand_sku': skus_list, 'brand_index': indexes_list}
 
     with open('data/brands_dict.json', mode='w', encoding='utf-8') as file:
         json.dump(brands_dict, file, indent=4, ensure_ascii=False)
