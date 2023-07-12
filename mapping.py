@@ -360,14 +360,31 @@ def get_xml_from_web(source='luminosa'):
     response = requests.get(url)
     if response.status_code == 200:
         xml_content = response.content
+        root = ET.fromstring(xml_content)
+
         if source == 'ampari':
-            root = ET.fromstring(xml_content)
             attrs_elements = root.findall('.//attrs/a[@name="Kod producenta"]')
             for elem in attrs_elements:
                 elem.attrib['name'] = 'Kod_producenta'
+
+            for product in root.findall('o'):
+                product_sku_element = product.find("attrs/a[@name='Kod_producenta']")
+                if product_sku_element is None:
+                    missing_sku_element = ET.SubElement(product.find("attrs"), "a", attrib={"name": "Kod_producenta"})
+                    missing_sku_element.text = "MISSING"
+                product_ean_element = product.find("attrs/a[@name='EAN']")
+                if product_ean_element is None:
+                    missing_ean_element = ET.SubElement(product.find("attrs"), "a", attrib={"name": "EAN"})
+                    missing_ean_element.text = "MISSING"
+
             xml_content = ET.tostring(root)
+
         with open(f'data/{source}_feed.xml', 'wb') as file:
             file.write(xml_content)
         print("File saved successfully!")
+
     else:
         print("Failed to fetch the XML file!")
+
+
+# get_xml_from_web(source='ampari')

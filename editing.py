@@ -43,21 +43,43 @@ def select_products_xml(source='luminosa', mode=None, data=None, print_info=None
 
     selected_products = root.findall('o')
 
+    # for p in selected_products[:10]:
+    #     print(p.find('name').text.strip())
+    #     kod = p.find("attrs/a[@name='Kod_producenta']").text.strip()
+    #     brandowo = p.find("attrs/a[@name='Producent']").text.strip()
+    #     print(brandowo)
+    #     print(kod)
+    #     print(brandowo == data[0])
+
+    for product in selected_products:
+
     with open('data/brands_dict.json', encoding='utf-8') as file:
         lists = json.load(file)
     sku_list = lists['skus']
     ean_list = lists['eans']
 
-    for product in selected_products:
-        if product.find("attrs/a[@name='Kod_producenta']"):
-            product_sku = product.find("attrs/a[@name='Kod_producenta']").text
-            if product_sku in sku_list:
-                selected_products.remove(product)
-    for product in selected_products:
-        if product.find("attrs/a[@name='EAN']"):
-            product_ean = product.find("attrs/a[@name='EAN']").text
-            if product_ean in ean_list:
-                selected_products.remove(product)
+    # for product in selected_products:
+    #     if product.find("attrs/a[@name='Kod_producenta']"):
+    #         product_sku = product.find("attrs/a[@name='Kod_producenta']").text.strip()
+    #         print(product_sku)
+    #         if product_sku in sku_list:
+    #             selected_products.remove(product)
+    # for product in selected_products:
+    #     if product.find("attrs/a[@name='EAN']"):
+    #         product_ean = product.find("attrs/a[@name='EAN']").text.strip()
+    #         if product_ean in ean_list:
+    #             selected_products.remove(product)
+
+    # # WORKABLE
+    # for product in selected_products:
+    #     product_sku_element = product.find("attrs/a[@name='Kod_producenta']")
+    #     if product_sku_element is not None:
+    #         product_sku = product_sku_element.text.strip()
+    #     else:
+    #         product_sku = 'MISSING'
+    #     if product_sku in sku_list:
+    #         selected_products.remove(product)
+
     print(len(selected_products))
     print('AFTER CONDITIONS')
 
@@ -79,11 +101,11 @@ def select_products_xml(source='luminosa', mode=None, data=None, print_info=None
         print('PRODUCT NAME, SHOP ID, SKU, EAN, PRICE, LINK')
         for p in selected_products:
             if p.find("attrs/a[@name='Kod_producenta']"):
-                sku = p.find("attrs/a[@name='Kod_producenta']").text
+                sku = p.find("attrs/a[@name='Kod_producenta']").text.strip()
             else:
                 sku = ''
             if p.find("attrs/a[@name='EAN']"):
-                ean = p.find("attrs/a[@name='EAN']").text
+                ean = p.find("attrs/a[@name='EAN']").text.strip()
             else:
                 ean = ''
             print(f"{p.find('name').text},{p.get('id')},{sku},{ean},{p.get('price')},{p.get('url')}")
@@ -95,7 +117,7 @@ def select_products_xml(source='luminosa', mode=None, data=None, print_info=None
 
 
 # select_products_xml(source='luminosa', mode='brands', data=['Germaine de Capuccini', 'Mesoestetic'], print_info=1)
-# select_products_xml(source='ampari', mode='brands', data=['Helen Seward'], print_info=1)
+select_products_xml(source='ampari', mode='brands', data=['Helen Seward'], print_info=1)
 
 
 def process_products(product_list, max_products=5):
