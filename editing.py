@@ -45,10 +45,15 @@ def select_products_xml(source='luminosa', mode=None, data=None, print_info=None
 
     with open('data/brands_dict.json', encoding='utf-8') as file:
         sku_list = json.load(file)['skus']
+        ean_list = json.load(file)['eans']
 
     for product in selected_products:
         product_sku = product.find("attrs/a[@name='Kod_producenta']").text
         if product_sku in sku_list:
+            selected_products.remove(product)
+    for product in selected_products:
+        product_ean = product.find("attrs/a[@name='EAN']").text
+        if product_ean in ean_list:
             selected_products.remove(product)
 
     if mode == 'brands':
