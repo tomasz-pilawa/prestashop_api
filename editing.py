@@ -8,6 +8,7 @@ import requests
 from datetime import datetime
 
 import ai_boosting
+import mapping
 
 api_url = os.getenv('urodama_link')
 api_key = os.getenv('urodama_pass')
@@ -277,7 +278,9 @@ def improve_products(file_path_fix=None, classify_ai=0, descriptions_ai=0, featu
             writer = csv.DictWriter(file, fieldnames=product.keys())
             writer.writerow(product)
 
-    # update_dicts()
+    mapping.update_products_dict(mode='ids', data_ids_list=product_ids)
+    mapping.update_brands_dict()
+    mapping.update_cats_dict(update_cats_to_classify=0)
 
 
 # improve_products(file_path_fix='data/logs/__dummy_testing_change.csv', classify_ai=1)

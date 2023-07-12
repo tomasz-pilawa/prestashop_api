@@ -9,44 +9,67 @@ api_url = os.getenv('urodama_link')
 api_key = os.getenv('urodama_pass')
 
 
-def update_products_json(max_products=10, brand_update=None):
+def update_products_dict(mode='all', max_products=1000, data_brands_list=None, data_ids_list=None):
+    """
+    The function updates json file with all products' data with the up-to-date information from the site.
+    It selects ids to be updated based on mode and provided data. The default mode updates all products.
+    :param data_ids_list: list
+            a list of product ids to be updated - works only with mode 'ids'
+    :param data_brands_list: list
+            a list of product brands to be updated - works only with mode 'brands'
+    :param mode: str
+            'new'   - updates the file only with new products that are on the website, but not in json file
+            'all'   - resets the whole json file and updates all products on the website (DEFAULT)
+            'brands'- updates the file only with products of a certain brand
+            'ids'   - updates the file only with the specified products' data (serves improve_products function)
+    :param max_products:
+            serves for testing and limiting the max products edited per use
+    :return: confirmation message
+
+    examples of use:
+    update_products_dict(mode='new')
+    update_products_dict(mode='all')
+    update_products_dict(mode='ids', data_ids_list=[23, 231, 53, 132])
+    update_products_dict(mode='brands', data_brands_list=['Prokos', 'Retix C'])
+    """
+
     prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
     with open('data/all_products.json', encoding='utf-8') as file:
         product_list = json.load(file)
 
     indexes_site = prestashop.search('products')
-    indexes_data = [int(p['id']) for p in product_list]
+    indexes_dict = [int(p['id']) for p in product_list]
 
-    indexes_unique = [index for index in indexes_site if index not in indexes_data]
-    indexes_selected = indexes_unique[:max_products]
+    print(len(product_list))
 
-    if brand_update:
-        indexes_brand = [int(p['id']) for p in product_list if brand_update == p['manufacturer_name']['value']]
-        updated_products_list = [prestashop.get('products', x)['product'] for x in indexes_brand]
+    # default mode is all - it would update all products
+    indexes_selected = prestashop.search('products')
 
-        for updated_product in updated_products_list:
-            for i, existing_product in enumerate(product_list):
-                if int(existing_product['id']) == updated_product['id']:
-                    product_list[i] = updated_product
-                    break
-        print(f'Updated {len(updated_products_list)} products for brand "{brand_update}"')
-    else:
-        print(f'There were no products to update for brand "{brand_update}"')
+    if mode == 'new':
+        indexes_new = [index for index in indexes_site if index not in indexes_dict]
+        indexes_selected = indexes_new[:max_products]
+
+    if mode == 'ids':
+        indexes_selected = data_ids_list[:max_products]
+
+    if mode == 'brands':
+        indexes_selected = [int(p['id']) for p in product_list if p['manufacturer_name']['value'] in data_brands_list]
+
+    print(indexes_selected)
 
     if len(indexes_selected) > 0:
-        new_products_list = [prestashop.get('products', y)['product'] for y in indexes_selected]
+        product_data = [p for p in product_list if int(p['id']) not in indexes_selected]
+        modified_products = [prestashop.get('products', y)['product'] for y in indexes_selected]
+        product_data.extend(modified_products)
 
-        product_list.extend(new_products_list)
-
-        print(f'Added {len(indexes_selected)} products. Total products in the data file now: {len(product_list)}')
-
+        print(f'Added/Modified {len(indexes_selected)} products. Total number of products now: {len(product_data)}')
         with open('data/all_products.json', 'w', encoding='utf-8') as file:
-            json.dump(product_list, file, indent=4, ensure_ascii=False)
+            json.dump(product_data, file, indent=4, ensure_ascii=False)
     else:
         print(f'There were no more new products to add. Total number of products now is {len(product_list)}')
 
-    print('FINISHED UPDATING ALL PRODUCTS JSON')
+    print('FINISHED UPDATING PRODUCTS DICT')
 
 
 def update_brands_dict():
@@ -128,9 +151,6 @@ def update_cats_dict(update_cats_to_classify=0):
     print('UPDATED CATS DICT')
 
 
-# update_cats_dict(update_cats_to_classify=0)
-
-
 # FUNCTIONS BELOW ARE SUPPOSED TO BE USED ONLY ONE WHILE SETTING UP THE ENVIRONMENT AFTER MIGRATION
 
 
@@ -208,7 +228,6 @@ def create_category_dicts(csv_name='cats_pairing_init.csv', version='0', update_
 
 
 def set_categories_tree(changes_file=None):
-
     """
     This function is meant to be used only once after migration from one version to another.
 
@@ -284,7 +303,6 @@ def set_categories_tree(changes_file=None):
 
 
 def reassign_categories_setter(initial_mode=1, cats_to_reassign=None, cats_substitutes=None):
-
     """
     The function was created to encapsulate one separate functionality of set_categories_tree functionality,
     however it can be used in future to easily reassign all products from one category to a different category.
@@ -329,7 +347,6 @@ def reassign_categories_setter(initial_mode=1, cats_to_reassign=None, cats_subst
 
 
 def get_xml_from_web(source='luminosa'):
-
     """
     It gets up-to-date product feed from the xml file posted on the web and saves it to local data directory.
     Source argument indicates from which shop the xml should be up updated.
