@@ -189,13 +189,13 @@ def write_to_csv(file_path, product_dict):
 
     with open(file_path, mode='a', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=row_data.keys())
-
         writer.writerow(row_data)
 
 
 def fix_data_from_csv(file_path):
 
     fixed_ids = []
+    products_log_list = []
 
     with open(file_path, encoding='utf-8', newline='') as file:
         reader = list(csv.DictReader(file))
@@ -225,9 +225,29 @@ def fix_data_from_csv(file_path):
         print(product)
         prestashop.edit('products', product)
 
+        # writes a log of all changes in nice format
+        product_log = {
+            'ID_urodama': 0,
+            'date_change': 0,
+            'brand': 0,
+            'SKU_old': 0,
+            'SKU_new': 0,
+            'EAN_old': 0,
+            'EAN_new': 0,
+            'active_old': 0,
+            'active_new': 0,
+            'name_old': 0,
+            'name_new': 0,
+            'cost_old': 0,
+            'cost_new': 0,
+            'price_old': 0,
+            'price_new': 0,
+        }
+        products_log_list.append(product_log)
+
     print('FINISHED FIXING FROM CSV')
 
-    return fixed_ids
+    return fixed_ids, products_log_list
 
 
 def add_product_from_xml(select_source=None, select_mode=None, select_ids=None, process_max_products=2):
@@ -236,28 +256,29 @@ def add_product_from_xml(select_source=None, select_mode=None, select_ids=None, 
     add_with_photo(products)
 
 
-def improve_products(file_path_fix=None, classify_ai=None, descriptions_ai=None, features_ai=None):
+def improve_products(file_path_fix=None, classify_ai=0, descriptions_ai=0, features_ai=0):
 
-    products_ids = fix_data_from_csv(file_path=file_path_fix)
+    product_ids, product_logs = fix_data_from_csv(file_path=file_path_fix)
 
     if classify_ai:
-        ai_boosting.classify_categories(products_ids)
-
+        ai_boosting.classify_categories(product_ids)
     if descriptions_ai:
-        pass
-        # write_descriptions() ---> should encapsulate prompts and inserting properly
-
+        ai_boosting.write_descriptions(product_ids)
     if features_ai:
+        # ai_boosting.configure_features(products_ids)
         pass
-        # configure_features() ---> should encapsulate prompts and inserting properly
+
+    # writes log for all changes
+    for product in product_logs:
+        product.update({'classify_ai': classify_ai, 'descriptions_ai': descriptions_ai, 'features_ai': features_ai})
+        with open('data/logs/improved_products_log.csv', mode='a', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=product.keys())
+            writer.writerow(product)
 
     # update_dicts()
-
-    pass
 
 
 # improve_products(file_path_fix='data/logs/__dummy_testing_change.csv', classify_ai=1)
 
 # add_product_from_xml(select_source='luminosa', process_max_products=2)
 # prestashop.delete('products', [786, 787])
-
