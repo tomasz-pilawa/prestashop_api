@@ -203,6 +203,14 @@ def fix_data_from_csv(file_path):
     for r in reader:
         product = prestashop.get('products', r['ID_u'])
 
+        # writes initial data into the log
+        product_log = dict(SKU_old=product['product']['reference'],
+                           EAN_old=product['product']['ean13'],
+                           active_old=product['product']['state'],
+                           name_old=product['product']['name']['language']['value'],
+                           cost_old=product['product']['wholesale_price'],
+                           price_old=product['product']['price'])
+
         product['product']['reference'] = r['ref']
         product['product']['name']['language']['value'] = r['nazwa']
         product['product']['ean13'] = r['Comments']
@@ -226,23 +234,17 @@ def fix_data_from_csv(file_path):
         prestashop.edit('products', product)
 
         # writes a log of all changes in nice format
-        product_log = {
-            'ID_urodama': 0,
-            'date_change': 0,
-            'brand': 0,
-            'SKU_old': 0,
-            'SKU_new': 0,
-            'EAN_old': 0,
-            'EAN_new': 0,
-            'active_old': 0,
-            'active_new': 0,
-            'name_old': 0,
-            'name_new': 0,
-            'cost_old': 0,
-            'cost_new': 0,
-            'price_old': 0,
-            'price_new': 0,
-        }
+        product_log.update({
+            'ID_urodama': product['product']['product_id'],
+            'date_change': datetime.now().strftime("%d-%m-%Y %H:%M"),
+            'brand_id': product['product']['id_manufacturer'],
+            'SKU_new': product['product']['reference'],
+            'EAN_new': product['product']['ean13'],
+            'active_new': product['product']['state'],
+            'name_new': product['product']['name']['language']['value'],
+            'cost_new': product['product']['wholesale_price'],
+            'price_new': product['product']['price']
+        })
         products_log_list.append(product_log)
 
     print('FINISHED FIXING FROM CSV')
