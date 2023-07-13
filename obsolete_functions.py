@@ -9,12 +9,27 @@ import json
 import random
 import re
 
+import mapping
+
 api_url = os.getenv('urodama_link')
 api_key = os.getenv('urodama_pass')
 
 prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
 openai.api_key = os.getenv('openai_api')
+
+
+def set_up_cats_after_migration():
+    """
+    USED ONLY ONCE 13/07_2023 14:10 - SUCCESS
+    Sets up the whole categories tree based on csv file. Meant to be used only once after migration to new Prestashop.
+    :return:
+    """
+    mapping.create_category_dicts(csv_name='cats_pairing_init.csv', update_classification_dict=1)
+    mapping.set_categories_tree(changes_file='cats_pairing_v_0.json')
+    mapping.update_products_dict()
+    mapping.update_cats_dict(update_cats_to_classify=1)
+    mapping.update_brands_dict()
 
 
 def fix_prices(limit=2, file=None):

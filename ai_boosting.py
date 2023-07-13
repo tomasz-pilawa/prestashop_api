@@ -58,11 +58,6 @@ def classify_categories(product_ids_list):
         with open('data/cats_dict.json', encoding='utf-8') as file:
             cats_dict = json.load(file)['cats_name_id']
 
-        # temporary for testing
-        product_classification[0] = 'Pielęgnacja Twarzy'
-        product_classification[1] = 'Tonik'
-        product_classification[2] = 'nawilżające'
-
         # always adds Home Category as one of the categories for every product
         cats = ['2'] + [cats_dict[cat] for cat in product_classification]
         cats_format = [{'id': cat_id} for cat_id in cats]
