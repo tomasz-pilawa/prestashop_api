@@ -24,9 +24,8 @@ def classify_categories(product_ids_list):
     """
     prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
-    print('BASED ON WRITE DESCRIPTIONS EXPERIENCES, MAYBE ITS BETTER TO CLASSIFY BASED ON SHORT DESC?')
-    with open('data/temp/categories_to_classify_0.json', encoding='utf-8') as file:
-        cats = json.load(file)
+    with open('data/cats_dict.json', encoding='utf-8') as file:
+        cats = json.load(file)['cats_classify']
     cats_all = [value for key, values in cats.items() if key not in ["cat_other", "cat_old"] for value in values]
 
     for product_id in product_ids_list:
