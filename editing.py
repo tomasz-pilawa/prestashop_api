@@ -265,8 +265,8 @@ def fix_data_from_csv(file_path):
     return fixed_ids, products_log_list
 
 
-def add_product_from_xml(select_source=None, select_mode=None, select_ids=None, process_max_products=2):
-    products = select_products_xml(source=select_source, mode=select_mode, data=select_ids)
+def add_product_from_xml(select_source=None, select_mode=None, select_data=None, process_max_products=2):
+    products = select_products_xml(source=select_source, mode=select_mode, data=select_data)
     products = process_products(products, max_products=process_max_products)
     add_with_photo(products)
 

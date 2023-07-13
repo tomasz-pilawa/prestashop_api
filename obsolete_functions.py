@@ -687,4 +687,3 @@ def create_csv_file(file_path):
 
 
 # create_csv_file('data/logs/added_products_raw.csv')
-

@@ -147,6 +147,3 @@ def write_descriptions(product_ids_list):
         prestashop.edit('products', product)
 
     print('FINISHED WRITING PRODUCT DESCRIPTIONS')
-
-
-# write_descriptions([346])
