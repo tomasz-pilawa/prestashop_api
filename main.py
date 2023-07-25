@@ -15,17 +15,17 @@ openai.api_key = os.getenv('openai_api')
 
 
 # Check which products to introduce, get their ids and verify the initial data
-# editing.select_products_xml(source='luminosa', mode='brands', print_info=1, data=['Guam'])
+# editing.select_products_xml(source='luminosa', mode='brands', print_info=1, data=['Mesoestetic'])
 # editing.select_products_xml(source='ampari', mode='brands', data=['Helen Seward'], print_info=1)
 
 
 # Add simple version of selected products (preferably ID-based) & correct essential information (name, price, sku, ean)
-id_list = [836, 824]
+# id_list = [751, 748, 789, 791, 787, 817, 850, 866]
 # editing.add_product_from_xml(select_source='luminosa', select_mode='include',
-#                              select_data=id_list, process_max_products=5)
+#                              select_data=id_list, process_max_products=10)
 
 # new_id_list = [789, 790]
 # After adding or while editing only always use csv to improve specific products (works on ids too)
-editing.improve_products(file_path_fix='data/logs/adding_1.csv',
-                         classify_ai=1, descriptions_ai=1, features_ai=0)
+# editing.improve_products(file_path_fix='data/logs/adding_2.csv',
+#                          classify_ai=1, descriptions_ai=1, features_ai=0)
 

@@ -96,13 +96,18 @@ def write_descriptions(product_ids_list):
         product = prestashop.get('products', product_id)
         product_name = product['product']['name']['language']['value']
         product_desc = product['product']['description']['language']['value']
+
+        if product_desc.count(' ') > 350:
+            tokens = product_desc.split(' ')
+            product_desc = ' '.join(tokens[:350])
+
         # print(product)
         print(product_name)
 
         with open('data/prompts/write_descriptions.txt', 'r', encoding='utf-8') as file:
             prompt_template = file.read().strip()
         prompt = prompt_template.format(product_name=product_name, product_desc=product_desc)
-        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=2000, temperature=0.2)
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1800, temperature=0.2)
         print(f"TOKENS USED: {response['usage']['total_tokens']}")
         # print(response.choices[0].text.strip())
 

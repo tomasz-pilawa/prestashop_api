@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 import openai
 import requests
 from datetime import datetime
+from bs4 import BeautifulSoup
 
 import ai_boosting
 import mapping
@@ -26,6 +27,14 @@ def truncate_string(text, max_length=70):
     else:
         truncated_text = text
     return truncated_text
+
+
+def extract_plain_text(html_content):
+    """
+    Used for simple processing to remove html tags from meta.
+    """
+    soup = BeautifulSoup(html_content, 'html.parser')
+    return soup.get_text()
 
 
 def select_products_xml(source='luminosa', mode=None, data=None, print_info=None):
@@ -130,7 +139,7 @@ def process_products(product_list, max_products=5):
         data['description'] = single_product.find('desc').text.split('div class')[0]
         data['description_short'] = single_product.find('desc').text.split('</p><p>')[0]
         data['meta_title'] = truncate_string(data['name'], 70)
-        data['meta_description'] = truncate_string(data['description'][3:].split('.')[0] + '.', 160)
+        data['meta_description'] = truncate_string(extract_plain_text(single_product.find('desc').text), 160)
 
         data['image_url'] = single_product.find("imgs/main").get('url')
 
@@ -161,21 +170,25 @@ def add_with_photo(product_list):
         single_product['product_id'] = product_id
 
         image_url = single_product['image_url']
-        response = requests.get(image_url)
-        response.raise_for_status()
+        image_response = requests.get(image_url)
 
-        filename = f"{single_product['link_rewrite']['language']['value']}-kosmetyki-urodama.jpg"
-        image_path = "images/" + filename
+        if image_response.status_code == 200:
+            filename = f"{single_product['link_rewrite']['language']['value']}-kosmetyki-urodama.jpg"
+            image_path = "images/" + filename
 
-        with open(image_path, "wb") as file:
-            file.write(response.content)
+            with open(image_path, "wb") as file:
+                file.write(image_response.content)
 
-        with open(image_path, "rb") as file:
-            image_content = file.read()
+            with open(image_path, "rb") as file:
+                image_content = file.read()
 
-        prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
+            prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
 
-        write_to_csv(file_path='data/logs/added_products_raw.csv', product_dict=single_product)
+            write_to_csv(file_path='data/logs/added_products_raw.csv', product_dict=single_product)
+
+        else:
+            print(f"Failed to download image for product: {single_product['name']['language']['value']}")
+            continue
 
     print('SUCCESS!!! Indexes added:')
     print(indexes_added)
@@ -299,4 +312,4 @@ def improve_products(file_path_fix=None, classify_ai=0, descriptions_ai=0, featu
 # improve_products(file_path_fix='data/logs/__dummy_testing_change.csv', classify_ai=1)
 
 # add_product_from_xml(select_source='luminosa', process_max_products=2)
-# prestashop.delete('products', [786, 787])
+# prestashop.delete('products', [792, 793])
