@@ -28,6 +28,8 @@ def classify_categories(product_ids_list):
         cats = json.load(file)['cats_classify']
     cats_all = [value for key, values in cats.items() if key not in ["cat_other", "cat_old"] for value in values]
 
+    # print(type(cats))
+
     for product_id in product_ids_list:
         product = prestashop.get('products', product_id)
 
@@ -59,29 +61,22 @@ def classify_categories(product_ids_list):
             cats_dict = json.load(file)['cats_name_id']
 
         # always adds Home Category as one of the categories for every product
-        cats = ['2'] + [cats_dict[cat] for cat in product_classification]
-        cats_format = [{'id': cat_id} for cat_id in cats]
+        cats_classified = ['2'] + [cats_dict[cat] for cat in product_classification]
+        cats_format = [{'id': cat_id} for cat_id in cats_classified]
+        print(cats_classified)
 
-        # this is needed to add association on category db as well
-        cats_original = product['product']['associations']['categories']['category']
-        cats_original_ids = [element['id'] for element in cats_original]
-        added_cats = [c for c in cats if c not in cats_original_ids]
-
-        for c in added_cats:
-            cato = prestashop.get('categories', int(c))
-            cato['category']['associations']['products']['product'].append({'id': c})
-            cato['category'].pop('level_depth')
-            cato['category'].pop('nb_products_recursive')
-            prestashop.edit('categories', cato)
-
-        product['product']['id_category_default'] = cats[-1]
+        product['product']['id_category_default'] = cats_classified[-1]
         product['product']['associations']['categories']['category'] = cats_format
 
         product['product'].pop('manufacturer_name')
         product['product'].pop('quantity')
-        if int(product['product']['position_in_category']['value']) < 1:
-            product['product']['position_in_category']['value'] = str(1)
+        product['product'].pop('position_in_category')
+        # if not product['product']['position_in_category']['value'].isdigit():
+        #     product['product']['position_in_category']['value'] = '1'
+        # if int(product['product']['position_in_category']['value']) < 1:
+        #     product['product']['position_in_category']['value'] = str(1)
 
+        print(product)
         prestashop.edit('products', product)
 
     print('FINISHED PRODUCTS CLASSIFICATION')
@@ -136,6 +131,8 @@ def write_descriptions(product_ids_list):
 
         product['product'].pop('manufacturer_name')
         product['product'].pop('quantity')
+        if not product['product']['position_in_category']['value'].isdigit():
+            product['product']['position_in_category']['value'] = '1'
         if int(product['product']['position_in_category']['value']) < 1:
             product['product']['position_in_category']['value'] = str(1)
 

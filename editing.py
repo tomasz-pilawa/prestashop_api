@@ -12,8 +12,7 @@ import mapping
 
 api_url = os.getenv('urodama_link')
 api_key = os.getenv('urodama_pass')
-
-# openai.api_key = os.getenv('openai_api')
+openai.api_key = os.getenv('openai_api')
 
 prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
@@ -238,6 +237,8 @@ def fix_data_from_csv(file_path):
 
         product['product'].pop('manufacturer_name')
         product['product'].pop('quantity')
+        if not product['product']['position_in_category']['value'].isdigit():
+            product['product']['position_in_category']['value'] = '1'
         if int(product['product']['position_in_category']['value']) < 1:
             product['product']['position_in_category']['value'] = str(1)
 
@@ -248,7 +249,7 @@ def fix_data_from_csv(file_path):
 
         # writes a log of all changes in nice format
         product_log.update({
-            'ID_urodama': product['product']['product_id'],
+            'ID_urodama': product['product']['id'],
             'date_change': datetime.now().strftime("%d-%m-%Y %H:%M"),
             'brand_id': product['product']['id_manufacturer'],
             'SKU_new': product['product']['reference'],
