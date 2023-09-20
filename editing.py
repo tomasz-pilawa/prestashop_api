@@ -122,11 +122,14 @@ def process_products(product_list, max_products=5):
     for single_product in product_list[:max_products]:
         data = dict(default_data)
 
-        data['reference'] = single_product.find("attrs/a[@name='Kod_producenta']").text
-        data['ean13'] = single_product.find("attrs/a[@name='EAN']").text
+        data['reference'] = single_product.find("attrs/a[@name='Kod_producenta']").text.strip('\n ')
+
+        ean_raw = single_product.find("attrs/a[@name='EAN']").text
+        data['ean13'] = ''.join([char for char in ean_raw if char.isdigit()])
+
         data['price'] = single_product.get('price')
         data['wholesale_price'] = str(round(float(data['price']) / price_ratio, 2))
-        data['name'] = single_product.find('name').text
+        data['name'] = single_product.find('name').text.strip('\n ')
 
         if single_product.find("attrs/a[@name='Producent']").text in list(manufacturer_dict.keys()):
             data['id_manufacturer'] = manufacturer_dict[single_product.find("attrs/a[@name='Producent']").text]
@@ -138,8 +141,8 @@ def process_products(product_list, max_products=5):
 
         data['description'] = single_product.find('desc').text.split('div class')[0]
         data['description_short'] = single_product.find('desc').text.split('</p><p>')[0]
-        data['meta_title'] = truncate_string(data['name'], 70)
-        data['meta_description'] = truncate_string(extract_plain_text(single_product.find('desc').text), 160)
+        data['meta_title'] = truncate_string(data['name'], 70).strip('\n ')
+        data['meta_description'] = truncate_string(extract_plain_text(single_product.find('desc').text), 160).strip('\n ')
 
         data['image_url'] = single_product.find("imgs/main").get('url')
 

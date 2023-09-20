@@ -24,7 +24,7 @@ id_list = [620, 621, 624, 637, 639, 641, 643, 645, 653, 654, 655, 659, 663, 664,
 # editing.add_product_from_xml(select_source='ampari', select_mode='include',
 #                              select_data=id_list, process_max_products=30)
 
-# new_id_list = [789, 790]
+# new_id_list = [803, 804, 805, 806, 807, 808, 809, 810, 811, 812, 813, 814, 815, 816, 817, 818, 819, 820, 821, 822]
 # After adding or while editing only always use csv to improve specific products (works on ids too)
 # editing.improve_products(file_path_fix='data/logs/adding_2_5.csv',
 #                          classify_ai=1, descriptions_ai=1, features_ai=0)
