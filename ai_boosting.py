@@ -107,7 +107,7 @@ def write_descriptions(product_ids_list):
         with open('data/prompts/write_descriptions.txt', 'r', encoding='utf-8') as file:
             prompt_template = file.read().strip()
         prompt = prompt_template.format(product_name=product_name, product_desc=product_desc)
-        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1800, temperature=0.2)
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1800, temperature=0.3)
         print(f"TOKENS USED: {response['usage']['total_tokens']}")
         # print(response.choices[0].text.strip())
 
@@ -124,7 +124,7 @@ def write_descriptions(product_ids_list):
         prompt = prompt_template.format(product_name=product_name, product_desc=description_short)
         response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1000, temperature=0.1)
         print(f"TOKENS USED: {response['usage']['total_tokens']}")
-        print(response.choices[0].text.strip())
+        # print(response.choices[0].text.strip())
 
         meta_title = response.choices[0].text.strip().split('*****')[0].replace('META TITLE', '').strip()
         meta_description = response.choices[0].text.strip().split('*****')[1].replace('META DESCRIPTION', '').strip()
