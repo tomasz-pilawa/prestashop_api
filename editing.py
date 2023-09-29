@@ -394,32 +394,28 @@ def fill_brand_inci(brand='Mesoestetic', limit=2, source='luminosa'):
                     product_found = True
                     s_desc = s.find('desc').text.lower()
 
-                    # Thirdly, check if there's inci in the match
+                    # Thirdly, if there is INCI in the source - insert it via API directly and break the loop
                     if 'inci' in s_desc:
                         soup = BeautifulSoup(s_desc.split('inci')[1], 'html.parser')
                         s_inci = soup.find('p', string=True).get_text()
-                        print(s_inci)
+
+                        s_inci = '<p><strong>Skład INCI</strong></p><p>' + s_inci + '</p>'
+                        product['description']['language']['value'] += s_inci
+
+                        product.pop('manufacturer_name')
+                        product.pop('quantity')
+                        if int(product['position_in_category']['value']) < 1:
+                            product['position_in_category']['value'] = str(1)
+                        prestashop.edit('products', {'product': product})
+                        print('Inserted INCI')
+                        break
+
                     else:
                         print('There is no INCI in the source description')
 
             if not product_found:
                 print(f"{product['name']['language']['value']} doesn't exist in source database")
 
-            # print(f"{s_inci} at the end of the iteration")
-            print(product_found == True)
-            # ONLY IF BOTH ARE POSITIVE THAN OPERATE ON PRESTASHOP
-            # HERE COMES INCI INSERTION
-            # product['product']['price'] = p_price
-            # <p><strong>Skład INCI</strong></p><p>
-            # </p>
-
-            # product['product'].pop('manufacturer_name')
-            # product['product'].pop('quantity')
-            # if int(product['product']['position_in_category']['value']) < 1:
-            #     product['product']['position_in_category']['value'] = str(1)
-            # print(product['product'])
-
-            # prestashop.edit('products', product)
         else:
             print('The INCI is already there')
 
