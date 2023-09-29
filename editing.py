@@ -316,3 +316,98 @@ def improve_products(file_path_fix=None, classify_ai=0, descriptions_ai=0, featu
 
 # add_product_from_xml(select_source='luminosa', process_max_products=2)
 # prestashop.delete('products', [792, 793])
+
+
+def check_inci(limit=5, file=None, include=None):
+
+    tree = ET.parse(f'data/{file}')
+    root = tree.getroot()
+    all_products = root.findall('o')
+
+    ids_no_inci = []
+    brands = ["Filorga", "Mesoestetic", "Anna Lotan", "Sesderma", "LEIM", "Germaine de Capuccini", "Fusion Mesotherapy",
+              "Prokos", "Retix C", "Exuviance", "GUAM Lacote", "Lidooxin", "Magnipsor", "Colway", "Croma Pharma",
+              "Montibello", "Footlogix"]
+    brand_counts = {brand: 0 for brand in brands}
+
+    for p in all_products[:limit]:
+        p_name = p.find('name').text
+        p_id = int(p.get('id'))
+        p_desc = p.find('desc').text.lower()
+
+        if 'inci' in p_desc:
+            x = p_desc.split('inci')[1]
+
+            soup = BeautifulSoup(x, 'html.parser')
+            inci_p = soup.find('p', string=True)
+            # print(inci_p.get_text())
+
+        else:
+            ids_no_inci.append(p_id)
+            print(p_name.strip())
+            for brand in brands:
+                if p.find(".//attrs/a[@name='Producent']").text.strip().lower() in brand.lower():
+                    brand_counts[brand] += 1
+
+    print(f"There are {len(ids_no_inci)} products (out of {len(all_products[:limit])}) without valid INCI code. "
+          f"Here's the list of them")
+    print(ids_no_inci)
+    print(brand_counts)
+
+        # product = prestashop.get('products', p_id)
+        #
+        # product['product']['price'] = p_price
+        #
+        # product['product'].pop('manufacturer_name')
+        # product['product'].pop('quantity')
+        #
+        # if int(product['product']['position_in_category']['value']) < 1:
+        #     product['product']['position_in_category']['value'] = str(1)
+        #
+        # product['product']['price'] = p_price
+        # print(product['product'])
+        #
+        # prestashop.edit('products', product)
+
+
+# check_inci(limit=500, file='urodama_feed.xml')
+
+
+def fill_brand_inci(brand='Mesoestetic', limit=5):
+
+    with open('data/brands_dict.json', encoding='utf-8') as file:
+        all_brand_ids = json.load(file)['brand_index'][brand]
+
+    # print(all_brand_ids)
+
+    for p_id in all_brand_ids[:limit]:
+
+        # HERE CHECK IF THERE IS THIS SKU IN OTHER SOURCES
+        # LATER CHECK IF THERE IS INCI IN OTHER SOURCES
+        # ONLY IF BOTH ARE POSITIVE THAN OPERATE ON PRESTASHOP
+
+
+
+
+
+        product = prestashop.get('products', p_id)
+
+        # HERE COMES INCI INSERTION
+        # product['product']['price'] = p_price
+
+
+        product['product'].pop('manufacturer_name')
+        product['product'].pop('quantity')
+        if int(product['product']['position_in_category']['value']) < 1:
+            product['product']['position_in_category']['value'] = str(1)
+
+        print(product['product'])
+        # prestashop.edit('products', product)
+
+    mapping.get_xml_from_web(source='urodama')
+    print('FINISHED')
+
+
+# fill_brand_inci()
+
+mapping.get_xml_from_web(source='ampari_inci')

@@ -355,19 +355,20 @@ def get_xml_from_web(source='luminosa'):
     XML urls are taken from the separate dictionaries.
     """
 
-    with open(f'data/xml_urls.json') as file:
+    with open(f'data/xml_urls.json', encoding='utf-8') as file:
         url = json.load(file)[source]
     response = requests.get(url)
     if response.status_code == 200:
         xml_content = response.content
         root = ET.fromstring(xml_content)
 
-        if source == 'ampari':
+        if source != 'luminosa':
             attrs_elements = root.findall('.//attrs/a[@name="Kod producenta"]')
             for elem in attrs_elements:
                 elem.attrib['name'] = 'Kod_producenta'
 
             for product in root.findall('o'):
+                # print(product.find('desc').text.lower())
                 product_sku_element = product.find("attrs/a[@name='Kod_producenta']")
                 if product_sku_element is None:
                     missing_sku_element = ET.SubElement(product.find("attrs"), "a", attrib={"name": "Kod_producenta"})
@@ -377,7 +378,7 @@ def get_xml_from_web(source='luminosa'):
                     missing_ean_element = ET.SubElement(product.find("attrs"), "a", attrib={"name": "EAN"})
                     missing_ean_element.text = "MISSING"
 
-            xml_content = ET.tostring(root)
+            xml_content = ET.tostring(root, encoding='utf-8')
 
         with open(f'data/{source}_feed.xml', 'wb') as file:
             file.write(xml_content)
