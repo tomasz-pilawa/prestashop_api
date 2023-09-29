@@ -354,60 +354,79 @@ def check_inci(limit=5, file=None, include=None):
     print(ids_no_inci)
     print(brand_counts)
 
-        # product = prestashop.get('products', p_id)
-        #
-        # product['product']['price'] = p_price
-        #
-        # product['product'].pop('manufacturer_name')
-        # product['product'].pop('quantity')
-        #
-        # if int(product['product']['position_in_category']['value']) < 1:
-        #     product['product']['position_in_category']['value'] = str(1)
-        #
-        # product['product']['price'] = p_price
-        # print(product['product'])
-        #
-        # prestashop.edit('products', product)
 
+def fill_brand_inci(brand='Mesoestetic', limit=2, source='luminosa'):
 
-# check_inci(limit=500, file='urodama_feed.xml')
-
-
-def fill_brand_inci(brand='Mesoestetic', limit=5):
-
+    # Get list of brand IDs from json dict
     with open('data/brands_dict.json', encoding='utf-8') as file:
         all_brand_ids = json.load(file)['brand_index'][brand]
 
-    # print(all_brand_ids)
+    # Load source products' data in xml tree
+    tree = ET.parse(f'data/{source}_feed.xml')
+    root = tree.getroot()
+    source_products = root.findall('o')
 
+    # Iterate over all Products and fill in Inci if either SKU or EAN matches any product in source database
     for p_id in all_brand_ids[:limit]:
+        product = prestashop.get('products', p_id)['product']
+        print(f"\nCHECKING PRODUCT {product['name']['language']['value']}")
 
-        # HERE CHECK IF THERE IS THIS SKU IN OTHER SOURCES
-        # LATER CHECK IF THERE IS INCI IN OTHER SOURCES
-        # ONLY IF BOTH ARE POSITIVE THAN OPERATE ON PRESTASHOP
+        # Check if there is no INCI at the moment
+        if 'inci' not in product['description']['language']['value'].lower():
+            print('There is no INCI on the website. Proceeding with the loop.')
+            sku = product['reference']
+            ean = product['ean13']
+            product_found = False
+            s_inci = None
 
+            # Firstly, find the any matching sku/ean
+            for s in source_products:
+                s_sku = s.find("attrs/a[@name='Kod_producenta']").text.strip()
+                s_ean = s.find("attrs/a[@name='EAN']").text.strip()
 
+                # Secondly, if there is a match, print names & check for INCI
+                if sku == s_sku or ean == s_ean:
+                    print(sku, s_sku)
+                    print(ean, s_ean)
+                    # print(product['name']['language']['value'])
+                    print(s.find('name').text.strip())
 
+                    product_found = True
+                    s_desc = s.find('desc').text.lower()
 
+                    # Thirdly, check if there's inci in the match
+                    if 'inci' in s_desc:
+                        soup = BeautifulSoup(s_desc.split('inci')[1], 'html.parser')
+                        s_inci = soup.find('p', string=True).get_text()
+                        print(s_inci)
+                    else:
+                        print('There is no INCI in the source description')
 
-        product = prestashop.get('products', p_id)
+            if not product_found:
+                print(f"{product['name']['language']['value']} doesn't exist in source database")
 
-        # HERE COMES INCI INSERTION
-        # product['product']['price'] = p_price
+            # print(f"{s_inci} at the end of the iteration")
+            print(product_found == True)
+            # ONLY IF BOTH ARE POSITIVE THAN OPERATE ON PRESTASHOP
+            # HERE COMES INCI INSERTION
+            # product['product']['price'] = p_price
+            # <p><strong>Skład INCI</strong></p><p>
+            # </p>
 
+            # product['product'].pop('manufacturer_name')
+            # product['product'].pop('quantity')
+            # if int(product['product']['position_in_category']['value']) < 1:
+            #     product['product']['position_in_category']['value'] = str(1)
+            # print(product['product'])
 
-        product['product'].pop('manufacturer_name')
-        product['product'].pop('quantity')
-        if int(product['product']['position_in_category']['value']) < 1:
-            product['product']['position_in_category']['value'] = str(1)
+            # prestashop.edit('products', product)
+        else:
+            print('The INCI is already there')
 
-        print(product['product'])
-        # prestashop.edit('products', product)
-
-    mapping.get_xml_from_web(source='urodama')
     print('FINISHED')
 
 
-# fill_brand_inci()
+# check_inci(limit=500, file='urodama_feed.xml')
+# mapping.get_xml_from_web(source='ampari_inci')
+fill_brand_inci()
 
-mapping.get_xml_from_web(source='ampari_inci')
