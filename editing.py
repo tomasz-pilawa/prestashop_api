@@ -318,7 +318,7 @@ def improve_products(file_path_fix=None, classify_ai=0, descriptions_ai=0, featu
 # prestashop.delete('products', [792, 793])
 
 
-def check_inci(limit=5, file=None, include=None):
+def check_inci(limit=5, file=None):
 
     tree = ET.parse(f'data/{file}')
     root = tree.getroot()
@@ -346,7 +346,7 @@ def check_inci(limit=5, file=None, include=None):
             ids_no_inci.append(p_id)
             print(p_name.strip())
             for brand in brands:
-                if p.find(".//attrs/a[@name='Producent']").text.strip().lower() in brand.lower():
+                if p.find(".//attrs/a[@name='Producent']").text.strip().lower() == brand.lower():
                     brand_counts[brand] += 1
 
     print(f"There are {len(ids_no_inci)} products (out of {len(all_products[:limit])}) without valid INCI code. "
@@ -419,10 +419,18 @@ def fill_brand_inci(brand='Mesoestetic', limit=2, source='luminosa'):
         else:
             print('The INCI is already there')
 
-    print('FINISHED')
+    response = requests.get('https://urodama.pl/ceneoinci.php')
+    if response.status_code == 200:
+        print('\nCeneo PHP updated')
+    mapping.get_xml_from_web(source='urodama_inci')
+
+    print('\nFINISHED THE SCRIPT')
 
 
-# check_inci(limit=500, file='urodama_feed.xml')
-# mapping.get_xml_from_web(source='ampari_inci')
-fill_brand_inci()
+# mapping.get_xml_from_web(source='aleja')
+# check_inci(limit=500, file='urodama_inci_feed.xml')
+# fill_brand_inci(limit=100, brand='Footlogix', source='luminosa')
+
+
+
 
