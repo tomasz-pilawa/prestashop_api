@@ -7,6 +7,7 @@ import openai
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
+import re
 
 import ai_boosting
 import mapping
@@ -427,10 +428,47 @@ def fill_brand_inci(brand='Mesoestetic', limit=2, source='luminosa'):
     print('\nFINISHED THE SCRIPT')
 
 
-# mapping.get_xml_from_web(source='aleja')
+# mapping.get_xml_from_web(source='urodama')
 # check_inci(limit=500, file='urodama_inci_feed.xml')
 # fill_brand_inci(limit=100, brand='Footlogix', source='luminosa')
 
 
+def set_unit_price(limit=400, site='urodama'):
+
+    tree = ET.parse(f'data/{site}_feed.xml')
+    root = tree.getroot()
+    source_products = root.findall('o')
+    indexes = [int(p.get('id')) for p in source_products]
+
+    for i in indexes[:limit]:
+        product = prestashop.get('products', i)['product']
+
+        name = product['name']['language']['value']
+        print(name)
+        quantity = None
+
+        matches = re.findall(r'(\d+)\s*ml', name)
+        if matches:
+            quantity = sum([int(match) for match in matches])
+
+        m2 = re.search(r'(\d+)\s*x\s*(\d+)', name)
+        if m2:
+            num1 = int(m2.group(1))
+            num2 = int(m2.group(2))
+            quantity = num1 * num2
+
+        if re.search(r'\d+\s*g|\s*g', name):
+            quantity = None
+        if 'Zestaw Xylogic' in name:
+            quantity = None
+        if 'kg' in name:
+            quantity = None
 
 
+        print(quantity)
+
+        # print(product['unity'])
+        # print(product['unit_price_ratio'])
+
+
+# set_unit_price()
