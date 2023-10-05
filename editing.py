@@ -8,6 +8,7 @@ import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
 import re
+import pymysql
 
 import ai_boosting
 import mapping
@@ -433,14 +434,14 @@ def fill_brand_inci(brand='Mesoestetic', limit=2, source='luminosa'):
 # fill_brand_inci(limit=100, brand='Footlogix', source='luminosa')
 
 
-def set_unit_price(limit=400, site='urodama'):
+def set_unit_price_api(limit=5, site='urodama'):
 
     tree = ET.parse(f'data/{site}_feed.xml')
     root = tree.getroot()
     source_products = root.findall('o')
     indexes = [int(p.get('id')) for p in source_products]
 
-    for i in indexes[:limit]:
+    for i in indexes[1:limit]:
         product = prestashop.get('products', i)['product']
 
         name = product['name']['language']['value']
@@ -457,18 +458,88 @@ def set_unit_price(limit=400, site='urodama'):
             num2 = int(m2.group(2))
             quantity = num1 * num2
 
-        if re.search(r'\d+\s*g|\s*g', name):
-            quantity = None
+        # if re.search(r'\d+\s*g|\s*g', name):
+        #     quantity = None
         if 'Zestaw Xylogic' in name:
             quantity = None
         if 'kg' in name:
             quantity = None
 
-
         print(quantity)
 
-        # print(product['unity'])
-        # print(product['unit_price_ratio'])
+        print(product)
+        if quantity:
+            product['unity'] = 'za mililitr'
+            # product['unit_price_ratio'] = quantity
+
+        product.pop('manufacturer_name')
+        product.pop('quantity')
+        if int(product['position_in_category']['value']) < 1:
+            product['position_in_category']['value'] = str(1)
+        print(product)
+
+        prestashop.edit('products', {'product': product})
+
+    print('FINISHED SETTING UNIT PRICE FOR ALL PRODUCTS')
 
 
-# set_unit_price()
+# set_unit_price_api()
+
+
+def set_unit_price_sql(limit=2, site='urodama'):
+
+    pass_php = os.getenv('pass_php_urodama')
+
+    tree = ET.parse(f'data/{site}_feed.xml')
+    root = tree.getroot()
+    source_products = root.findall('o')
+
+    try:
+        for p in source_products[:limit]:
+            name = p.find('name').text.strip()
+            print(name)
+            quantity = None
+
+            matches = re.findall(r'(\d+)\s*ml', name)
+            if matches:
+                quantity = sum([int(match) for match in matches])
+
+            m2 = re.search(r'(\d+)\s*x\s*(\d+)', name)
+            if m2:
+                num1 = int(m2.group(1))
+                num2 = int(m2.group(2))
+                quantity = num1 * num2
+
+            if 'Zestaw Xylogic' in name:
+                quantity = None
+            if 'kg' in name:
+                quantity = None
+
+            # print(quantity)
+
+        conn = pymysql.connect(
+            host='s18.cyber-folks.pl',
+            port=3306,
+            user='pilek_python',
+            password=pass_php,
+            db='pilek_pr1')
+
+        c = conn.cursor()
+
+        if quantity is not None:
+            product_id = p.get('id')
+            c.execute("UPDATE `pr_product_shop` SET `unit_price_ratio` = %s, `unity` = 'za mililitr' "
+                      "WHERE `id_product` = %s AND `id_shop` = 1;", (quantity, product_id))
+
+        conn.commit()
+
+    except Exception as e:
+        print("Error:", e)
+        conn.rollback()
+    finally:
+        c.close()
+        conn.close()
+
+
+set_unit_price_sql(limit=10)
+
