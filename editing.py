@@ -542,8 +542,34 @@ def set_unit_price_sql(limit=2, site='urodama'):
 # set_unit_price_sql(limit=500)
 
 
-def set_unit_price_api_sql_luminosa():
-    pass
+def set_unit_price_api_sql_luminosa(limit=5):
+
+    luminosa_url = os.getenv('luminosa_link')
+    luminosa_key = os.getenv('luminosa_pass')
+    prestashop = PrestaShopWebServiceDict(luminosa_url, luminosa_key)
+
+    indexes = prestashop.search('products')
+
+    for i in indexes[1:limit]:
+        product = prestashop.get('products', i)['product']
+
+        name = product['name']['language']['value']
+        print(name)
+        quantity = None
+
+        matches = re.findall(r'(\d+)\s*ml', name)
+        if matches:
+            quantity = sum([int(match) for match in matches])
+
+        m2 = re.search(r'(\d+)\s*x\s*(\d+)', name)
+        if m2:
+            num1 = int(m2.group(1))
+            num2 = int(m2.group(2))
+            quantity = num1 * num2
+        if 'kg' in name:
+            quantity = None
+
+        print(quantity)
 
 
-# set_unit_price_api_sql_luminosa()
+set_unit_price_api_sql_luminosa(limit=200)
