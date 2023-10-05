@@ -494,7 +494,17 @@ def set_unit_price_sql(limit=2, site='urodama'):
     root = tree.getroot()
     source_products = root.findall('o')
 
+    conn = pymysql.connect(
+        host='s18.cyber-folks.pl',
+        port=3306,
+        user='pilek_python',
+        password=pass_php,
+        db='pilek_pr1')
+
     try:
+        c = conn.cursor()
+        conn.begin()
+
         for p in source_products[:limit]:
             name = p.find('name').text.strip()
             print(name)
@@ -509,27 +519,15 @@ def set_unit_price_sql(limit=2, site='urodama'):
                 num1 = int(m2.group(1))
                 num2 = int(m2.group(2))
                 quantity = num1 * num2
-
             if 'Zestaw Xylogic' in name:
                 quantity = None
             if 'kg' in name:
                 quantity = None
 
-            # print(quantity)
-
-        conn = pymysql.connect(
-            host='s18.cyber-folks.pl',
-            port=3306,
-            user='pilek_python',
-            password=pass_php,
-            db='pilek_pr1')
-
-        c = conn.cursor()
-
-        if quantity is not None:
-            product_id = p.get('id')
-            c.execute("UPDATE `pr_product_shop` SET `unit_price_ratio` = %s, `unity` = 'za mililitr' "
-                      "WHERE `id_product` = %s AND `id_shop` = 1;", (quantity, product_id))
+            if quantity is not None:
+                product_id = p.get('id')
+                c.execute("UPDATE `pr_product_shop` SET `unit_price_ratio` = %s, `unity` = 'za mililitr' "
+                          "WHERE `id_product` = %s AND `id_shop` = 1;", (quantity, product_id))
 
         conn.commit()
 
@@ -541,5 +539,11 @@ def set_unit_price_sql(limit=2, site='urodama'):
         conn.close()
 
 
-set_unit_price_sql(limit=10)
+# set_unit_price_sql(limit=500)
 
+
+def set_unit_price_api_sql_luminosa():
+    pass
+
+
+# set_unit_price_api_sql_luminosa()
