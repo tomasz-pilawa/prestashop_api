@@ -544,32 +544,57 @@ def set_unit_price_sql(limit=2, site='urodama'):
 
 def set_unit_price_api_sql_luminosa(limit=5):
 
+    pass_php = os.getenv('pass_php_luminosa')
+
+    conn = pymysql.connect(
+        host='sql62.lh.pl',
+        port=3306,
+        user='serwer96620',
+        password=pass_php,
+        db='serwer96620_luminosa')
+
     luminosa_url = os.getenv('luminosa_link')
     luminosa_key = os.getenv('luminosa_pass')
     prestashop = PrestaShopWebServiceDict(luminosa_url, luminosa_key)
 
     indexes = prestashop.search('products')
 
-    for i in indexes[1:limit]:
-        product = prestashop.get('products', i)['product']
+    try:
+        c = conn.cursor()
+        conn.begin()
 
-        name = product['name']['language']['value']
-        print(name)
-        quantity = None
+        for i in indexes[1:limit]:
+            product = prestashop.get('products', i)['product']
 
-        matches = re.findall(r'(\d+)\s*ml', name)
-        if matches:
-            quantity = sum([int(match) for match in matches])
-
-        m2 = re.search(r'(\d+)\s*x\s*(\d+)', name)
-        if m2:
-            num1 = int(m2.group(1))
-            num2 = int(m2.group(2))
-            quantity = num1 * num2
-        if 'kg' in name:
+            name = product['name']['language']['value']
+            print(name)
             quantity = None
 
-        print(quantity)
+            matches = re.findall(r'(\d+)\s*ml', name)
+            if matches:
+                quantity = sum([int(match) for match in matches])
+
+            m2 = re.search(r'(\d+)\s*x\s*(\d+)', name)
+            if m2:
+                num1 = int(m2.group(1))
+                num2 = int(m2.group(2))
+                quantity = num1 * num2
+            if 'kg' in name:
+                quantity = None
+
+            if quantity is not None:
+                c.execute("UPDATE `ps_product_shop` SET `unit_price_ratio` = %s, `unity` = 'za mililitr' "
+                          "WHERE `ps_product_shop`.`id_product` = %s AND `ps_product_shop`.`id_shop` = 1;",
+                          (quantity, product['id']))
+
+        conn.commit()
+
+    except Exception as e:
+        print("Error:", e)
+        conn.rollback()
+    finally:
+        c.close()
+        conn.close()
 
 
-set_unit_price_api_sql_luminosa(limit=200)
+# set_unit_price_api_sql_luminosa(limit=300)
