@@ -399,9 +399,14 @@ def fill_brand_inci(brand='Mesoestetic', limit=2, source='luminosa'):
                     # Thirdly, if there is INCI in the source - insert it via API directly and break the loop
                     if 'inci' in s_desc:
                         soup = BeautifulSoup(s_desc.split('inci')[1], 'html.parser')
-                        s_inci = soup.find('p', string=True).get_text()
+                        # s_inci = soup.find('p', string=True).get_text()
+                        s_inci = soup.find('p', string=True)
+                        if s_inci:
+                            s_inci_text = s_inci.get_text()
+                        else:
+                            s_inci_text = soup.get_text()
 
-                        s_inci = '<p><strong>Skład INCI</strong></p><p>' + s_inci + '</p>'
+                        s_inci = '<p><strong>Skład INCI</strong></p><p>' + s_inci_text + '</p>'
                         product['description']['language']['value'] += s_inci
 
                         product.pop('manufacturer_name')
@@ -429,9 +434,9 @@ def fill_brand_inci(brand='Mesoestetic', limit=2, source='luminosa'):
     print('\nFINISHED THE SCRIPT')
 
 
-# mapping.get_xml_from_web(source='urodama')
-# check_inci(limit=500, file='urodama_inci_feed.xml')
-# fill_brand_inci(limit=100, brand='Footlogix', source='luminosa')
+# mapping.get_xml_from_web(source='luminosa')
+# check_inci(limit=500, file='luminosa_feed.xml')
+# fill_brand_inci(limit=100, brand='Mesoestetic', source='aleja_inci')
 
 
 def set_unit_price_api(limit=5, site='urodama'):
