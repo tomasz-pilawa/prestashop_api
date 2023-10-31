@@ -9,8 +9,9 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import re
 import pymysql
+import random
 
-import ai_boosting
+# import ai_boosting
 import mapping
 
 api_url = os.getenv('urodama_link')
@@ -603,3 +604,83 @@ def set_unit_price_api_sql_luminosa(limit=5):
 
 
 # set_unit_price_api_sql_luminosa(limit=300)
+
+
+def manipulate_product_description_testing(n_products=10, source='aleja_inci'):
+    tree = ET.parse(f'data/{source}_feed.xml')
+    root = tree.getroot()
+    source_products = root.findall('o')
+
+    all_indexes = [int(p.get('id')) for p in source_products]
+    idx = random.sample(all_indexes, n_products)
+
+    selected_products = [product for product in source_products if int(product.get('id')) in idx]
+
+    output = []
+
+    for p in selected_products:
+        p_desc = p.find('desc').text.strip()    # .lower()
+        summary, latter = '', ''
+
+        cleaned_text = re.sub(r'\n+(?![^\n]*:)', ' ', p_desc)
+        cleaned_text = re.sub(r'&#\d+;', '', cleaned_text).replace('&nbsp;', '')
+
+        inci_split = re.split(r'skład inci', cleaned_text, flags=re.IGNORECASE)
+        if len(inci_split) >= 2:
+            cleaned_text = inci_split[0].strip()
+
+        active_split = re.split(r'składniki aktywne:', cleaned_text, flags=re.IGNORECASE)
+
+        if len(active_split) >= 2:
+            summary = active_split[0].strip()
+            latter = active_split[1].strip()
+
+        print(p.get('id'))
+        print(f'TOKENS USED BEFORE: {round(len(p_desc)/2.7)}')
+        print(f'TOKENS USED AFTER: {round(len(cleaned_text)/2.7)}')
+        if len(summary) > 2:
+            print(f'TOKENS USED SUMMARY: {round(len(summary)/2.7)}')
+            print(f'TOKENS USED LATTER: {round(len(latter) / 2.7)}')
+        print(f'\n')
+        # print(p_desc)
+        # print(cleaned_text)
+
+        output.append({p.get('id'): (round(len(p_desc)/2.7), round(len(cleaned_text)/2.7), round(len(summary)/2.7))})
+
+    print(output)
+    print('END OF THE FUNCTION')
+
+
+# manipulate_product_description_testing()
+
+
+def manipulate_desc(desc):
+    """
+    Trims product description from redundant characters, INCI and divides into summary and ingredients parts.
+    :param desc: single product description already stripped STR
+    :return: summary (str) product  summary trimmed
+            ingredients(str) active ingredients and mode of use trimmed (if none, returns summary)
+    """
+
+    summary, ingredients = '', ''
+
+    cleaned_text = re.sub(r'\n+(?![^\n]*:)', ' ', desc)
+    cleaned_text = re.sub(r'&#\d+;', '', cleaned_text).replace('&nbsp;', '').replace('</b>', '').replace('<b>', '').\
+        replace(' •', '')
+
+    inci_split = re.split(r'skład inci', cleaned_text, flags=re.IGNORECASE)
+    if len(inci_split) >= 2:
+        cleaned_text = inci_split[0].strip()
+
+    active_split = re.split(r'składniki aktywne:', cleaned_text, flags=re.IGNORECASE)
+
+    if len(active_split) >= 2:
+        summary = active_split[0].strip()
+        ingredients = active_split[1].strip()
+    else:
+        summary = cleaned_text
+        ingredients = cleaned_text
+
+    return summary, ingredients
+
+

@@ -8,6 +8,8 @@ import openai
 from prestapyt import PrestaShopWebServiceDict
 from unidecode import unidecode
 
+import editing
+
 openai.api_key = os.getenv('openai_api')
 api_url = os.getenv('urodama_link')
 api_key = os.getenv('urodama_pass')
@@ -87,8 +89,7 @@ def write_descriptions(product_ids_list):
     The function takes list of product IDS & improves short description, description, meta title & meta description.
     It uses chat-gpt API to accomplish that and directly edits given products via Prestashop API.
     :param product_ids_list: list of integers (must be valid Prestashop product ids)
-    :return: prints success message (it operates directly on products and doesn't return anything
-
+    :return: prints success message (it operates directly on products and doesn't return anything)
     """
     prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
@@ -144,3 +145,101 @@ def write_descriptions(product_ids_list):
         prestashop.edit('products', product)
 
     print('FINISHED WRITING PRODUCT DESCRIPTIONS')
+
+
+def write_descriptions_2(product_ids_list, reset_desc):
+    """
+    The function takes list of product IDS & improves short description, description, meta title & meta description.
+    It uses chat-gpt API to accomplish that and directly edits given products via Prestashop API.
+
+    Improved 2.0 function will take original product description, trim it of redundant characters and split into
+    two parts: descriptions vs active ingredients & mode of use. It will than send separate and optimized api requests
+    to open AI and get several components of the whole product description.
+    It will do the proper formatting and arrange the parts rather than use unreliable openAI fantasies.
+    The function will be faster, the formatting will always be right and will use less tokens.
+
+    :type reset_desc: bool
+    :param product_ids_list: list of integers (must be valid Prestashop product ids)
+            reset_desc: should it get the descriptions from alejazdrowia_inci (recommended for testing)
+    :return: prints success message (it operates directly on products and doesn't return anything)
+    """
+
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+
+    for product_id in product_ids_list:
+        product = prestashop.get('products', product_id)['product']
+        product_name = product['name']['language']['value']
+
+        if reset_desc == 1:
+            product_ean = product['ean13'].strip()
+            tree = ET.parse(f'data/aleja_inci_feed.xml')
+            root = tree.getroot()
+            source_products = root.findall('o')
+
+            matching_product = next((product for product in source_products if
+                                     product.find("attrs/a[@name='EAN']").text.strip() == product_ean), None)
+            if matching_product:
+                product_desc = matching_product.find('desc').text.lower()
+            else:
+                product_desc = product['description']['language']['value']
+        else:
+            product_desc = product['description']['language']['value']
+
+        product_summary, product_ingredients = editing.manipulate_desc(product_desc)
+        product_summary = product_summary[:3000]
+        product_ingredients = product_ingredients[:3000]
+
+        print(product)
+        print(product_name)
+        print(product_summary)
+        # print(product_ingredients)
+
+        # with open('data/prompts/write_desc_2.txt', 'r', encoding='utf-8') as file:
+        #     prompt_template = file.read().strip()
+        # prompt = prompt_template.format(product_name=product_name, product_desc=product_summary)
+        # response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=2500, temperature=0.25)
+        # print(f"TOKENS USED: {response['usage']['total_tokens']}")
+        # # print(response.choices[0].text.strip())
+        #
+        # description_short = response.choices[0].text.strip().split('*****')[0].replace('SHORT DESCRIPTION', '').strip()
+        # description = response.choices[0].text.strip().split('*****')[1].replace('LONG DESCRIPTION', '').strip()
+        # # print(description_short)
+        # # print(description)
+
+        task_2 = 'active ingredients component and sposób użycia prompt'
+        task_3 = ' rearrange and format everything for a long description'
+
+        # product['description_short']['language']['value'] = description_short
+        # product['description']['language']['value'] = description
+
+        task = 'Write meta descriptions using short summary'
+        # with open('data/prompts/write_meta.txt', 'r', encoding='utf-8') as file:
+        #     prompt_template = file.read().strip()
+        # prompt = prompt_template.format(product_name=product_name, product_desc=description_short)
+        # response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=999, temperature=0.1)
+        # print(f"TOKENS USED: {response['usage']['total_tokens']}")
+        # # print(response.choices[0].text.strip())
+        #
+        # meta_title = response.choices[0].text.strip().split('*****')[0].replace('META TITLE', '').strip()
+        # meta_description = response.choices[0].text.strip().split('*****')[1].replace('META DESCRIPTION', '').strip()
+        # # print(meta_title)
+        # # print(meta_description)
+        #
+        # product['meta_description']['language']['value'] = meta_description
+        # product['meta_title']['language']['value'] = meta_title
+
+        task_last = 'maybe we can encapsulate this function cuz it repeats itself and is always the same'
+        task_last_2 = 'change [product] so the code is cleaner'
+        # product['product'].pop('manufacturer_name')
+        # product['product'].pop('quantity')
+        # if not product['product']['position_in_category']['value'].isdigit():
+        #     product['product']['position_in_category']['value'] = '1'
+        # if int(product['product']['position_in_category']['value']) < 1:
+        #     product['product']['position_in_category']['value'] = str(1)
+        #
+        #  # prestashop.edit('products', product)
+
+    print('FINISHED WRITING PRODUCT DESCRIPTIONS')
+
+
+write_descriptions_2(product_ids_list=[813, 814, 815, 816], reset_desc=True)
