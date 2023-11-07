@@ -180,10 +180,14 @@ def make_active(desc):
         with open('data/prompts/z_product_active.txt', 'r', encoding='utf-8') as file:
             desc = file.read().strip()
 
-    desc = re.sub(r'\n&', r'</li><li>', desc)
-    desc = desc.replace('INGREDIENTS:</li><li>',
-                        '<p></p><p><strong>Składniki aktywne:</strong></p><ul style="list-style-type: disc;"><li>')
-    desc = re.sub(r'\n\nMODE OF USE:', r'</li><p></p><p><strong>Sposób użycia:</strong><p>', desc) + '</p>'
+    desc = re.sub(r'SKŁADNIKI:',
+                  r'<p></p><p><strong>Składniki aktywne:</strong></p><ul style="list-style-type: disc;">', desc)
+    desc = re.sub(r'(\n&|\n-)', r'</li><li>', desc).replace('</li>', '', 1)
+
+    # desc = desc.replace('SKŁADNIKI:</li><li>',
+    #                     '<p></p><p><strong>Składniki aktywne:</strong></p><ul style="list-style-type: disc;"><li>')
+
+    desc = re.sub(r'\n\nSPOSÓB UŻYCIA:', r'</li></ul><p></p><p><strong>Sposób użycia:</strong><p>', desc + '</p>')
 
     # print(desc)
     return desc
@@ -249,13 +253,15 @@ def write_descriptions_2(product_ids_list, reset_desc):
             product_desc = product['description']['language']['value']
 
         product_summary, product_ingredients = editing.manipulate_desc(product_desc)
+        print(product_summary)
 
         with open('data/prompts/write_desc_2.txt', 'r', encoding='utf-8') as file:
             prompt_template = file.read().strip()
         prompt = prompt_template.format(product_name=product_name, product_desc=product_summary)
-        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=2500, temperature=0.25)
+        print(f'{len(prompt)/2.5} TOKESN APRX')
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1900, temperature=0.25)
         # print(f"TOKENS USED: {response['usage']['total_tokens']}")
-        # print(response.choices[0].text.strip())
+        print(response.choices[0].text.strip())
 
         desc_short, desc_long = make_desc(response.choices[0].text.strip())
 
@@ -264,7 +270,7 @@ def write_descriptions_2(product_ids_list, reset_desc):
         prompt = prompt_template.format(product_desc=product_ingredients)
         response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1500, temperature=0.25)
         # print(f"TOKENS USED: {response['usage']['total_tokens']}")
-        # print(response.choices[0].text.strip())
+        print(response.choices[0].text.strip())
 
         desc_active = make_active(response.choices[0].text.strip())
 
@@ -276,6 +282,5 @@ def write_descriptions_2(product_ids_list, reset_desc):
     print('FINISHED WRITING PRODUCT DESCRIPTIONS')
 
 
-write_descriptions_2(product_ids_list=[813], reset_desc=True)
-# write_descriptions_2(product_ids_list=[813, 814, 815, 816, 817], reset_desc=True)
+write_descriptions_2(product_ids_list=[819, 820, 821, 822], reset_desc=True)
 
