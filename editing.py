@@ -681,6 +681,8 @@ def manipulate_desc(desc):
         summary = cleaned_text
         ingredients = cleaned_text
 
-    return summary, ingredients
+    return summary[:3000], ingredients[:3000]
+
+
 
 
