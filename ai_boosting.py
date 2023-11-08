@@ -7,6 +7,7 @@ import csv
 import openai
 from prestapyt import PrestaShopWebServiceDict
 from unidecode import unidecode
+from bs4 import BeautifulSoup
 
 import editing
 
@@ -183,13 +184,9 @@ def make_active(desc):
     desc = re.sub(r'SKŁADNIKI:',
                   r'<p></p><p><strong>Składniki aktywne:</strong></p><ul style="list-style-type: disc;">', desc)
     desc = re.sub(r'(\n&|\n-)', r'</li><li>', desc).replace('</li>', '', 1)
-
-    # desc = desc.replace('SKŁADNIKI:</li><li>',
-    #                     '<p></p><p><strong>Składniki aktywne:</strong></p><ul style="list-style-type: disc;"><li>')
-
     desc = re.sub(r'\n\nSPOSÓB UŻYCIA:', r'</li></ul><p></p><p><strong>Sposób użycia:</strong><p>', desc + '</p>')
-
     # print(desc)
+
     return desc
 
 
@@ -210,6 +207,34 @@ def edit_presta_product(product):
     prestashop.edit('products', {'product': product})
 
     print(f"Edited product {product['name']['language']['value']}")
+
+
+def truncate_meta(text, max_length=160):
+    """
+    Due to problems with forcing chat-gpt to give summaries that comply with 160 characters count, this function will
+    truncate the string so that it will always keep the first sentence (presumably the most important)
+    and add sentences conveying most of the information but not breaking them
+    :param
+    text: original string to be truncated
+    max_length: integer indicating max length to which the string should be truncated. Default = 170
+    :return: truncated string
+    """
+
+    sentences = text.split('. ')
+    output = sentences[0] + '. '
+
+    remaining_length = max_length - len(output)
+    remaining_sentences = sorted(sentences[1:], key=len, reverse=True)
+
+    for sentence in remaining_sentences:
+        sentence_length = len(sentence) + 2
+        if sentence_length <= remaining_length:
+            output += sentence
+            remaining_length -= sentence_length
+        else:
+            break
+
+    return output.strip()
 
 
 def write_descriptions_2(product_ids_list, reset_desc):
@@ -261,7 +286,7 @@ def write_descriptions_2(product_ids_list, reset_desc):
         print(f'{len(prompt)/2.5} TOKESN APRX')
         response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1900, temperature=0.25)
         # print(f"TOKENS USED: {response['usage']['total_tokens']}")
-        print(response.choices[0].text.strip())
+        # print(response.choices[0].text.strip())
 
         desc_short, desc_long = make_desc(response.choices[0].text.strip())
 
@@ -270,7 +295,7 @@ def write_descriptions_2(product_ids_list, reset_desc):
         prompt = prompt_template.format(product_desc=product_ingredients)
         response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1500, temperature=0.25)
         # print(f"TOKENS USED: {response['usage']['total_tokens']}")
-        print(response.choices[0].text.strip())
+        # print(response.choices[0].text.strip())
 
         desc_active = make_active(response.choices[0].text.strip())
 
@@ -282,5 +307,50 @@ def write_descriptions_2(product_ids_list, reset_desc):
     print('FINISHED WRITING PRODUCT DESCRIPTIONS')
 
 
-write_descriptions_2(product_ids_list=[819, 820, 821, 822], reset_desc=True)
+# write_descriptions_2(product_ids_list=[819, 820, 821, 822], reset_desc=True)
 
+
+def write_meta(product_ids_list):
+    """
+    The function takes product IDs list & improves meta titles & descriptions for SEO based on short product description
+    It uses chat-gpt API to accomplish that and directly edits given products via Prestashop API.
+    Initially the functionality was inside write_descriptions function but was subsequently detached.
+
+    :param product_ids_list: list of integers (must be valid Prestashop product ids)
+    :return: prints success message (it operates directly on products and doesn't return anything)
+    """
+
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+
+    for product_id in product_ids_list:
+        product = prestashop.get('products', product_id)['product']
+        product_name = product['name']['language']['value']
+
+        product_desc = product['description_short']['language']['value']
+        product_desc = BeautifulSoup(product_desc, 'html.parser').get_text()
+
+        print(product_name)
+        # print(product_desc)
+
+        with open('data/prompts/write_meta_2.txt', 'r', encoding='utf-8') as file:
+            prompt_template = file.read().strip()
+        prompt = prompt_template.format(product_name=product_name, product_desc=product_desc)
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=400, temperature=0.3)
+        # print(f"TOKENS USED: {response['usage']['total_tokens']}")
+
+        text = response.choices[0].text.strip()
+        # print(text)
+
+        meta_title = text.split('META DESCRIPTION:')[0].split('META TITLE:')[1].strip()
+        meta_desc = truncate_meta(text.split('META DESCRIPTION:')[1].strip())
+
+        product['meta_title']['language']['value'] = meta_title
+        product['meta_description']['language']['value'] = meta_desc
+
+        edit_presta_product(product=product)
+
+    print('FINISHED WRITING META DESCRIPTIONS')
+
+
+# write_meta(product_ids_list=[813, 814])
+# write_meta(product_ids_list=[813, 814, 815, 816, 817, 819, 820, 821, 822])
