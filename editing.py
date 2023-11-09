@@ -308,16 +308,39 @@ def fill_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
     print('\nFINISHED THE SCRIPT')
 
 
-# mapping.get_xml_from_web(source='luminosa')
+# mapping.get_xml_from_web(source='aleja')
 # fill_inci(limit=100, brand='Mesoestetic', source='aleja_inci')
+# fill_inci(limit=100, product_ids=[813, 814, 815, 816, 817, 819, 820, 821, 822], source='aleja')
 
 
-def set_unit_price_api_sql_luminosa(limit=5, site='urodama'):
+def set_unit_price_api_sql(site='urodama', product_ids=None, limit=5):
+    """
+    Calculates price/quantity ratio based on product name regex and price variables accessed via API.
+    Inserts correct values directly on SQL database, either urodama or luminosa
+    If no product ids are given, the function iterates over the whole DB considering the limit of max products.
+    :param site: which shop data should be manipulated: either 'urodama' or 'luminosa'
+    :param product_ids: list of integers of valid product ids
+    :param limit: maximum products to iterate over (useful in case of no product_ids list given)
+    :return: operates directly on DB and prints success message
+    """
 
+    # Connect to Prestashop API to get the data for unit price manipulation
+    api_url = os.getenv(f'{site}_link')
+    api_key = os.getenv(f'{site}_pass')
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+
+    # switch enabling manipulating only specified product ids
+    if not product_ids:
+        indexes = prestashop.search('products')
+    else:
+        indexes = product_ids
+
+    # Get SQL connection passes
     with open('data/php_access.json', encoding='utf-8') as file:
         php_access = json.load(file)[site]
-    pass_php = os.getenv('pass_php_luminosa')
+    pass_php = os.getenv(f'pass_php_{site}')
 
+    # Connect to the database
     conn = pymysql.connect(
         host=php_access['host'],
         port=3306,
@@ -325,17 +348,11 @@ def set_unit_price_api_sql_luminosa(limit=5, site='urodama'):
         password=pass_php,
         db=php_access['db'])
 
-    luminosa_url = os.getenv('luminosa_link')
-    luminosa_key = os.getenv('luminosa_pass')
-    prestashop = PrestaShopWebServiceDict(luminosa_url, luminosa_key)
-
-    indexes = prestashop.search('products')
-
     try:
         c = conn.cursor()
         conn.begin()
 
-        for i in indexes[1:limit]:
+        for i in indexes[:limit]:
             product = prestashop.get('products', i)['product']
 
             name = product['name']['language']['value']
@@ -355,9 +372,7 @@ def set_unit_price_api_sql_luminosa(limit=5, site='urodama'):
                 quantity = None
 
             if quantity is not None:
-                c.execute("UPDATE `ps_product_shop` SET `unit_price_ratio` = %s, `unity` = 'za mililitr' "
-                          "WHERE `ps_product_shop`.`id_product` = %s AND `ps_product_shop`.`id_shop` = 1;",
-                          (quantity, product['id']))
+                c.execute(php_access['query'], (quantity, product['id']))
 
         conn.commit()
 
@@ -369,7 +384,7 @@ def set_unit_price_api_sql_luminosa(limit=5, site='urodama'):
         conn.close()
 
 
-# set_unit_price_api_sql_luminosa(limit=300)
+# set_unit_price_api_sql(limit=20, product_ids=[813, 814, 815, 816, 817, 819, 820, 821, 822])
 
 
 def manipulate_desc(desc):
@@ -426,8 +441,6 @@ def make_desc(desc):
 
     return desc_short, desc_long
 
-# make_desc(desc=None)
-
 
 def make_active(desc):
 
@@ -442,9 +455,6 @@ def make_active(desc):
     # print(desc)
 
     return desc
-
-
-# make_active(desc=None)
 
 
 def edit_presta_product(product):
