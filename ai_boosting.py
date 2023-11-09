@@ -85,158 +85,6 @@ def classify_categories(product_ids_list):
     print('FINISHED PRODUCTS CLASSIFICATION')
 
 
-def write_descriptions(product_ids_list):
-    """
-    The function takes list of product IDS & improves short description, description, meta title & meta description.
-    It uses chat-gpt API to accomplish that and directly edits given products via Prestashop API.
-    :param product_ids_list: list of integers (must be valid Prestashop product ids)
-    :return: prints success message (it operates directly on products and doesn't return anything)
-    """
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
-
-    for product_id in product_ids_list:
-        product = prestashop.get('products', product_id)
-        product_name = product['product']['name']['language']['value']
-        product_desc = product['product']['description']['language']['value']
-
-        if product_desc.count(' ') > 350:
-            tokens = product_desc.split(' ')
-            product_desc = ' '.join(tokens[:350])
-
-        # print(product)
-        print(product_name)
-
-        with open('data/prompts/write_descriptions.txt', 'r', encoding='utf-8') as file:
-            prompt_template = file.read().strip()
-        prompt = prompt_template.format(product_name=product_name, product_desc=product_desc)
-        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1800, temperature=0.25)
-        print(f"TOKENS USED: {response['usage']['total_tokens']}")
-        # print(response.choices[0].text.strip())
-
-        description_short = response.choices[0].text.strip().split('*****')[0].replace('SHORT DESCRIPTION', '').strip()
-        description = response.choices[0].text.strip().split('*****')[1].replace('LONG DESCRIPTION', '').strip()
-        # print(description_short)
-        # print(description)
-
-        product['product']['description_short']['language']['value'] = description_short
-        product['product']['description']['language']['value'] = description
-
-        with open('data/prompts/write_meta.txt', 'r', encoding='utf-8') as file:
-            prompt_template = file.read().strip()
-        prompt = prompt_template.format(product_name=product_name, product_desc=description_short)
-        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1000, temperature=0.1)
-        print(f"TOKENS USED: {response['usage']['total_tokens']}")
-        # print(response.choices[0].text.strip())
-
-        meta_title = response.choices[0].text.strip().split('*****')[0].replace('META TITLE', '').strip()
-        meta_description = response.choices[0].text.strip().split('*****')[1].replace('META DESCRIPTION', '').strip()
-        # print(meta_title)
-        # print(meta_description)
-
-        product['product']['meta_description']['language']['value'] = meta_description
-        product['product']['meta_title']['language']['value'] = meta_title
-
-        product['product'].pop('manufacturer_name')
-        product['product'].pop('quantity')
-        if not product['product']['position_in_category']['value'].isdigit():
-            product['product']['position_in_category']['value'] = '1'
-        if int(product['product']['position_in_category']['value']) < 1:
-            product['product']['position_in_category']['value'] = str(1)
-
-        prestashop.edit('products', product)
-
-    print('FINISHED WRITING PRODUCT DESCRIPTIONS')
-
-
-def make_desc(desc):
-
-    if desc is None:
-        with open('data/prompts/z_product_desc.txt', 'r', encoding='utf-8') as file:
-            desc = file.read().strip()
-
-    desc_short = desc.split('SHORT DESCRIPTION:')[1].strip()
-    desc_long = desc.split('SHORT DESCRIPTION:')[0].replace('LONG DESCRIPTION:', '').strip().\
-        replace('Właściwości i Zalety kosmetyku:', '</p><p><strong>Właściwości i Zalety kosmetyku:</strong>')
-
-    desc_short = re.sub(r'\n& ', r'</li><li>', desc_short)
-    desc_short = re.sub(r'& ', r'<li>', desc_short)
-    desc_short = f'<ul style="list-style-type: disc;">{desc_short}</li></ul>'
-
-    desc_long = re.sub(r'\n& ', r'</li><li>', desc_long)
-    desc_long = re.sub(r'\n\n', '</p><p>', desc_long)
-    desc_long = desc_long.replace('</strong></li><li>', '</strong></p><ul style="list-style-type: disc;"><li>')
-    desc_long = f'<p>{desc_long}</li></ul>'
-
-    # print(desc_short)
-    # print(desc_long)
-
-    return desc_short, desc_long
-
-# make_desc(desc=None)
-
-
-def make_active(desc):
-
-    if desc is None:
-        with open('data/prompts/z_product_active.txt', 'r', encoding='utf-8') as file:
-            desc = file.read().strip()
-
-    desc = re.sub(r'SKŁADNIKI:',
-                  r'<p></p><p><strong>Składniki aktywne:</strong></p><ul style="list-style-type: disc;">', desc)
-    desc = re.sub(r'(\n&|\n-)', r'</li><li>', desc).replace('</li>', '', 1)
-    desc = re.sub(r'\n\nSPOSÓB UŻYCIA:', r'</li></ul><p></p><p><strong>Sposób użycia:</strong><p>', desc + '</p>')
-    # print(desc)
-
-    return desc
-
-
-# make_active(desc=None)
-
-
-def edit_presta_product(product):
-
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
-
-    product.pop('manufacturer_name')
-    product.pop('quantity')
-    if not product['position_in_category']['value'].isdigit():
-        product['position_in_category']['value'] = '1'
-    if int(product['position_in_category']['value']) < 1:
-        product['position_in_category']['value'] = str(1)
-
-    prestashop.edit('products', {'product': product})
-
-    print(f"Edited product {product['name']['language']['value']}")
-
-
-def truncate_meta(text, max_length=160):
-    """
-    Due to problems with forcing chat-gpt to give summaries that comply with 160 characters count, this function will
-    truncate the string so that it will always keep the first sentence (presumably the most important)
-    and add sentences conveying most of the information but not breaking them
-    :param
-    text: original string to be truncated
-    max_length: integer indicating max length to which the string should be truncated. Default = 170
-    :return: truncated string
-    """
-
-    sentences = text.split('. ')
-    output = sentences[0] + '. '
-
-    remaining_length = max_length - len(output)
-    remaining_sentences = sorted(sentences[1:], key=len, reverse=True)
-
-    for sentence in remaining_sentences:
-        sentence_length = len(sentence) + 2
-        if sentence_length <= remaining_length:
-            output += sentence
-            remaining_length -= sentence_length
-        else:
-            break
-
-    return output.strip()
-
-
 def write_descriptions_2(product_ids_list, reset_desc):
     """
     The function takes list of product IDS & improves short description, description, meta title & meta description.
@@ -288,7 +136,7 @@ def write_descriptions_2(product_ids_list, reset_desc):
         # print(f"TOKENS USED: {response['usage']['total_tokens']}")
         # print(response.choices[0].text.strip())
 
-        desc_short, desc_long = make_desc(response.choices[0].text.strip())
+        desc_short, desc_long = editing.make_desc(response.choices[0].text.strip())
 
         with open('data/prompts/write_active.txt', 'r', encoding='utf-8') as file:
             prompt_template = file.read().strip()
@@ -297,12 +145,12 @@ def write_descriptions_2(product_ids_list, reset_desc):
         # print(f"TOKENS USED: {response['usage']['total_tokens']}")
         # print(response.choices[0].text.strip())
 
-        desc_active = make_active(response.choices[0].text.strip())
+        desc_active = editing.make_active(response.choices[0].text.strip())
 
         product['description_short']['language']['value'] = desc_short
         product['description']['language']['value'] = desc_long + desc_active
 
-        edit_presta_product(product=product)
+        editing.edit_presta_product(product=product)
 
     print('FINISHED WRITING PRODUCT DESCRIPTIONS')
 
@@ -342,12 +190,12 @@ def write_meta(product_ids_list):
         # print(text)
 
         meta_title = text.split('META DESCRIPTION:')[0].split('META TITLE:')[1].strip()
-        meta_desc = truncate_meta(text.split('META DESCRIPTION:')[1].strip())
+        meta_desc = editing.truncate_meta(text.split('META DESCRIPTION:')[1].strip())
 
         product['meta_title']['language']['value'] = meta_title
         product['meta_description']['language']['value'] = meta_desc
 
-        edit_presta_product(product=product)
+        editing.edit_presta_product(product=product)
 
     print('FINISHED WRITING META DESCRIPTIONS')
 

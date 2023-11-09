@@ -3,41 +3,18 @@ import json
 import csv
 from prestapyt import PrestaShopWebServiceDict
 import xml.etree.ElementTree as ET
-import openai
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
 import re
 import pymysql
-import random
 
-# import ai_boosting
 import mapping
 
 api_url = os.getenv('urodama_link')
 api_key = os.getenv('urodama_pass')
-openai.api_key = os.getenv('openai_api')
 
 prestashop = PrestaShopWebServiceDict(api_url, api_key)
-
-
-def truncate_string(text, max_length=70):
-    """
-    Truncates the string to 70 characters max. Necessary due to limits on Prestashop Meta Title variable.
-    """
-    if len(text) > max_length:
-        truncated_text = text[:max_length - 3] + "..."
-    else:
-        truncated_text = text
-    return truncated_text
-
-
-def extract_plain_text(html_content):
-    """
-    Used for simple processing to remove html tags from meta.
-    """
-    soup = BeautifulSoup(html_content, 'html.parser')
-    return soup.get_text()
 
 
 def select_products_xml(source='luminosa', mode=None, data=None, print_info=None):
@@ -144,8 +121,8 @@ def process_products(product_list, max_products=5):
 
         data['description'] = single_product.find('desc').text.split('div class')[0]
         data['description_short'] = single_product.find('desc').text.split('</p><p>')[0]
-        data['meta_title'] = truncate_string(data['name'], 70).strip('\n ')
-        data['meta_description'] = truncate_string(extract_plain_text(single_product.find('desc').text), 160).strip('\n ')
+        data['meta_title'] = data['name'].strip('\n ')
+        data['meta_description'] = BeautifulSoup(single_product.find('desc').text, 'html.parser').get_text().strip('\n')
 
         data['image_url'] = single_product.find("imgs/main").get('url')
 
@@ -190,8 +167,6 @@ def add_with_photo(product_list):
 
             prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
 
-            write_to_csv(file_path='data/logs/added_products_raw.csv', product_dict=single_product)
-
         else:
             print(f"Failed to download image for product: {single_product['name']['language']['value']}")
             continue
@@ -202,46 +177,15 @@ def add_with_photo(product_list):
     return indexes_added
 
 
-def write_to_csv(file_path, product_dict):
-
-    row_data = {
-        'ID_u': product_dict['product_id'],
-        'ref': product_dict['reference'],
-        'nazwa': product_dict['name']['language']['value'],
-        'active': product_dict['state'],
-        'brand': '',
-        'wprowadzony': datetime.now().strftime("%d-%m-%Y %H:%M"),
-        'Comments': product_dict['ean13'],
-        'Sales 2021': 0,
-        'Sales 2022': 0,
-        'COST NET': product_dict['wholesale_price'],
-        'PRICE': product_dict['price']
-    }
-
-    with open(file_path, mode='a', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=row_data.keys())
-        writer.writerow(row_data)
-
-
 def fix_data_from_csv(file_path):
 
     fixed_ids = []
-    products_log_list = []
 
     with open(file_path, encoding='utf-8', newline='') as file:
         reader = list(csv.DictReader(file))
 
     for r in reader:
         product = prestashop.get('products', r['ID_u'])
-
-        # writes initial data into the log
-        product_log = dict(SKU_old=product['product']['reference'],
-                           EAN_old=product['product']['ean13'],
-                           active_old=product['product']['state'],
-                           name_old=product['product']['name']['language']['value'],
-                           cost_old=product['product']['wholesale_price'],
-                           price_old=product['product']['price'])
-
         product['product']['reference'] = r['ref']
         product['product']['name']['language']['value'] = r['nazwa']
         product['product']['ean13'] = r['Comments']
@@ -266,99 +210,12 @@ def fix_data_from_csv(file_path):
         print(product)
         prestashop.edit('products', product)
 
-        # writes a log of all changes in nice format
-        product_log.update({
-            'ID_urodama': product['product']['id'],
-            'date_change': datetime.now().strftime("%d-%m-%Y %H:%M"),
-            'brand_id': product['product']['id_manufacturer'],
-            'SKU_new': product['product']['reference'],
-            'EAN_new': product['product']['ean13'],
-            'active_new': product['product']['state'],
-            'name_new': product['product']['name']['language']['value'],
-            'cost_new': product['product']['wholesale_price'],
-            'price_new': product['product']['price']
-        })
-        products_log_list.append(product_log)
-
     print('FINISHED FIXING FROM CSV')
 
-    return fixed_ids, products_log_list
+    return fixed_ids
 
 
-def add_product_from_xml(select_source=None, select_mode=None, select_data=None, process_max_products=2):
-    products = select_products_xml(source=select_source, mode=select_mode, data=select_data)
-    products = process_products(products, max_products=process_max_products)
-    add_with_photo(products)
-
-
-def improve_products(file_path_fix=None, classify_ai=0, descriptions_ai=0, features_ai=0):
-
-    product_ids, product_logs = fix_data_from_csv(file_path=file_path_fix)
-
-    if classify_ai:
-        ai_boosting.classify_categories(product_ids)
-    if descriptions_ai:
-        ai_boosting.write_descriptions(product_ids)
-    if features_ai:
-        # ai_boosting.configure_features(products_ids)
-        pass
-
-    # writes log for all changes
-    for product in product_logs:
-        product.update({'classify_ai': classify_ai, 'descriptions_ai': descriptions_ai, 'features_ai': features_ai})
-        with open('data/logs/improved_products_log.csv', mode='a', newline='') as file:
-            writer = csv.DictWriter(file, fieldnames=product.keys())
-            writer.writerow(product)
-
-    mapping.update_products_dict(mode='ids', data_ids_list=product_ids)
-    mapping.update_brands_dict()
-    mapping.update_cats_dict(update_cats_to_classify=0)
-
-
-# improve_products(file_path_fix='data/logs/__dummy_testing_change.csv', classify_ai=1)
-
-# add_product_from_xml(select_source='luminosa', process_max_products=2)
-# prestashop.delete('products', [792, 793])
-
-
-def check_inci(limit=5, file=None):
-
-    tree = ET.parse(f'data/{file}')
-    root = tree.getroot()
-    all_products = root.findall('o')
-
-    ids_no_inci = []
-    brands = ["Filorga", "Mesoestetic", "Anna Lotan", "Sesderma", "LEIM", "Germaine de Capuccini", "Fusion Mesotherapy",
-              "Prokos", "Retix C", "Exuviance", "GUAM Lacote", "Lidooxin", "Magnipsor", "Colway", "Croma Pharma",
-              "Montibello", "Footlogix"]
-    brand_counts = {brand: 0 for brand in brands}
-
-    for p in all_products[:limit]:
-        p_name = p.find('name').text
-        p_id = int(p.get('id'))
-        p_desc = p.find('desc').text.lower()
-
-        if 'inci' in p_desc:
-            x = p_desc.split('inci')[1]
-
-            soup = BeautifulSoup(x, 'html.parser')
-            inci_p = soup.find('p', string=True)
-            # print(inci_p.get_text())
-
-        else:
-            ids_no_inci.append(p_id)
-            print(p_name.strip())
-            for brand in brands:
-                if p.find(".//attrs/a[@name='Producent']").text.strip().lower() == brand.lower():
-                    brand_counts[brand] += 1
-
-    print(f"There are {len(ids_no_inci)} products (out of {len(all_products[:limit])}) without valid INCI code. "
-          f"Here's the list of them")
-    print(ids_no_inci)
-    print(brand_counts)
-
-
-def fill_brand_inci(brand='Mesoestetic', limit=2, source='luminosa'):
+def fill_brand_inci(brand='Mesoestetic', limit=2, source='aleja_inci'):
 
     # Get list of brand IDs from json dict
     with open('data/brands_dict.json', encoding='utf-8') as file:
@@ -369,7 +226,7 @@ def fill_brand_inci(brand='Mesoestetic', limit=2, source='luminosa'):
     root = tree.getroot()
     source_products = root.findall('o')
 
-    # Iterate over all Products and fill in Inci if either SKU or EAN matches any product in source database
+    # Iterate over all Products and fill in INCI if either SKU or EAN matches any product in source database
     for p_id in all_brand_ids[:limit]:
         product = prestashop.get('products', p_id)['product']
         print(f"\nCHECKING PRODUCT {product['name']['language']['value']}")
@@ -436,7 +293,6 @@ def fill_brand_inci(brand='Mesoestetic', limit=2, source='luminosa'):
 
 
 # mapping.get_xml_from_web(source='luminosa')
-# check_inci(limit=500, file='luminosa_feed.xml')
 # fill_brand_inci(limit=100, brand='Mesoestetic', source='aleja_inci')
 
 
@@ -606,54 +462,6 @@ def set_unit_price_api_sql_luminosa(limit=5):
 # set_unit_price_api_sql_luminosa(limit=300)
 
 
-def manipulate_product_description_testing(n_products=10, source='aleja_inci'):
-    tree = ET.parse(f'data/{source}_feed.xml')
-    root = tree.getroot()
-    source_products = root.findall('o')
-
-    all_indexes = [int(p.get('id')) for p in source_products]
-    idx = random.sample(all_indexes, n_products)
-
-    selected_products = [product for product in source_products if int(product.get('id')) in idx]
-
-    output = []
-
-    for p in selected_products:
-        p_desc = p.find('desc').text.strip()    # .lower()
-        summary, latter = '', ''
-
-        cleaned_text = re.sub(r'\n+(?![^\n]*:)', ' ', p_desc)
-        cleaned_text = re.sub(r'&#\d+;', '', cleaned_text).replace('&nbsp;', '')
-
-        inci_split = re.split(r'skład inci', cleaned_text, flags=re.IGNORECASE)
-        if len(inci_split) >= 2:
-            cleaned_text = inci_split[0].strip()
-
-        active_split = re.split(r'składniki aktywne:', cleaned_text, flags=re.IGNORECASE)
-
-        if len(active_split) >= 2:
-            summary = active_split[0].strip()
-            latter = active_split[1].strip()
-
-        print(p.get('id'))
-        print(f'TOKENS USED BEFORE: {round(len(p_desc)/2.7)}')
-        print(f'TOKENS USED AFTER: {round(len(cleaned_text)/2.7)}')
-        if len(summary) > 2:
-            print(f'TOKENS USED SUMMARY: {round(len(summary)/2.7)}')
-            print(f'TOKENS USED LATTER: {round(len(latter) / 2.7)}')
-        print(f'\n')
-        # print(p_desc)
-        # print(cleaned_text)
-
-        output.append({p.get('id'): (round(len(p_desc)/2.7), round(len(cleaned_text)/2.7), round(len(summary)/2.7))})
-
-    print(output)
-    print('END OF THE FUNCTION')
-
-
-# manipulate_product_description_testing()
-
-
 def manipulate_desc(desc):
     """
     Trims product description from redundant characters, INCI and divides into summary and ingredients parts.
@@ -682,6 +490,97 @@ def manipulate_desc(desc):
         ingredients = cleaned_text
 
     return summary[:3000], ingredients[:3000]
+
+
+def make_desc(desc):
+
+    if desc is None:
+        with open('data/prompts/z_product_desc.txt', 'r', encoding='utf-8') as file:
+            desc = file.read().strip()
+
+    desc_short = desc.split('SHORT DESCRIPTION:')[1].strip()
+    desc_long = desc.split('SHORT DESCRIPTION:')[0].replace('LONG DESCRIPTION:', '').strip().\
+        replace('Właściwości i Zalety kosmetyku:', '</p><p><strong>Właściwości i Zalety kosmetyku:</strong>')
+
+    desc_short = re.sub(r'\n& ', r'</li><li>', desc_short)
+    desc_short = re.sub(r'& ', r'<li>', desc_short)
+    desc_short = f'<ul style="list-style-type: disc;">{desc_short}</li></ul>'
+
+    desc_long = re.sub(r'\n& ', r'</li><li>', desc_long)
+    desc_long = re.sub(r'\n\n', '</p><p>', desc_long)
+    desc_long = desc_long.replace('</strong></li><li>', '</strong></p><ul style="list-style-type: disc;"><li>')
+    desc_long = f'<p>{desc_long}</li></ul>'
+
+    # print(desc_short)
+    # print(desc_long)
+
+    return desc_short, desc_long
+
+# make_desc(desc=None)
+
+
+def make_active(desc):
+
+    if desc is None:
+        with open('data/prompts/z_product_active.txt', 'r', encoding='utf-8') as file:
+            desc = file.read().strip()
+
+    desc = re.sub(r'SKŁADNIKI:',
+                  r'<p></p><p><strong>Składniki aktywne:</strong></p><ul style="list-style-type: disc;">', desc)
+    desc = re.sub(r'(\n&|\n-)', r'</li><li>', desc).replace('</li>', '', 1)
+    desc = re.sub(r'\n\nSPOSÓB UŻYCIA:', r'</li></ul><p></p><p><strong>Sposób użycia:</strong><p>', desc + '</p>')
+    # print(desc)
+
+    return desc
+
+
+# make_active(desc=None)
+
+
+def edit_presta_product(product):
+
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+
+    product.pop('manufacturer_name')
+    product.pop('quantity')
+    product.pop('position_in_category')
+
+    # if not product['position_in_category']['value'].isdigit():
+    #     product['position_in_category']['value'] = '1'
+    # if int(product['position_in_category']['value']) < 1:
+    #     product['position_in_category']['value'] = str(1)
+
+    prestashop.edit('products', {'product': product})
+
+    print(f"Edited product {product['name']['language']['value']}")
+
+
+def truncate_meta(text, max_length=160):
+    """
+    Due to problems with forcing chat-gpt to give summaries that comply with 160 characters count, this function will
+    truncate the string so that it will always keep the first sentence (presumably the most important)
+    and add sentences conveying most of the information but not breaking them
+    :param
+    text: original string to be truncated
+    max_length: integer indicating max length to which the string should be truncated. Default = 170
+    :return: truncated string
+    """
+
+    sentences = text.split('. ')
+    output = sentences[0] + '. '
+
+    remaining_length = max_length - len(output)
+    remaining_sentences = sorted(sentences[1:], key=len, reverse=True)
+
+    for sentence in remaining_sentences:
+        sentence_length = len(sentence) + 2
+        if sentence_length <= remaining_length:
+            output += sentence
+            remaining_length -= sentence_length
+        else:
+            break
+
+    return output.strip()
 
 
 

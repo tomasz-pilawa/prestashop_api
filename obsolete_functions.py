@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 import json
 import random
 import re
+from bs4 import BeautifulSoup
 
 import mapping
 
@@ -17,6 +18,168 @@ api_key = os.getenv('urodama_pass')
 prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
 openai.api_key = os.getenv('openai_api')
+
+
+def check_inci(limit=5, file=None):
+
+    """
+    Simple functions that check how many products of each brand lack INCI in product description
+    :param limit: how many products shall be checked
+    :param file: xml source file (name of the shop)
+    :return: prints the summary
+    """
+
+    tree = ET.parse(f'data/{file}')
+    root = tree.getroot()
+    all_products = root.findall('o')
+
+    ids_no_inci = []
+    brands = ["Filorga", "Mesoestetic", "Anna Lotan", "Sesderma", "LEIM", "Germaine de Capuccini", "Fusion Mesotherapy",
+              "Prokos", "Retix C", "Exuviance", "GUAM Lacote", "Lidooxin", "Magnipsor", "Colway", "Croma Pharma",
+              "Montibello", "Footlogix"]
+    brand_counts = {brand: 0 for brand in brands}
+
+    for p in all_products[:limit]:
+        p_name = p.find('name').text
+        p_id = int(p.get('id'))
+        p_desc = p.find('desc').text.lower()
+
+        if 'inci' in p_desc:
+            x = p_desc.split('inci')[1]
+
+            soup = BeautifulSoup(x, 'html.parser')
+            inci_p = soup.find('p', string=True)
+            # print(inci_p.get_text())
+
+        else:
+            ids_no_inci.append(p_id)
+            print(p_name.strip())
+            for brand in brands:
+                if p.find(".//attrs/a[@name='Producent']").text.strip().lower() == brand.lower():
+                    brand_counts[brand] += 1
+
+    print(f"There are {len(ids_no_inci)} products (out of {len(all_products[:limit])}) without valid INCI code. "
+          f"Here's the list of them")
+    print(ids_no_inci)
+    print(brand_counts)
+
+
+def manipulate_product_description_testing(n_products=10, source='aleja_inci'):
+    """
+    Old function used to test description manipulation and truncation for ai boosting to save tokens.
+    :param n_products: number of products to test description manimulation
+    :param source: xml source of product descriptions
+    :return:
+    """
+
+    tree = ET.parse(f'data/{source}_feed.xml')
+    root = tree.getroot()
+    source_products = root.findall('o')
+
+    all_indexes = [int(p.get('id')) for p in source_products]
+    idx = random.sample(all_indexes, n_products)
+
+    selected_products = [product for product in source_products if int(product.get('id')) in idx]
+
+    output = []
+
+    for p in selected_products:
+        p_desc = p.find('desc').text.strip()  # .lower()
+        summary, latter = '', ''
+
+        cleaned_text = re.sub(r'\n+(?![^\n]*:)', ' ', p_desc)
+        cleaned_text = re.sub(r'&#\d+;', '', cleaned_text).replace('&nbsp;', '')
+
+        inci_split = re.split(r'skład inci', cleaned_text, flags=re.IGNORECASE)
+        if len(inci_split) >= 2:
+            cleaned_text = inci_split[0].strip()
+
+        active_split = re.split(r'składniki aktywne:', cleaned_text, flags=re.IGNORECASE)
+
+        if len(active_split) >= 2:
+            summary = active_split[0].strip()
+            latter = active_split[1].strip()
+
+        print(p.get('id'))
+        print(f'TOKENS USED BEFORE: {round(len(p_desc) / 2.7)}')
+        print(f'TOKENS USED AFTER: {round(len(cleaned_text) / 2.7)}')
+        if len(summary) > 2:
+            print(f'TOKENS USED SUMMARY: {round(len(summary) / 2.7)}')
+            print(f'TOKENS USED LATTER: {round(len(latter) / 2.7)}')
+        print(f'\n')
+        # print(p_desc)
+        # print(cleaned_text)
+
+        output.append(
+            {p.get('id'): (round(len(p_desc) / 2.7), round(len(cleaned_text) / 2.7), round(len(summary) / 2.7))})
+
+    print(output)
+    print('END OF THE FUNCTION')
+
+
+def write_descriptions(product_ids_list):
+    """
+    There is a newer 2.0 version of this function
+    The function takes list of product IDS & improves short description, description, meta title & meta description.
+    It uses chat-gpt API to accomplish that and directly edits given products via Prestashop API.
+    :param product_ids_list: list of integers (must be valid Prestashop product ids)
+    :return: prints success message (it operates directly on products and doesn't return anything)
+    """
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+
+    for product_id in product_ids_list:
+        product = prestashop.get('products', product_id)
+        product_name = product['product']['name']['language']['value']
+        product_desc = product['product']['description']['language']['value']
+
+        if product_desc.count(' ') > 350:
+            tokens = product_desc.split(' ')
+            product_desc = ' '.join(tokens[:350])
+
+        # print(product)
+        print(product_name)
+
+        with open('data/prompts/write_descriptions.txt', 'r', encoding='utf-8') as file:
+            prompt_template = file.read().strip()
+        prompt = prompt_template.format(product_name=product_name, product_desc=product_desc)
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1800, temperature=0.25)
+        print(f"TOKENS USED: {response['usage']['total_tokens']}")
+        # print(response.choices[0].text.strip())
+
+        description_short = response.choices[0].text.strip().split('*****')[0].replace('SHORT DESCRIPTION', '').strip()
+        description = response.choices[0].text.strip().split('*****')[1].replace('LONG DESCRIPTION', '').strip()
+        # print(description_short)
+        # print(description)
+
+        product['product']['description_short']['language']['value'] = description_short
+        product['product']['description']['language']['value'] = description
+
+        with open('data/prompts/write_meta.txt', 'r', encoding='utf-8') as file:
+            prompt_template = file.read().strip()
+        prompt = prompt_template.format(product_name=product_name, product_desc=description_short)
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1000, temperature=0.1)
+        print(f"TOKENS USED: {response['usage']['total_tokens']}")
+        # print(response.choices[0].text.strip())
+
+        meta_title = response.choices[0].text.strip().split('*****')[0].replace('META TITLE', '').strip()
+        meta_description = response.choices[0].text.strip().split('*****')[1].replace('META DESCRIPTION', '').strip()
+        # print(meta_title)
+        # print(meta_description)
+
+        product['product']['meta_description']['language']['value'] = meta_description
+        product['product']['meta_title']['language']['value'] = meta_title
+
+        product['product'].pop('manufacturer_name')
+        product['product'].pop('quantity')
+        if not product['product']['position_in_category']['value'].isdigit():
+            product['product']['position_in_category']['value'] = '1'
+        if int(product['product']['position_in_category']['value']) < 1:
+            product['product']['position_in_category']['value'] = str(1)
+
+        prestashop.edit('products', product)
+
+    print('FINISHED WRITING PRODUCT DESCRIPTIONS')
+
 
 
 def set_up_cats_after_migration():
@@ -110,6 +273,25 @@ def fix_stock(file_old=None, file_new=None):
 
 
 # fix_stock(file_old='new_prices_urodama_07_2023.xml', file_new='ceneo_urodama_after_update_too_many.xml')
+
+
+def truncate_string(text, max_length=70):
+    """
+    Truncates the string to 70 characters max. Necessary due to limits on Prestashop Meta Title variable.
+    """
+    if len(text) > max_length:
+        truncated_text = text[:max_length - 3] + "..."
+    else:
+        truncated_text = text
+    return truncated_text
+
+
+def extract_plain_text(html_content):
+    """
+    Used for simple processing to remove html tags from meta.
+    """
+    soup = BeautifulSoup(html_content, 'html.parser')
+    return soup.get_text()
 
 
 def add_product(file_name, brand=None, mode='print', price_ratio=1.87, max_products=3, edit_presta=0,
