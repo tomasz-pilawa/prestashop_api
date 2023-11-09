@@ -215,7 +215,7 @@ def fix_data_from_csv(file_path):
     return fixed_ids
 
 
-def fill_brand_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
+def fill_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
     """
     Checks whether there is an INCI in product description for a given brand or specific products.
     If not, checks in the source XML data (based on SKU and EAN) whether there is an INCI to insert.
@@ -225,7 +225,6 @@ def fill_brand_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
     :param limit: maximum number of the products handled
     :param source: source data XML
     :param product_ids: list of int of products to operate upon
-    :return:
     """
 
     # Get list of brand IDs from json dict or set ids to be fixed or return early
@@ -310,7 +309,7 @@ def fill_brand_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
 
 
 # mapping.get_xml_from_web(source='luminosa')
-# fill_brand_inci(limit=100, brand='Mesoestetic', source='aleja_inci')
+# fill_inci(limit=100, brand='Mesoestetic', source='aleja_inci')
 
 
 def set_unit_price_api(limit=5, site='urodama'):
