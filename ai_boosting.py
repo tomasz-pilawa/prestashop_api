@@ -85,7 +85,7 @@ def classify_categories(product_ids_list):
     print('FINISHED PRODUCTS CLASSIFICATION')
 
 
-def write_descriptions_2(product_ids_list, reset_desc):
+def write_descriptions_2(product_ids_list, reset_desc=0):
     """
     The function takes list of product IDS & improves short description, description, meta title & meta description.
     It uses chat-gpt API to accomplish that and directly edits given products via Prestashop API.

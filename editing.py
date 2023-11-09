@@ -300,11 +300,6 @@ def fill_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
         else:
             print('The INCI is already there')
 
-    # response = requests.get('https://urodama.pl/ceneoinci.php')
-    # if response.status_code == 200:
-    #     print('\nCeneo PHP updated')
-    # mapping.get_xml_from_web(source='urodama_inci')
-
     print('\nFINISHED THE SCRIPT')
 
 

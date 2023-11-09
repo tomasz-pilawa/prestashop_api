@@ -48,9 +48,7 @@ def improve_products(file_path_fix=None, classify_ai=0, descriptions_ai=0, meta_
         # ai_boosting.configure_features(products_ids)
         pass
 
-    mapping.update_products_dict(mode='ids', data_ids_list=product_ids)
-    mapping.update_brands_dict()
-    mapping.update_cats_dict(update_cats_to_classify=0)
+    mapping.update_everything(product_ids=product_ids)
 
 
 # new_id_list = [811, 812, 813, 814, 815, 816, 817, 818, 819, 820, 821, 822]
