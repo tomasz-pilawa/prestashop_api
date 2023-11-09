@@ -215,11 +215,17 @@ def fix_data_from_csv(file_path):
     return fixed_ids
 
 
-def fill_brand_inci(brand='Mesoestetic', limit=2, source='aleja_inci'):
+def fill_brand_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
 
     # Get list of brand IDs from json dict
-    with open('data/brands_dict.json', encoding='utf-8') as file:
-        all_brand_ids = json.load(file)['brand_index'][brand]
+    if brand:
+        with open('data/brands_dict.json', encoding='utf-8') as file:
+            ids_to_fix = json.load(file)['brand_index'][brand]
+    elif product_ids:
+        ids_to_fix = product_ids
+    else:
+        print('No brand or product ids given hence no INCI inserted')
+        return
 
     # Load source products' data in xml tree
     tree = ET.parse(f'data/{source}_feed.xml')
@@ -227,7 +233,7 @@ def fill_brand_inci(brand='Mesoestetic', limit=2, source='aleja_inci'):
     source_products = root.findall('o')
 
     # Iterate over all Products and fill in INCI if either SKU or EAN matches any product in source database
-    for p_id in all_brand_ids[:limit]:
+    for p_id in ids_to_fix[:limit]:
         product = prestashop.get('products', p_id)['product']
         print(f"\nCHECKING PRODUCT {product['name']['language']['value']}")
 
@@ -284,10 +290,10 @@ def fill_brand_inci(brand='Mesoestetic', limit=2, source='aleja_inci'):
         else:
             print('The INCI is already there')
 
-    response = requests.get('https://urodama.pl/ceneoinci.php')
-    if response.status_code == 200:
-        print('\nCeneo PHP updated')
-    mapping.get_xml_from_web(source='urodama_inci')
+    # response = requests.get('https://urodama.pl/ceneoinci.php')
+    # if response.status_code == 200:
+    #     print('\nCeneo PHP updated')
+    # mapping.get_xml_from_web(source='urodama_inci')
 
     print('\nFINISHED THE SCRIPT')
 
