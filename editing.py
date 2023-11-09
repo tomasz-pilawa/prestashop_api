@@ -216,8 +216,19 @@ def fix_data_from_csv(file_path):
 
 
 def fill_brand_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
+    """
+    Checks whether there is an INCI in product description for a given brand or specific products.
+    If not, checks in the source XML data (based on SKU and EAN) whether there is an INCI to insert.
+    If so, directly inserts nicely formatted INCI into the description.
+    Needs either brand or product_ids to perform.
+    :param brand: valid brand name to operate upon
+    :param limit: maximum number of the products handled
+    :param source: source data XML
+    :param product_ids: list of int of products to operate upon
+    :return:
+    """
 
-    # Get list of brand IDs from json dict
+    # Get list of brand IDs from json dict or set ids to be fixed or return early
     if brand:
         with open('data/brands_dict.json', encoding='utf-8') as file:
             ids_to_fix = json.load(file)['brand_index'][brand]
