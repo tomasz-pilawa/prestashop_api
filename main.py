@@ -18,8 +18,8 @@ prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
 
 # Check which products to introduce, get their ids and verify the initial data
-# editing.select_products_xml(source='luminosa', mode='brands', print_info=1, data=['Mesoestetic'])
-# editing.select_products_xml(source='ampari', mode='brands', data=['Colway'], print_info=1)
+# e.select_products_xml(source='luminosa', mode='brands', print_info=1, data=['Mesoestetic'])
+# e.select_products_xml(source='aleja', mode='brands', data=['Urgo', 'Xylogic'], print_info=1)
 
 
 # Add simple version of selected products (preferably ID-based) & correct essential information (name, price, sku, ean)
@@ -29,10 +29,11 @@ def add_product_from_xml(select_source=None, select_mode=None, select_data=None,
     e.add_with_photo(products)
 
 
-# id_list = [620, 621, 624, 637, 639, 641, 643, 645, 653, 654, 655, 659, 663, 664, 666, 923, 1256, 2054, 2141, 2353]
-# add_product_from_xml(select_source='ampari', select_mode='include', select_data=id_list, process_max_products=30)
+# id_list = [4695, 4763, 4915, 5112, 5557]
+# add_product_from_xml(select_source='aleja', select_mode='include', select_data=id_list, process_max_products=30)
 
-def improve_products(fix_source=None, classify_ai=0, descriptions_ai=0, meta_ai=0, features_ai=0):
+
+def improve_products(fix_source=None, classify_ai=0, descriptions_ai=0, meta_ai=0, features_ai=0, inci_unit=0):
 
     product_ids = e.fix_products(source=fix_source)
 
@@ -45,12 +46,15 @@ def improve_products(fix_source=None, classify_ai=0, descriptions_ai=0, meta_ai=
     if features_ai:
         # ai_boosting.configure_features(products_ids)
         pass
+    if inci_unit:
+        e.fill_inci(limit=20, product_ids=product_ids, source='aleja')
+        e.set_unit_price_api_sql(limit=20, product_ids=product_ids)
 
     mapping.update_everything(product_ids=product_ids)
 
 
-# new_id_list = [127, 128]
-# improve_products(fix_source=new_id_list, classify_ai=1, descriptions_ai=1, meta_ai=1)
+# new_id_list = [585, 670, 686, 687, 688, 689]
+# improve_products(fix_source=new_id_list, classify_ai=0, descriptions_ai=1, meta_ai=0, inci_unit=0)
 
 
 # Fixer

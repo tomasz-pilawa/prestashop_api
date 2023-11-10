@@ -394,7 +394,7 @@ def update_everything(site='urodama', product_ids=None):
     else:
         mode = 'all'
 
-    # Update Ceneo & Google Shopping XML files online via remote PHP scripts
+    # Update Ceneo, Google Shopping XML and Google Sitemap files online via remote PHP scripts
     with open(f'data/xml_urls.json', encoding='utf-8') as file:
         url_list = json.load(file)[f'{site}_php_update']
     for url in url_list:

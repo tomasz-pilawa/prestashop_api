@@ -120,9 +120,11 @@ def process_products(product_list, max_products=5):
         data['link_rewrite'] = data['name'].lower().replace(' ', '-')
 
         data['description'] = single_product.find('desc').text.split('div class')[0]
-        data['description_short'] = single_product.find('desc').text.split('</p><p>')[0]
+        data['description_short'] = BeautifulSoup(single_product.find('desc').text, 'html.parser').\
+            get_text()[:600].strip('\n')
         data['meta_title'] = data['name'].strip('\n ')
-        data['meta_description'] = BeautifulSoup(single_product.find('desc').text, 'html.parser').get_text().strip('\n')
+        data['meta_description'] = BeautifulSoup(single_product.find('desc').text, 'html.parser').\
+            get_text()[:200].strip('\n')
 
         data['image_url'] = single_product.find("imgs/main").get('url')
 
@@ -212,7 +214,7 @@ def fix_products(source=None):
             product = prestashop.get('products', r['ID_u'])['product']
             product['reference'] = r['ref']
             product['name']['language']['value'] = r['nazwa']
-            product['product']['ean13'] = r['Comments']
+            product['ean13'] = r['Comments']
 
             product['price'] = r['PRICE'].strip().replace(',', '.')
             product['wholesale_price'] = r['COST NET'].strip().replace(',', '.')
@@ -228,9 +230,6 @@ def fix_products(source=None):
             edit_presta_product(product=product)
     else:
         fixed_ids = source
-
-    fill_inci(limit=20, product_ids=fixed_ids, source='aleja')
-    set_unit_price_api_sql(limit=20, product_ids=fixed_ids)
 
     print('FINISHED FIXING THE PRODUCTS (CSV, INCI, UNIT PRICE)\n')
 
@@ -302,15 +301,10 @@ def fill_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
                         else:
                             s_inci_text = soup.get_text()
 
-                        s_inci = '<p><strong>Skład INCI</strong></p><p>' + s_inci_text + '</p>'
+                        s_inci = '<p></p><p><strong>Skład INCI:</strong></p><p>' + s_inci_text + '</p>'
                         product['description']['language']['value'] += s_inci
 
-                        product.pop('manufacturer_name')
-                        product.pop('quantity')
-                        if int(product['position_in_category']['value']) < 1:
-                            product['position_in_category']['value'] = str(1)
-                        prestashop.edit('products', {'product': product})
-                        print('Inserted INCI')
+                        edit_presta_product(product=product)
                         break
 
                     else:
