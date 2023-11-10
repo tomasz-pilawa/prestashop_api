@@ -32,11 +32,9 @@ def add_product_from_xml(select_source=None, select_mode=None, select_data=None,
 # id_list = [620, 621, 624, 637, 639, 641, 643, 645, 653, 654, 655, 659, 663, 664, 666, 923, 1256, 2054, 2141, 2353]
 # e.add_product_from_xml(select_source='ampari', select_mode='include', select_data=id_list, process_max_products=30)
 
+def improve_products(fix_source=None, classify_ai=0, descriptions_ai=0, meta_ai=0, features_ai=0):
 
-# After adding or while editing only always use csv to improve specific products (works on ids too)
-def improve_products(file_path_fix=None, classify_ai=0, descriptions_ai=0, meta_ai=0, features_ai=0):
-
-    product_ids = e.fix_data_from_csv(file_path=file_path_fix)
+    product_ids = e.fix_products(source=fix_source)
 
     if classify_ai:
         ai_boosting.classify_categories(product_ids)
@@ -52,8 +50,7 @@ def improve_products(file_path_fix=None, classify_ai=0, descriptions_ai=0, meta_
 
 
 # new_id_list = [811, 812, 813, 814, 815, 816, 817, 818, 819, 820, 821, 822]
-# editing.improve_products(file_path_fix='data/logs/adding_3_1.csv',
-#                          classify_ai=0, descriptions_ai=1, features_ai=0)
+# editing.improve_products(fix_source='adding_4', classify_ai=1, descriptions_ai=1, meta_ai=0)
 
 
 # Fixer

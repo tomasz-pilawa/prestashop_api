@@ -200,31 +200,37 @@ def add_with_photo(product_list):
     return indexes_added
 
 
-def fix_data_from_csv(file_path):
+def fix_products(source=None):
 
-    fixed_ids = []
+    if type(source) == str:
 
-    with open(file_path, encoding='utf-8', newline='') as file:
-        reader = list(csv.DictReader(file))
+        fixed_ids = []
+        with open(f'data/logs/{source}.csv', encoding='utf-8', newline='') as file:
+            reader = list(csv.DictReader(file))
 
-    for r in reader:
-        product = prestashop.get('products', r['ID_u'])['product']
-        product['reference'] = r['ref']
-        product['name']['language']['value'] = r['nazwa']
-        product['product']['ean13'] = r['Comments']
+        for r in reader:
+            product = prestashop.get('products', r['ID_u'])['product']
+            product['reference'] = r['ref']
+            product['name']['language']['value'] = r['nazwa']
+            product['product']['ean13'] = r['Comments']
 
-        product['price'] = r['PRICE'].strip().replace(',', '.')
-        product['wholesale_price'] = r['COST NET'].strip().replace(',', '.')
+            product['price'] = r['PRICE'].strip().replace(',', '.')
+            product['wholesale_price'] = r['COST NET'].strip().replace(',', '.')
 
-        with open('data/brands_dict.json', encoding='utf-8') as file:
-            manufacturer_dict = json.load(file)['brand_id']
+            with open('data/brands_dict.json', encoding='utf-8') as file:
+                manufacturer_dict = json.load(file)['brand_id']
 
-        product['id_manufacturer'] = manufacturer_dict[r['brand']]
+            product['id_manufacturer'] = manufacturer_dict[r['brand']]
 
-        fixed_ids.append(int(r['ID_u']))
+            fixed_ids.append(int(r['ID_u']))
 
-        print(product)
-        edit_presta_product(product=product)
+            print(product)
+            edit_presta_product(product=product)
+    else:
+        fixed_ids = source
+
+    fill_inci(limit=20, product_ids=fixed_ids, source='aleja')
+    set_unit_price_api_sql(limit=20, product_ids=fixed_ids)
 
     print('FINISHED FIXING FROM CSV')
 
@@ -319,11 +325,6 @@ def fill_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
     print('\nFINISHED THE SCRIPT')
 
 
-# mapping.get_xml_from_web(source='aleja')
-# fill_inci(limit=100, brand='Mesoestetic', source='aleja_inci')
-# fill_inci(limit=100, product_ids=[813, 814, 815, 816, 817, 819, 820, 821, 822], source='aleja')
-
-
 def set_unit_price_api_sql(site='urodama', product_ids=None, limit=5):
     """
     Calculates price/quantity ratio based on product name regex and price variables accessed via API.
@@ -393,9 +394,6 @@ def set_unit_price_api_sql(site='urodama', product_ids=None, limit=5):
     finally:
         c.close()
         conn.close()
-
-
-# set_unit_price_api_sql(limit=20, product_ids=[813, 814, 815, 816, 817, 819, 820, 821, 822])
 
 
 def manipulate_desc(desc):
