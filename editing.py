@@ -232,7 +232,7 @@ def fix_products(source=None):
     fill_inci(limit=20, product_ids=fixed_ids, source='aleja')
     set_unit_price_api_sql(limit=20, product_ids=fixed_ids)
 
-    print('FINISHED FIXING FROM CSV')
+    print('FINISHED FIXING THE PRODUCTS (CSV, INCI, UNIT PRICE)\n')
 
     return fixed_ids
 
@@ -322,7 +322,7 @@ def fill_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
         else:
             print('The INCI is already there')
 
-    print('\nFINISHED THE SCRIPT')
+    print('FINISHED INSERTING INCI\n')
 
 
 def set_unit_price_api_sql(site='urodama', product_ids=None, limit=5):

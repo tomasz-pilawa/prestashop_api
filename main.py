@@ -30,7 +30,7 @@ def add_product_from_xml(select_source=None, select_mode=None, select_data=None,
 
 
 # id_list = [620, 621, 624, 637, 639, 641, 643, 645, 653, 654, 655, 659, 663, 664, 666, 923, 1256, 2054, 2141, 2353]
-# e.add_product_from_xml(select_source='ampari', select_mode='include', select_data=id_list, process_max_products=30)
+# add_product_from_xml(select_source='ampari', select_mode='include', select_data=id_list, process_max_products=30)
 
 def improve_products(fix_source=None, classify_ai=0, descriptions_ai=0, meta_ai=0, features_ai=0):
 
@@ -49,8 +49,8 @@ def improve_products(fix_source=None, classify_ai=0, descriptions_ai=0, meta_ai=
     mapping.update_everything(product_ids=product_ids)
 
 
-# new_id_list = [811, 812, 813, 814, 815, 816, 817, 818, 819, 820, 821, 822]
-# editing.improve_products(fix_source='adding_4', classify_ai=1, descriptions_ai=1, meta_ai=0)
+# new_id_list = [127, 128]
+# improve_products(fix_source=new_id_list, classify_ai=1, descriptions_ai=1, meta_ai=1)
 
 
 # Fixer

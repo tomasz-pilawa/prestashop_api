@@ -34,16 +34,16 @@ def classify_categories(product_ids_list):
     # print(type(cats))
 
     for product_id in product_ids_list:
-        product = prestashop.get('products', product_id)
+        product = prestashop.get('products', product_id)['product']
 
-        # it is used inside the prompt
-        product_name = product['product']['name']['language']['value']
+        product_name = product['name']['language']['value']
+        product_desc = product['description_short']['language']['value']
 
         with open('data/prompts/classify_product.txt', 'r', encoding='utf-8') as file:
             prompt_template = file.read().strip()
-        prompt = prompt_template.format(product_name=product_name, cats=cats)
+        prompt = prompt_template.format(product=product_desc, cats=cats)
 
-        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=200, temperature=0.2)
+        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=400, temperature=0.2)
         generated_text = response.choices[0].text
         # print(generated_text)
 
@@ -66,21 +66,12 @@ def classify_categories(product_ids_list):
         # always adds Home Category as one of the categories for every product
         cats_classified = ['2'] + [cats_dict[cat] for cat in product_classification]
         cats_format = [{'id': cat_id} for cat_id in cats_classified]
-        print(cats_classified)
+        # print(cats_classified)
 
-        product['product']['id_category_default'] = cats_classified[-1]
-        product['product']['associations']['categories']['category'] = cats_format
+        product['id_category_default'] = cats_classified[-1]
+        product['associations']['categories']['category'] = cats_format
 
-        product['product'].pop('manufacturer_name')
-        product['product'].pop('quantity')
-        product['product'].pop('position_in_category')
-        # if not product['product']['position_in_category']['value'].isdigit():
-        #     product['product']['position_in_category']['value'] = '1'
-        # if int(product['product']['position_in_category']['value']) < 1:
-        #     product['product']['position_in_category']['value'] = str(1)
-
-        print(product)
-        prestashop.edit('products', product)
+        editing.edit_presta_product(product=product)
 
     print('FINISHED PRODUCTS CLASSIFICATION')
 

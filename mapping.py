@@ -42,8 +42,6 @@ def update_products_dict(mode='all', max_products=1000, data_brands_list=None, d
     indexes_site = prestashop.search('products')
     indexes_dict = [int(p['id']) for p in product_list]
 
-    print(len(product_list))
-
     # default mode is all - it would update all products
     indexes_selected = prestashop.search('products')
 
@@ -57,7 +55,7 @@ def update_products_dict(mode='all', max_products=1000, data_brands_list=None, d
     if mode == 'brands':
         indexes_selected = [int(p['id']) for p in product_list if p['manufacturer_name']['value'] in data_brands_list]
 
-    print(indexes_selected)
+    print(f'Manipulated indexes for all_products.json: {indexes_selected}')
 
     if len(indexes_selected) > 0:
         product_data = [p for p in product_list if int(p['id']) not in indexes_selected]
