@@ -185,30 +185,23 @@ def fix_data_from_csv(file_path):
         reader = list(csv.DictReader(file))
 
     for r in reader:
-        product = prestashop.get('products', r['ID_u'])
-        product['product']['reference'] = r['ref']
-        product['product']['name']['language']['value'] = r['nazwa']
+        product = prestashop.get('products', r['ID_u'])['product']
+        product['reference'] = r['ref']
+        product['name']['language']['value'] = r['nazwa']
         product['product']['ean13'] = r['Comments']
 
-        product['product']['price'] = r['PRICE'].strip().replace(',', '.')
-        product['product']['wholesale_price'] = r['COST NET'].strip().replace(',', '.')
+        product['price'] = r['PRICE'].strip().replace(',', '.')
+        product['wholesale_price'] = r['COST NET'].strip().replace(',', '.')
 
         with open('data/brands_dict.json', encoding='utf-8') as file:
             manufacturer_dict = json.load(file)['brand_id']
 
-        product['product']['id_manufacturer'] = manufacturer_dict[r['brand']]
-
-        product['product'].pop('manufacturer_name')
-        product['product'].pop('quantity')
-        if not product['product']['position_in_category']['value'].isdigit():
-            product['product']['position_in_category']['value'] = '1'
-        if int(product['product']['position_in_category']['value']) < 1:
-            product['product']['position_in_category']['value'] = str(1)
+        product['id_manufacturer'] = manufacturer_dict[r['brand']]
 
         fixed_ids.append(int(r['ID_u']))
 
         print(product)
-        prestashop.edit('products', product)
+        edit_presta_product(product=product)
 
     print('FINISHED FIXING FROM CSV')
 
