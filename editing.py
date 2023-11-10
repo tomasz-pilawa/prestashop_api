@@ -132,6 +132,27 @@ def process_products(product_list, max_products=5):
     return processed_products
 
 
+def write_to_csv(file_path, product_dict):
+
+    row_data = {
+        'ID_u': product_dict['product_id'],
+        'ref': product_dict['reference'],
+        'nazwa': product_dict['name']['language']['value'],
+        'active': product_dict['state'],
+        'brand': '',
+        'wprowadzony': datetime.now().strftime("%d-%m-%Y %H:%M"),
+        'Comments': product_dict['ean13'],
+        'Sales 2021': 0,
+        'Sales 2022': 0,
+        'COST NET': product_dict['wholesale_price'],
+        'PRICE': product_dict['price']
+    }
+
+    with open(file_path, mode='a', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=row_data.keys())
+        writer.writerow(row_data)
+
+
 def add_with_photo(product_list):
 
     indexes_added = []
@@ -166,6 +187,8 @@ def add_with_photo(product_list):
                 image_content = file.read()
 
             prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
+
+            write_to_csv(file_path='data/logs/added_products_raw.csv', product_dict=single_product)
 
         else:
             print(f"Failed to download image for product: {single_product['name']['language']['value']}")
