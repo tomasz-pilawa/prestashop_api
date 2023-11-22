@@ -13,13 +13,9 @@ openai.api_key = os.getenv('openai_api')
 
 prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
-# Update XML file from time to time
-# mapping.get_xml_from_web(source='aleja')
-
 
 # Check which products to introduce, get their ids and verify the initial data
-# e.select_products_xml(source='luminosa', mode='brands', print_info=1, data=['Mesoestetic'])
-# e.select_products_xml(source='aleja', mode='brands', data=['Urgo', 'Xylogic'], print_info=1)
+# e.select_products_xml(source='aleja', mode='brands', data=['Fusion Mesotherapy'], print_info=1)
 
 
 # Add simple version of selected products (preferably ID-based) & correct essential information (name, price, sku, ean)
@@ -29,7 +25,8 @@ def add_product_from_xml(select_source=None, select_mode=None, select_data=None,
     e.add_with_photo(products)
 
 
-# id_list = [4695, 4763, 4915, 5112, 5557]
+id_list = numbers = [3672, 3690, 3741, 3758, 3759, 3797, 3804, 4347, 4597, 4601, 4874, 5064, 4725, 4755, 4756, 4757,
+                     4759, 5632, 5633, 5634, 5269, 5290]
 # add_product_from_xml(select_source='aleja', select_mode='include', select_data=id_list, process_max_products=30)
 
 
@@ -53,9 +50,9 @@ def improve_products(fix_source=None, classify_ai=0, descriptions_ai=0, meta_ai=
     mapping.update_everything(product_ids=product_ids)
 
 
-# new_id_list = [585, 670, 686, 687, 688, 689]
+# new_id_list = ['659', '660', '661', '662', '663', '664', '665', '666', '678']
 # improve_products(fix_source=new_id_list, classify_ai=0, descriptions_ai=1, meta_ai=0, inci_unit=0)
 
-
+# 'adding_9'
 # Fixer
 # prestashop.delete('products', [792, 793])

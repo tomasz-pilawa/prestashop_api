@@ -430,6 +430,9 @@ def make_desc(desc):
     desc_long = desc.split('SHORT DESCRIPTION:')[0].replace('LONG DESCRIPTION:', '').strip().\
         replace('Właściwości i Zalety kosmetyku:', '</p><p><strong>Właściwości i Zalety kosmetyku:</strong>')
 
+    # print(desc_short)
+    # print(len(desc_short))
+
     desc_short = re.sub(r'\n& ', r'</li><li>', desc_short)
     desc_short = re.sub(r'& ', r'<li>', desc_short)
     desc_short = f'<ul style="list-style-type: disc;">{desc_short}</li></ul>'
