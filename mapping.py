@@ -152,11 +152,6 @@ def update_cats_dict(update_cats_to_classify=0):
 
 
 def get_xml_from_web(source='luminosa'):
-    """
-    It gets up-to-date product feed from the xml file posted on the web and saves it to local data directory.
-    Source argument indicates from which shop the xml should be up updated.
-    XML urls are taken from the separate dictionaries.
-    """
 
     with open(f'data/xml_urls.json', encoding='utf-8') as file:
         url = json.load(file)[source]
@@ -183,7 +178,7 @@ def get_xml_from_web(source='luminosa'):
 
             xml_content = ET.tostring(root, encoding='utf-8')
 
-        with open(f'data/{source}_feed.xml', 'wb') as file:
+        with open(f'data/xml/{source}_feed.xml', 'wb') as file:
             file.write(xml_content)
         print(f"{source.capitalize()} XML fetched successfully!")
 

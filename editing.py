@@ -19,7 +19,7 @@ prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
 def select_products_xml(source='luminosa', mode=None, data=None, print_info=None):
 
-    tree = ET.parse(f'data/{source}_feed.xml')
+    tree = ET.parse(f'data/xml/{source}_feed.xml')
     root = tree.getroot()
 
     selected_products = root.findall('o')
@@ -232,7 +232,7 @@ def fill_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
         return
 
     # Load source products' data in xml tree
-    tree = ET.parse(f'data/{source}_feed.xml')
+    tree = ET.parse(f'data/xml/{source}_feed.xml')
     root = tree.getroot()
     source_products = root.findall('o')
 
@@ -380,10 +380,6 @@ def manipulate_desc(desc):
 
 def make_desc(desc):
 
-    if desc is None:
-        with open('data/prompts/z_product_desc.txt', 'r', encoding='utf-8') as file:
-            desc = file.read().strip()
-
     desc_short = desc.split('SHORT DESCRIPTION:')[1].strip()
     desc_long = desc.split('SHORT DESCRIPTION:')[0].replace('LONG DESCRIPTION:', '').strip().\
         replace('Właściwości i Zalety kosmetyku:', '</p><p><strong>Właściwości i Zalety kosmetyku:</strong>')
@@ -408,15 +404,10 @@ def make_desc(desc):
 
 def make_active(desc):
 
-    if desc is None:
-        with open('data/prompts/z_product_active.txt', 'r', encoding='utf-8') as file:
-            desc = file.read().strip()
-
     desc = re.sub(r'SKŁADNIKI:',
                   r'<p></p><p><strong>Składniki aktywne:</strong></p><ul style="list-style-type: disc;">', desc)
     desc = re.sub(r'(\n&|\n-)', r'</li><li>', desc).replace('</li>', '', 1)
     desc = re.sub(r'\n\nSPOSÓB UŻYCIA:', r'</li></ul><p></p><p><strong>Sposób użycia:</strong><p>', desc + '</p>')
-    # print(desc)
 
     return desc
 
@@ -428,11 +419,6 @@ def edit_presta_product(product):
     product.pop('manufacturer_name')
     product.pop('quantity')
     product.pop('position_in_category')
-
-    # if not product['position_in_category']['value'].isdigit():
-    #     product['position_in_category']['value'] = '1'
-    # if int(product['position_in_category']['value']) < 1:
-    #     product['position_in_category']['value'] = str(1)
 
     prestashop.edit('products', {'product': product})
 
