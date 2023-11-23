@@ -8,6 +8,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import re
 import pymysql
+import logging
 
 import mapping
 
@@ -384,9 +385,6 @@ def make_desc(desc):
     desc_long = desc.split('SHORT DESCRIPTION:')[0].replace('LONG DESCRIPTION:', '').strip().\
         replace('Właściwości i Zalety kosmetyku:', '</p><p><strong>Właściwości i Zalety kosmetyku:</strong>')
 
-    # print(desc_short)
-    # print(len(desc_short))
-
     desc_short = re.sub(r'\n& ', r'</li><li>', desc_short)
     desc_short = re.sub(r'& ', r'<li>', desc_short)
     desc_short = f'<ul style="list-style-type: disc;">{desc_short}</li></ul>'
@@ -395,9 +393,6 @@ def make_desc(desc):
     desc_long = re.sub(r'\n\n', '</p><p>', desc_long)
     desc_long = desc_long.replace('</strong></li><li>', '</strong></p><ul style="list-style-type: disc;"><li>')
     desc_long = f'<p>{desc_long}</li></ul>'
-
-    # print(desc_short)
-    # print(desc_long)
 
     return desc_short, desc_long
 
@@ -444,5 +439,43 @@ def truncate_meta(text, max_length=160):
     return output.strip()
 
 
+def explore_brand(brand, source='aleja'):
 
+    product_tree = ET.parse(f'data/xml/{source}_feed.xml')
+    all_products = product_tree.getroot().findall('o')
+
+    with open('data/brands_dict.json', encoding='utf-8') as file:
+        excluded_products_list = json.load(file)
+    excluded_sku = excluded_products_list.get('skus', [])
+    excluded_ean = excluded_products_list.get('eans', [])
+
+    selected_products = [product for product in all_products if
+                         product.find("attrs/a[@name='Producent']").text.strip() in brand and
+                         product.find("attrs/a[@name='Kod_producenta']").text.strip() not in excluded_sku and
+                         product.find("attrs/a[@name='EAN']").text.strip() not in excluded_ean]
+
+    for p in selected_products:
+        product_data = {
+                    'ID_urodama': '',
+                    'SKU': p.find("attrs/a[@name='Kod_producenta']").text.strip(),
+                    'Product Name': p.find('name').text.strip(),
+                    'Active': 1,
+                    'Brand': brand,
+                    'Date': datetime.now().strftime("%d-%m-%Y %H:%M"),
+                    'EAN': p.find("attrs/a[@name='EAN']").text.strip(),
+                    'Sales 2021': 0,
+                    'Sales 2022': 0,
+                    'COST NET': str(round(float(p.get('price'))/1.87, 2)).replace('.', ','),
+                    'PRICE': str(p.get('price')).replace('.', ','),
+                    'LINK': p.get('url').strip()
+        }
+
+        with open('data/logs/_product_ideas.csv', mode='a', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=product_data.keys())
+            writer.writerow(product_data)
+
+    logging.info('Explore_brand: Saved potential products ideas to csv file')
+
+
+explore_brand('Fusion Mesotherapy')
 
