@@ -17,14 +17,7 @@ api_key = os.getenv('urodama_pass')
 
 
 def classify_categories(product_ids_list):
-    """
-    The function takes list of product IDS and classifies them to predefined categories using chat-gpt API.
-    It pairs the names of the categories with their IDs in the shop and directly reassigns them via Prestashop API.
-    It adds associations both in categories and products tables, which is necessary.
-    It assigns main category and all categories.
-    :param product_ids_list: list of integers (must be valid Prestashop product ids)
-    :return: prints success message (it operates directly on products and doesn't return anything
-    """
+
     prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
     with open('data/cats_dict.json', encoding='utf-8') as file:
@@ -77,21 +70,6 @@ def classify_categories(product_ids_list):
 
 
 def write_descriptions_2(product_ids_list, reset_desc=0):
-    """
-    The function takes list of product IDS & improves short description, description, meta title & meta description.
-    It uses chat-gpt API to accomplish that and directly edits given products via Prestashop API.
-
-    Improved 2.0 function will take original product description, trim it of redundant characters and split into
-    two parts: descriptions vs active ingredients & mode of use. It will than send separate and optimized api requests
-    to open AI and get several components of the whole product description.
-    It will do the proper formatting and arrange the parts rather than use unreliable openAI fantasies.
-    The function will be faster, the formatting will always be right and will use less tokens.
-
-    :type reset_desc: bool
-    :param product_ids_list: list of integers (must be valid Prestashop product ids)
-            reset_desc: should it get the descriptions from alejazdrowia_inci (recommended for testing)
-    :return: prints success message (it operates directly on products and doesn't return anything)
-    """
 
     prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
@@ -150,14 +128,6 @@ def write_descriptions_2(product_ids_list, reset_desc=0):
 
 
 def write_meta(product_ids_list):
-    """
-    The function takes product IDs list & improves meta titles & descriptions for SEO based on short product description
-    It uses chat-gpt API to accomplish that and directly edits given products via Prestashop API.
-    Initially the functionality was inside write_descriptions function but was subsequently detached.
-
-    :param product_ids_list: list of integers (must be valid Prestashop product ids)
-    :return: prints success message (it operates directly on products and doesn't return anything)
-    """
 
     prestashop = PrestaShopWebServiceDict(api_url, api_key)
 

@@ -151,201 +151,6 @@ def update_cats_dict(update_cats_to_classify=0):
     print('UPDATED CATS DICT')
 
 
-# FUNCTIONS BELOW ARE SUPPOSED TO BE USED ONLY ONE WHILE SETTING UP THE ENVIRONMENT AFTER MIGRATION
-
-
-def create_category_dicts(csv_name='cats_pairing_init.csv', version='0', update_classification_dict=1):
-    """
-    This function is meant to be used only once after migration from one version to another.
-
-    It takes the csv file containing old categories list with the changes to be made.
-    The changes may be: changing the name, changing parent category, changing the name and the parent.
-    Some categories may be completely deleted, some may be added from scratch and some may remain unchanged.
-
-    The function does two things:
-    1. It converts a csv into workable python dict and saves it into json (this is needed only once in a lifetime)
-    2. It throws dict of categories divided into groups like cat_main, cat_face_action, cat_hair, etc. that are needed
-    for classification prompts (there is a newer version of that function that works faster and is more universal)
-    """
-
-    version = str(version)
-    data = []
-
-    with open(f'data/temp/{csv_name}', 'r', encoding='utf-8') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            data.append(row)
-
-    json_name = f"{csv_name.split('_')[0]}_{csv_name.split('_')[1]}_v_{version}.json"
-
-    with open(f'data/temp/{json_name}', 'w', encoding='utf-8') as file:
-        json.dump(data, file, indent=4, ensure_ascii=False)
-
-    print('JSON file saved successfully')
-
-    if update_classification_dict == 1:
-
-        categories = {
-            'cat_main': [],
-            'cat_face_form': [],
-            'cat_face_action': [],
-            'cat_body': [],
-            'cat_hair': [],
-            'cat_random': [],
-            'cat_other': [],
-            'cat_old': []
-        }
-
-        for row in data:
-
-            category_type = row['Type']
-            category_name = row['NameNew']
-            categories['cat_old'].append(row['NameOld'])
-
-            if category_type == 'main':
-                categories['cat_main'].append(category_name)
-            elif category_type == 'face_form':
-                categories['cat_face_form'].append(category_name)
-            elif category_type == 'face_action':
-                categories['cat_face_action'].append(category_name)
-            elif category_type == 'body':
-                categories['cat_body'].append(category_name)
-            elif category_type == 'hair':
-                categories['cat_hair'].append(category_name)
-            elif category_type == 'random':
-                categories['cat_random'].append(category_name)
-            else:
-                categories['cat_other'].append(category_name)
-
-        categories['cat_old'] = [c for c in categories['cat_old'] if c not in ['None']]
-
-        cats_classify_filename = f'categories_to_classify_{version}.json'
-
-        with open(f'data/temp/{cats_classify_filename}', 'w', encoding='utf-8') as json_file:
-            json.dump(categories, json_file, ensure_ascii=False)
-
-        print('Categories to Clasify dumped into JSON too')
-
-
-def set_categories_tree(changes_file=None):
-    """
-    This function is meant to be used only once after migration from one version to another.
-
-    It takes the json file containing old categories list with the changes to be made.
-    The changes may be: changing the name, changing parent category, changing the name and the parent.
-    Some categories may be completely deleted, some may be added from scratch and some may remain unchanged.
-
-    It does all the changes directly via Prestashop API. It handles name and/or parent changes as well as
-    adds completely new categories and removes redundant ones.
-    It uses the function reassign_categories_setter so that the products which main category is being removed are
-    being moved up the category tree before, so they are not left without main category.
-
-    """
-
-    with open(f'data/temp/{changes_file}', encoding='utf-8') as file:
-        changes = json.load(file)
-
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
-
-    name_change = [n for n in changes if n['ChangeType'] in ['Name', 'NameParent']]
-
-    for cat in name_change:
-        cat_to_modify = prestashop.get('categories', cat['ID'])
-        cat_to_modify['category']['name']['language']['value'] = cat['NameNew']
-
-        link_rewritten = unidecode(cat_to_modify['category']['name']['language']['value'].lower().replace(' ', '-'))
-        cat_to_modify['category']['link_rewrite']['language']['value'] = link_rewritten
-
-        cat_to_modify['category'].pop('level_depth')
-        cat_to_modify['category'].pop('nb_products_recursive')
-
-        prestashop.edit('categories', cat_to_modify)
-
-    parent_change = [p for p in changes if p['ChangeType'] in ['NameParent', 'OrderRemove']]
-
-    for cat in parent_change:
-        cat_to_modify = prestashop.get('categories', cat['ID'])
-        cat_to_modify['category']['id_parent'] = cat['ParentNew']
-
-        link_rewritten = unidecode(cat_to_modify['category']['name']['language']['value'].lower().replace(' ', '-'))
-        cat_to_modify['category']['link_rewrite']['language']['value'] = link_rewritten
-
-        cat_to_modify['category'].pop('level_depth')
-        cat_to_modify['category'].pop('nb_products_recursive')
-
-        prestashop.edit('categories', cat_to_modify)
-
-    reassign_categories_setter(initial_mode=1)
-
-    remove_change = [r for r in changes if r['ChangeType'] in ['OrderRemove', 'Remove']]
-    sorted_remove_change = sorted(remove_change, key=lambda x: x['ID'], reverse=True)
-
-    for cat in sorted_remove_change:
-        prestashop.delete('categories', cat['ID'])
-
-    add_change = [a for a in changes if a['ChangeType'] == 'Add']
-
-    for cat in add_change:
-        link_rewritten = unidecode(cat['NameNew'].lower().replace(' ', '-'))
-
-        cat_data = prestashop.get('categories', options={'schema': 'blank'})
-        cat_data['category'].update({'id_parent': cat['ParentNew'],
-                                     'active': '1',
-                                     'name': {'language': {'attrs': {'id': '2'}, 'value': cat['NameNew']}},
-                                     'link_rewrite': {'language': {'attrs': {'id': '2'}, 'value': link_rewritten}}
-                                     })
-
-        cat_data['category'].pop('id')
-
-        prestashop.add('categories', cat_data)
-
-    # prestashop.delete('categories', list(range(65, 76)))
-
-
-def reassign_categories_setter(initial_mode=1, cats_to_reassign=None, cats_substitutes=None):
-    """
-    The function was created to encapsulate one separate functionality of set_categories_tree functionality,
-    however it can be used in future to easily reassign all products from one category to a different category.
-    It gets a list with categories from which all products will be moved and a list of categories to which all the
-    products from the 1st list will be assigned.
-    Obviously the order is important as products from n-th category of the 1-st list will be assigned exactly to
-    the n-th element of the 2-nd list. Both lists have to have the same number of elements.
-    The initial_mode provides the lists for the first and only use of set_categories_tree function.
-    """
-
-    with open('data/all_products.json', encoding='utf-8') as file:
-        data = json.load(file)
-
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
-
-    if initial_mode == 1:
-        # initial values from the first setting up of the categories tree
-        cats_to_reassign = [20, 21, 22, 23, 27, 35, 37, 39, 40]
-        cats_substitutes = [13, 13, 13, 13, 14, 44, 47, 38, 38]
-
-    cats_mapped = list(zip(cats_to_reassign, cats_substitutes))
-
-    for cat in cats_mapped:
-        products_cat_x = [p for p in data if p['id_category_default'] == str(cat[0])]
-        # print(f'Category {cat[0]} is main category in {len(products_cat_X)} instances')
-
-        for x in products_cat_x:
-            x['id_category_default'] = str(cat[1])
-
-            product_edit = prestashop.get('products', x['id'])
-
-            product_edit['product']['id_category_default'] = x['id_category_default']
-
-            product_edit['product'].pop('manufacturer_name')
-            product_edit['product'].pop('quantity')
-
-            product_edit['product']['position_in_category']['value'] = str(1)
-
-            # print(product_edit)
-
-            prestashop.edit('products', product_edit)
-
-
 def get_xml_from_web(source='luminosa'):
     """
     It gets up-to-date product feed from the xml file posted on the web and saves it to local data directory.
@@ -394,7 +199,6 @@ def update_everything(site='urodama', product_ids=None):
     else:
         mode = 'all'
 
-    # Update Ceneo, Google Shopping XML and Google Sitemap files online via remote PHP scripts
     with open(f'data/xml_urls.json', encoding='utf-8') as file:
         url_list = json.load(file)[f'{site}_php_update']
     for url in url_list:
@@ -402,11 +206,9 @@ def update_everything(site='urodama', product_ids=None):
         if response.status_code == 200:
             print('Ceneo/Google XML Online updated')
 
-    # Fetch and Update XMLs
     for xml_site in ['aleja', 'urodama', 'urodama_inci', 'luminosa']:
         get_xml_from_web(source=xml_site)
 
-    # Update dictionaries
     update_products_dict(mode=mode, max_products=1000, data_ids_list=product_ids)
     update_brands_dict()
     update_cats_dict(update_cats_to_classify=0)

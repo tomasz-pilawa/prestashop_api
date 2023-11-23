@@ -18,13 +18,6 @@ prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
 
 def select_products_xml(source='luminosa', mode=None, data=None, print_info=None):
-    """
-    EXAMPLES OF USAGE OF THIS FUNCTION
-    select_products_xml(source='luminosa', mode='brands', data=['Essente', 'Mesoestetic'], print_info=1)
-    select_products_xml(source='luminosa', mode='brands', data=['Mesoestetic'], print_info=1)
-    select_products_xml(source='luminosa', mode='exclude', data=[716, 31, 711, 535, 723, 55], print_info=1)
-    select_products_xml(source='luminosa', mode='include', data=[716, 31, 711, 535, 723, 55], print_info=1)
-    """
 
     tree = ET.parse(f'data/{source}_feed.xml')
     root = tree.getroot()
@@ -78,16 +71,6 @@ def select_products_xml(source='luminosa', mode=None, data=None, print_info=None
 
 
 def process_products(product_list, max_products=5):
-    """
-    The function takes list of products in XML tree format and converts it to simpler python list of dictionaries
-    with only necessary attributes that are needed for adding a new product via Prestashop API.
-    :param product_list: XML tree
-            List of products in XML tree format that would be processed and converted to simpler list of dictionaries
-    :param max_products: integer
-            Limits the number of products to be processed. Used mostly during development
-    :return: processed_products: list of dictionaries
-            All necessary data for the products to be added to Prestashop. Should be passed to add_with_photo function
-    """
 
     default_data = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404", "condition": "new",
                     "show_price": "1", "indexed": "1", "visibility": "both"}
@@ -237,16 +220,6 @@ def fix_products(source=None):
 
 
 def fill_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
-    """
-    Checks whether there is an INCI in product description for a given brand or specific products.
-    If not, checks in the source XML data (based on SKU and EAN) whether there is an INCI to insert.
-    If so, directly inserts nicely formatted INCI into the description.
-    Needs either brand or product_ids to perform.
-    :param brand: valid brand name to operate upon
-    :param limit: maximum number of the products handled
-    :param source: source data XML
-    :param product_ids: list of int of products to operate upon
-    """
 
     # Get list of brand IDs from json dict or set ids to be fixed or return early
     if brand:
@@ -320,15 +293,6 @@ def fill_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
 
 
 def set_unit_price_api_sql(site='urodama', product_ids=None, limit=5):
-    """
-    Calculates price/quantity ratio based on product name regex and price variables accessed via API.
-    Inserts correct values directly on SQL database, either urodama or luminosa
-    If no product ids are given, the function iterates over the whole DB considering the limit of max products.
-    :param site: which shop data should be manipulated: either 'urodama' or 'luminosa'
-    :param product_ids: list of integers of valid product ids
-    :param limit: maximum products to iterate over (useful in case of no product_ids list given)
-    :return: operates directly on DB and prints success message
-    """
 
     # Connect to Prestashop API to get the data for unit price manipulation
     api_url = os.getenv(f'{site}_link')
@@ -391,12 +355,6 @@ def set_unit_price_api_sql(site='urodama', product_ids=None, limit=5):
 
 
 def manipulate_desc(desc):
-    """
-    Trims product description from redundant characters, INCI and divides into summary and ingredients parts.
-    :param desc: single product description already stripped STR
-    :return: summary (str) product  summary trimmed
-            ingredients(str) active ingredients and mode of use trimmed (if none, returns summary)
-    """
 
     summary, ingredients = '', ''
 
@@ -482,15 +440,6 @@ def edit_presta_product(product):
 
 
 def truncate_meta(text, max_length=160):
-    """
-    Due to problems with forcing chat-gpt to give summaries that comply with 160 characters count, this function will
-    truncate the string so that it will always keep the first sentence (presumably the most important)
-    and add sentences conveying most of the information but not breaking them
-    :param
-    text: original string to be truncated
-    max_length: integer indicating max length to which the string should be truncated. Default = 170
-    :return: truncated string
-    """
 
     sentences = text.split('. ')
     output = sentences[0] + '. '
