@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 import openai
 from prestapyt import PrestaShopWebServiceDict
 from bs4 import BeautifulSoup
@@ -9,6 +10,8 @@ import editing
 openai.api_key = os.getenv('openai_api')
 api_url = os.getenv('urodama_link')
 api_key = os.getenv('urodama_pass')
+
+prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
 
 def classify_categories(product_ids_list):
@@ -115,3 +118,18 @@ def write_meta(product_ids_list):
         editing.edit_presta_product(product=product)
 
     print('FINISHED WRITING META DESCRIPTIONS')
+
+
+def apply_ai_actions(product_ids, classify_ai=0, descriptions_ai=0, meta_ai=0, inci_unit=0):
+
+    if classify_ai:
+        classify_categories(product_ids)
+    if descriptions_ai:
+        write_descriptions_2(product_ids)
+    if meta_ai:
+        write_meta(product_ids)
+    if inci_unit:
+        editing.fill_inci(limit=20, product_ids=product_ids, source='aleja')
+        editing.set_unit_price_api_sql(limit=20, product_ids=product_ids)
+
+    logging.info('Finished all AI actions.')

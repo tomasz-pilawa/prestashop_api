@@ -15,8 +15,6 @@ import mapping
 api_url = os.getenv('urodama_link')
 api_key = os.getenv('urodama_pass')
 
-prestashop = PrestaShopWebServiceDict(api_url, api_key)
-
 
 def select_products_xml(source='luminosa', mode=None, data=None, print_info=None):
 
@@ -140,7 +138,7 @@ def write_to_csv(file_path, product_dict):
 
 
 def add_with_photo(product_list):
-
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
     indexes_added = []
 
     for product in product_list:
@@ -171,11 +169,12 @@ def add_with_photo(product_list):
 
     logging.info(f'Finished adding {len(product_list)} with photos to Prestashop database via API.')
 
-    with open('/daga/logs/indexes_added.json', 'w') as file:
+    with open('data/logs/product_indexes.json', 'w') as file:
         json.dump(indexes_added, file)
 
 
 def fix_products(source=None):
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
     if type(source) == str:
 
@@ -210,6 +209,7 @@ def fix_products(source=None):
 
 
 def fill_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
+    prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
     # Get list of brand IDs from json dict or set ids to be fixed or return early
     if brand:
@@ -467,9 +467,6 @@ def explore_brand(brand, source='aleja'):
     logging.info('Explore_brand: Saved potential product ideas to csv file')
 
 
-# explore_brand(brand='Montibello')
-
-
 def process_products_from_csv(source_csv, source_desc_xml='aleja'):
 
     default_product_data = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404",
@@ -516,11 +513,6 @@ def process_products_from_csv(source_csv, source_desc_xml='aleja'):
     return processed_products
 
 
-# csv_filename = 'test_adding'
-# products = process_products_from_csv(source_csv=csv_filename)
-# add_with_photo(product_list=products)
-
-
-
-
-
+def load_product_ids_from_file(file_path):
+    with open(file_path, 'r') as file:
+        return json.load(file)

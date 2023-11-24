@@ -186,7 +186,7 @@ def get_xml_from_web(source='luminosa'):
         print("Failed to fetch the XML file!")
 
 
-def update_everything(site='urodama', product_ids=None):
+def update_files_and_xmls(site='urodama', product_ids=None):
 
     print('\nUPDATING DICTIONARIES & XMLs\n')
     if product_ids:
