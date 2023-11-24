@@ -145,8 +145,8 @@ def add_with_photo(product_list):
 
     for single_product in product_list:
 
-        for x in ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']:
-            single_product[x] = {'language': {'attrs': {'id': '2'}, 'value': single_product[x]}}
+        # for x in ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']:
+        #     single_product[x] = {'language': {'attrs': {'id': '2'}, 'value': single_product[x]}}
 
         # this prevents mutability to occur (passing by reference as they are the same object in memory)
         product_info = {'product': dict(single_product)}
@@ -456,7 +456,7 @@ def explore_brand(brand, source='aleja'):
 
     for p in selected_products:
         product_data = {
-                    'ID_urodama': '',
+                    'ID_TARGET': '',
                     'SKU': p.find("attrs/a[@name='Kod_producenta']").text.strip(),
                     'Product Name': p.find('name').text.strip(),
                     'Active': 1,
@@ -467,15 +467,71 @@ def explore_brand(brand, source='aleja'):
                     'Sales 2022': 0,
                     'COST NET': str(round(float(p.get('price'))/1.87, 2)).replace('.', ','),
                     'PRICE': str(p.get('price')).replace('.', ','),
-                    'LINK': p.get('url').strip()
+                    'LINK': p.get('url').strip(),
+                    'ID_SOURCE': p.get('id')
         }
 
-        with open('data/logs/_product_ideas.csv', mode='a', newline='') as file:
+        with open('data/logs/_product_ideas.csv', mode='a', newline='', encoding='utf-8') as file:
             writer = csv.DictWriter(file, fieldnames=product_data.keys())
             writer.writerow(product_data)
 
-    logging.info('Explore_brand: Saved potential products ideas to csv file')
+    logging.info('Explore_brand: Saved potential product ideas to csv file')
 
 
-explore_brand('Fusion Mesotherapy')
+# explore_brand(brand='Montibello')
+
+
+def process_products_from_csv(source_csv, source_desc_xml='aleja'):
+
+    default_product_data = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404",
+                            "condition": "new", "show_price": "1", "indexed": "1", "visibility": "both"}
+
+    with open(f'data/logs/{source_csv}.csv', encoding='utf-8', newline='') as file:
+        products_to_add = list(csv.DictReader(file))
+
+    product_tree = ET.parse(f'data/xml/{source_desc_xml}_feed.xml')
+
+    processed_products = []
+
+    for product_source in products_to_add:
+        product = dict(default_product_data)
+
+        product['name'] = product_source.get('Product Name', None)
+        product['reference'] = product_source.get('SKU', None)
+        product['ean13'] = product_source.get('EAN', None)
+        product['price'] = product_source.get('PRICE', None).replace(',', '.')
+        product['wholesale_price'] = product_source.get('COST NET', None).replace(',', '.')
+        product['id_category_default'] = 2
+        product['link_rewrite'] = product.get('name', 'NAME NOT FOUND').lower().replace(' ', '-')
+
+        with open('data/brands_dict.json', encoding='utf-8') as f:
+            brand_ids_dict = json.load(f).get('brand_id', None)
+        brand = product_source.get('Brand', None)
+        product['id_manufacturer'] = brand_ids_dict.get(brand, None)
+
+        product_id_xml = product_source.get('ID_SOURCE', None)
+        product_xml = product_tree.find(f'.//o[@id="{product_id_xml}"]')
+
+        product['description'] = product_xml.find('desc').text.strip().replace('&#8211;', '-').replace('&nbsp', '')
+        product['description_short'] = '.'.join(product['description'].replace('\n', ' ').split('.')[:3]) + '.'[:800]
+        product['meta_title'] = product['name']
+        product['meta_description'] = truncate_meta(product['description_short'], 160)[:180]
+        product['image_url'] = product_xml.find("imgs/main").get('url')
+
+        for text in ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']:
+            product[text] = {'language': {'attrs': {'id': '2'}, 'value': product[text]}}
+
+        processed_products.append(product)
+
+    logging.info('Finished processing products from CSV.')
+    return processed_products
+
+
+# source = 'test_adding'
+# products = process_products_from_csv(source_csv=source)
+# add_with_photo(product_list=products)
+
+
+
+
 
