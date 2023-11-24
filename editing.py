@@ -143,47 +143,36 @@ def add_with_photo(product_list):
 
     indexes_added = []
 
-    for single_product in product_list:
+    for product in product_list:
+        product_upload_data = {'product': dict(product)}
+        product_upload_data['product'].pop('image_url')
 
-        # for x in ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']:
-        #     single_product[x] = {'language': {'attrs': {'id': '2'}, 'value': single_product[x]}}
+        response = prestashop.add('products', product_upload_data)
 
-        # this prevents mutability to occur (passing by reference as they are the same object in memory)
-        product_info = {'product': dict(single_product)}
-        product_info['product'].pop('image_url')
-
-        print(single_product)
-
-        response = prestashop.add('products', product_info)
         product_id = int(response['prestashop']['product']['id'])
         indexes_added.append(product_id)
-        single_product['product_id'] = product_id
 
-        image_url = single_product['image_url']
-        image_response = requests.get(image_url)
+        image_response = requests.get(product['image_url'])
 
         if image_response.status_code == 200:
-            filename = f"{single_product['link_rewrite']['language']['value']}-kosmetyki-urodama.jpg"
+            filename = f"{product['link_rewrite']['language']['value']}-kosmetyki-urodama.jpg"
             image_path = "images/" + filename
 
             with open(image_path, "wb") as file:
                 file.write(image_response.content)
-
             with open(image_path, "rb") as file:
                 image_content = file.read()
 
             prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
 
-            write_to_csv(file_path='data/logs/added_products_raw.csv', product_dict=single_product)
-
         else:
-            print(f"Failed to download image for product: {single_product['name']['language']['value']}")
+            logging.info(f"Failed to download image for product: {product['name']['language']['value']}")
             continue
 
-    print('SUCCESS!!! Indexes added:')
-    print(indexes_added)
+    logging.info(f'Finished adding {len(product_list)} with photos to Prestashop database via API.')
 
-    return indexes_added
+    with open('/daga/logs/indexes_added.json', 'w') as file:
+        json.dump(indexes_added, file)
 
 
 def fix_products(source=None):
@@ -527,8 +516,8 @@ def process_products_from_csv(source_csv, source_desc_xml='aleja'):
     return processed_products
 
 
-# source = 'test_adding'
-# products = process_products_from_csv(source_csv=source)
+# csv_filename = 'test_adding'
+# products = process_products_from_csv(source_csv=csv_filename)
 # add_with_photo(product_list=products)
 
 
