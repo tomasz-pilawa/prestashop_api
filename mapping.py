@@ -1,40 +1,9 @@
-import os
 import json
-import csv
 import requests
-from prestapyt import PrestaShopWebServiceDict
-from unidecode import unidecode
 import xml.etree.ElementTree as ET
 
-api_url = os.getenv('urodama_link')
-api_key = os.getenv('urodama_pass')
 
-
-def update_products_dict(mode='all', max_products=1000, data_brands_list=None, data_ids_list=None):
-    """
-    The function updates json file with all products' data with the up-to-date information from the site.
-    It selects ids to be updated based on mode and provided data. The default mode updates all products.
-    :param data_ids_list: list
-            a list of product ids to be updated - works only with mode 'ids'
-    :param data_brands_list: list
-            a list of product brands to be updated - works only with mode 'brands'
-    :param mode: str
-            'new'   - updates the file only with new products that are on the website, but not in json file
-            'all'   - resets the whole json file and updates all products on the website (DEFAULT)
-            'brands'- updates the file only with products of a certain brand
-            'ids'   - updates the file only with the specified products' data (serves improve_products function)
-    :param max_products:
-            serves for testing and limiting the max products edited per use
-    :return: confirmation message
-
-    examples of use:
-    update_products_dict(mode='new')
-    update_products_dict(mode='all')
-    update_products_dict(mode='ids', data_ids_list=[23, 231, 53, 132])
-    update_products_dict(mode='brands', data_brands_list=['Prokos', 'Retix C'])
-    """
-
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+def update_products_dict(prestashop, mode='all', max_products=1000, data_brands_list=None, data_ids_list=None):
 
     with open('data/all_products.json', encoding='utf-8') as file:
         product_list = json.load(file)
@@ -108,13 +77,11 @@ def update_brands_dict():
     print('UPDATED BRANDS DICT')
 
 
-def update_cats_dict(update_cats_to_classify=0):
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+def update_cats_dict(prestashop, update_cats_to_classify=0):
 
     with open('data/cats_dict.json', encoding='utf-8') as file:
         full_dict = json.load(file)
 
-    # This is basic, workable functionality that ads simple cats_name_id into a cats_dict for classification purposes
     all_cats_ids = prestashop.search('categories')
     cats_list = [prestashop.get('categories', cat_id)['category'] for cat_id in all_cats_ids]
     cats_dict = {cat['name']['language']['value']: cat['id'] for cat in cats_list}
@@ -186,7 +153,7 @@ def get_xml_from_web(source='luminosa'):
         print("Failed to fetch the XML file!")
 
 
-def update_files_and_xmls(site='urodama', product_ids=None):
+def update_files_and_xmls(prestashop, site='urodama', product_ids=None):
 
     print('\nUPDATING DICTIONARIES & XMLs\n')
     if product_ids:
@@ -204,6 +171,6 @@ def update_files_and_xmls(site='urodama', product_ids=None):
     for xml_site in ['aleja', 'urodama', 'urodama_inci', 'luminosa']:
         get_xml_from_web(source=xml_site)
 
-    update_products_dict(mode=mode, max_products=1000, data_ids_list=product_ids)
+    update_products_dict(prestashop, mode=mode, max_products=1000, data_ids_list=product_ids)
     update_brands_dict()
-    update_cats_dict(update_cats_to_classify=0)
+    update_cats_dict(prestashop, update_cats_to_classify=0)

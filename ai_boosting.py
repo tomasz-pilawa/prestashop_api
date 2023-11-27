@@ -11,12 +11,9 @@ openai.api_key = os.getenv('openai_api')
 api_url = os.getenv('urodama_link')
 api_key = os.getenv('urodama_pass')
 
-prestashop = PrestaShopWebServiceDict(api_url, api_key)
 
-
-def classify_categories(product_ids_list):
-
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+def classify_categories(prestashop, openai_conn, product_ids_list):
+    openai.api_key = openai_conn
 
     with open('data/cats_dict.json', encoding='utf-8') as file:
         cats = json.load(file)['cats_classify']
@@ -49,14 +46,13 @@ def classify_categories(product_ids_list):
         product['id_category_default'] = cats_classified[-1]
         product['associations']['categories']['category'] = cats_format
 
-        editing.edit_presta_product(product=product)
+        editing.edit_presta_product(prestashop, product=product)
 
     print('FINISHED PRODUCTS CLASSIFICATION')
 
 
-def write_descriptions_2(product_ids_list):
-
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+def write_descriptions_2(prestashop, openai_conn, product_ids_list):
+    openai.api_key = openai_conn
 
     for product_id in product_ids_list:
         product = prestashop.get('products', product_id)['product']
@@ -84,14 +80,13 @@ def write_descriptions_2(product_ids_list):
         product['description_short']['language']['value'] = desc_short
         product['description']['language']['value'] = desc_long + desc_active
 
-        editing.edit_presta_product(product=product)
+        editing.edit_presta_product(prestashop, product=product)
 
     print('FINISHED WRITING PRODUCT DESCRIPTIONS')
 
 
-def write_meta(product_ids_list):
-
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+def write_meta(prestashop, openai_conn, product_ids_list):
+    openai.api_key = openai_conn
 
     for product_id in product_ids_list:
         product = prestashop.get('products', product_id)['product']
@@ -115,21 +110,21 @@ def write_meta(product_ids_list):
         product['meta_title']['language']['value'] = meta_title
         product['meta_description']['language']['value'] = meta_desc
 
-        editing.edit_presta_product(product=product)
+        editing.edit_presta_product(prestashop, product=product)
 
     print('FINISHED WRITING META DESCRIPTIONS')
 
 
-def apply_ai_actions(product_ids, classify_ai=0, descriptions_ai=0, meta_ai=0, inci_unit=0):
+def apply_ai_actions(prestashop, openai_conn, product_ids, classify_ai=0, descriptions_ai=0, meta_ai=0, inci_unit=0):
 
     if classify_ai:
-        classify_categories(product_ids)
+        classify_categories(prestashop, openai_conn, product_ids)
     if descriptions_ai:
-        write_descriptions_2(product_ids)
+        write_descriptions_2(prestashop, openai_conn, product_ids)
     if meta_ai:
-        write_meta(product_ids)
+        write_meta(prestashop, openai_conn, product_ids)
     if inci_unit:
-        editing.fill_inci(limit=20, product_ids=product_ids, source='aleja')
-        editing.set_unit_price_api_sql(limit=20, product_ids=product_ids)
+        editing.fill_inci(prestashop, limit=20, product_ids=product_ids, source='aleja')
+        editing.set_unit_price_api_sql(prestashop, limit=20, product_ids=product_ids)
 
     logging.info('Finished all AI actions.')

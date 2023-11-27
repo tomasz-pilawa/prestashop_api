@@ -1,7 +1,6 @@
 import os
 import json
 import csv
-from prestapyt import PrestaShopWebServiceDict
 import xml.etree.ElementTree as ET
 import requests
 from datetime import datetime
@@ -10,135 +9,93 @@ import re
 import pymysql
 import logging
 
-import mapping
 
-api_url = os.getenv('urodama_link')
-api_key = os.getenv('urodama_pass')
+def explore_brand(brand, source='aleja'):
 
-
-def select_products_xml(source='luminosa', mode=None, data=None, print_info=None):
-
-    tree = ET.parse(f'data/xml/{source}_feed.xml')
-    root = tree.getroot()
-
-    selected_products = root.findall('o')
+    product_tree = ET.parse(f'data/xml/{source}_feed.xml')
+    all_products = product_tree.getroot().findall('o')
 
     with open('data/brands_dict.json', encoding='utf-8') as file:
-        lists = json.load(file)
-    sku_list = lists['skus']
-    ean_list = lists['eans']
+        excluded_products_list = json.load(file)
+    excluded_sku = excluded_products_list.get('skus', [])
+    excluded_ean = excluded_products_list.get('eans', [])
 
-    for product in selected_products:
-        product_sku = product.find("attrs/a[@name='Kod_producenta']").text.strip()
-        if product_sku in sku_list:
-            selected_products.remove(product)
-    for product in selected_products:
-        product_ean = product.find("attrs/a[@name='EAN']").text.strip()
-        if product_ean in ean_list:
-            selected_products.remove(product)
+    selected_products = [product for product in all_products if
+                         product.find("attrs/a[@name='Producent']").text.strip() in brand and
+                         product.find("attrs/a[@name='Kod_producenta']").text.strip() not in excluded_sku and
+                         product.find("attrs/a[@name='EAN']").text.strip() not in excluded_ean]
 
-    if mode == 'brands':
-        products_temp = [product for product in selected_products
-                         if product.find("attrs/a[@name='Producent']").text.strip() in data]
-        selected_products = products_temp
+    for p in selected_products:
+        product_data = {
+                    'ID_TARGET': '',
+                    'SKU': p.find("attrs/a[@name='Kod_producenta']").text.strip(),
+                    'Product Name': p.find('name').text.strip(),
+                    'Active': 1,
+                    'Brand': brand,
+                    'Date': datetime.now().strftime("%d-%m-%Y %H:%M"),
+                    'EAN': p.find("attrs/a[@name='EAN']").text.strip(),
+                    'Sales 2021': 0,
+                    'Sales 2022': 0,
+                    'COST NET': str(round(float(p.get('price'))/1.87, 2)).replace('.', ','),
+                    'PRICE': str(p.get('price')).replace('.', ','),
+                    'LINK': p.get('url').strip(),
+                    'ID_SOURCE': p.get('id')
+        }
 
-    elif mode == 'exclude':
-        products_temp = [product for product in selected_products if int(product.get('id')) not in data]
-        selected_products = products_temp
+        with open('data/logs/_product_ideas.csv', mode='a', newline='', encoding='utf-8') as file:
+            writer = csv.DictWriter(file, fieldnames=product_data.keys())
+            writer.writerow(product_data)
 
-    elif mode == 'include':
-        products_temp = [product for product in selected_products if int(product.get('id')) in data]
-        selected_products = products_temp
-
-    if print_info:
-        print(f'\nThere are potentially {len(selected_products)} products to add from the XML file\n')
-        print('PRODUCT NAME, SHOP ID, SKU, EAN, PRICE, LINK')
-        for p in selected_products:
-            sku = p.find("attrs/a[@name='Kod_producenta']").text.strip()
-            ean = p.find("attrs/a[@name='EAN']").text.strip()
-
-            print(f"{p.find('name').text.strip()},{p.get('id')},{sku},{ean},{p.get('price')},{p.get('url').strip()}")
-
-        selected_ids = [int(p.get('id')) for p in selected_products]
-        print(selected_ids)
-
-    return selected_products
+    logging.info('Explore_brand: Saved potential product ideas to csv file')
 
 
-# select_products_xml(source='luminosa', mode='brands', data=['Germaine de Capuccini', 'Mesoestetic'], print_info=1)
-# select_products_xml(source='ampari', mode='brands', data=['Helen Seward'], print_info=1)
+def process_products_from_csv(source_csv, source_desc_xml='aleja'):
 
+    default_product_data = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404",
+                            "condition": "new", "show_price": "1", "indexed": "1", "visibility": "both"}
 
-def process_products(product_list, max_products=5):
+    with open(f'data/logs/{source_csv}.csv', encoding='utf-8', newline='') as file:
+        products_to_add = list(csv.DictReader(file))
 
-    default_data = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404", "condition": "new",
-                    "show_price": "1", "indexed": "1", "visibility": "both"}
-
-    with open('data/brands_dict.json', encoding='utf-8') as file:
-        manufacturer_dict = json.load(file)['brand_id']
-
-    price_ratio = 1.87
+    product_tree = ET.parse(f'data/xml/{source_desc_xml}_feed.xml')
 
     processed_products = []
 
-    for single_product in product_list[:max_products]:
-        data = dict(default_data)
+    for product_source in products_to_add:
+        product = dict(default_product_data)
 
-        data['reference'] = single_product.find("attrs/a[@name='Kod_producenta']").text.strip('\n ')
+        product['name'] = product_source.get('Product Name', None)
+        product['reference'] = product_source.get('SKU', None)
+        product['ean13'] = product_source.get('EAN', None)
+        product['price'] = product_source.get('PRICE', None).replace(',', '.')
+        product['wholesale_price'] = product_source.get('COST NET', None).replace(',', '.')
+        product['id_category_default'] = 2
+        product['link_rewrite'] = product.get('name', 'NAME NOT FOUND').lower().replace(' ', '-')
 
-        ean_raw = single_product.find("attrs/a[@name='EAN']").text
-        data['ean13'] = ''.join([char for char in ean_raw if char.isdigit()])
+        with open('data/brands_dict.json', encoding='utf-8') as f:
+            brand_ids_dict = json.load(f).get('brand_id', None)
+        brand = product_source.get('Brand', None)
+        product['id_manufacturer'] = brand_ids_dict.get(brand, None)
 
-        data['price'] = single_product.get('price')
-        data['wholesale_price'] = str(round(float(data['price']) / price_ratio, 2))
-        data['name'] = single_product.find('name').text.strip('\n ')
+        product_id_xml = product_source.get('ID_SOURCE', None)
+        product_xml = product_tree.find(f'.//o[@id="{product_id_xml}"]')
 
-        if single_product.find("attrs/a[@name='Producent']").text in list(manufacturer_dict.keys()):
-            data['id_manufacturer'] = manufacturer_dict[single_product.find("attrs/a[@name='Producent']").text]
-        else:
-            data.pop('id_manufacturer', None)
+        product['description'] = product_xml.find('desc').text.strip().replace('&#8211;', '-').replace('&nbsp', '')
+        product['description_short'] = '.'.join(product['description'].replace('\n', ' ').split('.')[:3]) + '.'[:800]
+        product['meta_title'] = product['name']
+        product['meta_description'] = truncate_meta(product['description_short'], 160)[:180]
+        product['image_url'] = product_xml.find("imgs/main").get('url')
 
-        data['id_category_default'] = 2
-        data['link_rewrite'] = data['name'].lower().replace(' ', '-')
+        for text in ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']:
+            product[text] = {'language': {'attrs': {'id': '2'}, 'value': product[text]}}
 
-        data['description'] = single_product.find('desc').text.split('div class')[0]
-        data['description_short'] = BeautifulSoup(single_product.find('desc').text, 'html.parser').\
-            get_text()[:600].strip('\n')
-        data['meta_title'] = data['name'].strip('\n ')
-        data['meta_description'] = BeautifulSoup(single_product.find('desc').text, 'html.parser').\
-            get_text()[:200].strip('\n')
+        processed_products.append(product)
 
-        data['image_url'] = single_product.find("imgs/main").get('url')
-
-        # print(data)
-        processed_products.append(data)
-
+    logging.info('Finished processing products from CSV.')
     return processed_products
 
 
-def write_to_csv(file_path, product_dict):
-
-    row_data = {
-        'ID_u': product_dict['product_id'],
-        'ref': product_dict['reference'],
-        'nazwa': product_dict['name']['language']['value'],
-        'active': product_dict['state'],
-        'brand': '',
-        'wprowadzony': datetime.now().strftime("%d-%m-%Y %H:%M"),
-        'Comments': product_dict['ean13'],
-        'Sales 2021': 0,
-        'Sales 2022': 0,
-        'COST NET': product_dict['wholesale_price'],
-        'PRICE': product_dict['price']
-    }
-
-    with open(file_path, mode='a', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=row_data.keys())
-        writer.writerow(row_data)
-
-
-def add_with_photo(product_list):
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+def add_products_api(prestashop, product_list):
     indexes_added = []
 
     for product in product_list:
@@ -173,43 +130,7 @@ def add_with_photo(product_list):
         json.dump(indexes_added, file)
 
 
-def fix_products(source=None):
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
-
-    if type(source) == str:
-
-        fixed_ids = []
-        with open(f'data/logs/{source}.csv', encoding='utf-8', newline='') as file:
-            reader = list(csv.DictReader(file))
-
-        for r in reader:
-            product = prestashop.get('products', r['ID_u'])['product']
-            product['reference'] = r['ref']
-            product['name']['language']['value'] = r['nazwa']
-            product['ean13'] = r['Comments']
-
-            product['price'] = r['PRICE'].strip().replace(',', '.')
-            product['wholesale_price'] = r['COST NET'].strip().replace(',', '.')
-
-            with open('data/brands_dict.json', encoding='utf-8') as file:
-                manufacturer_dict = json.load(file)['brand_id']
-
-            product['id_manufacturer'] = manufacturer_dict[r['brand']]
-
-            fixed_ids.append(int(r['ID_u']))
-
-            print(product)
-            edit_presta_product(product=product)
-    else:
-        fixed_ids = source
-
-    print('FINISHED FIXING THE PRODUCTS (CSV, INCI, UNIT PRICE)\n')
-
-    return fixed_ids
-
-
-def fill_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+def fill_inci(prestashop, brand=None, limit=2, source='aleja_inci', product_ids=None):
 
     # Get list of brand IDs from json dict or set ids to be fixed or return early
     if brand:
@@ -267,7 +188,7 @@ def fill_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
                         s_inci = '<p></p><p><strong>Skład INCI:</strong></p><p>' + s_inci_text + '</p>'
                         product['description']['language']['value'] += s_inci
 
-                        edit_presta_product(product=product)
+                        edit_presta_product(prestashop, product=product)
                         break
 
                     else:
@@ -282,12 +203,7 @@ def fill_inci(brand=None, limit=2, source='aleja_inci', product_ids=None):
     print('FINISHED INSERTING INCI\n')
 
 
-def set_unit_price_api_sql(site='urodama', product_ids=None, limit=5):
-
-    # Connect to Prestashop API to get the data for unit price manipulation
-    api_url = os.getenv(f'{site}_link')
-    api_key = os.getenv(f'{site}_pass')
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+def set_unit_price_api_sql(prestashop, site='urodama', product_ids=None, limit=5):
 
     # switch enabling manipulating only specified product ids
     if not product_ids:
@@ -298,7 +214,7 @@ def set_unit_price_api_sql(site='urodama', product_ids=None, limit=5):
     # Get SQL connection passes
     with open('data/php_access.json', encoding='utf-8') as file:
         php_access = json.load(file)[site]
-    pass_php = os.getenv(f'pass_php_{site}')
+    pass_php = os.getenv('URODAMA_PHP_KEY')
 
     # Connect to the database
     conn = pymysql.connect(
@@ -396,9 +312,7 @@ def make_active(desc):
     return desc
 
 
-def edit_presta_product(product):
-
-    prestashop = PrestaShopWebServiceDict(api_url, api_key)
+def edit_presta_product(prestashop, product):
 
     product.pop('manufacturer_name')
     product.pop('quantity')
@@ -426,91 +340,6 @@ def truncate_meta(text, max_length=160):
             break
 
     return output.strip()
-
-
-def explore_brand(brand, source='aleja'):
-
-    product_tree = ET.parse(f'data/xml/{source}_feed.xml')
-    all_products = product_tree.getroot().findall('o')
-
-    with open('data/brands_dict.json', encoding='utf-8') as file:
-        excluded_products_list = json.load(file)
-    excluded_sku = excluded_products_list.get('skus', [])
-    excluded_ean = excluded_products_list.get('eans', [])
-
-    selected_products = [product for product in all_products if
-                         product.find("attrs/a[@name='Producent']").text.strip() in brand and
-                         product.find("attrs/a[@name='Kod_producenta']").text.strip() not in excluded_sku and
-                         product.find("attrs/a[@name='EAN']").text.strip() not in excluded_ean]
-
-    for p in selected_products:
-        product_data = {
-                    'ID_TARGET': '',
-                    'SKU': p.find("attrs/a[@name='Kod_producenta']").text.strip(),
-                    'Product Name': p.find('name').text.strip(),
-                    'Active': 1,
-                    'Brand': brand,
-                    'Date': datetime.now().strftime("%d-%m-%Y %H:%M"),
-                    'EAN': p.find("attrs/a[@name='EAN']").text.strip(),
-                    'Sales 2021': 0,
-                    'Sales 2022': 0,
-                    'COST NET': str(round(float(p.get('price'))/1.87, 2)).replace('.', ','),
-                    'PRICE': str(p.get('price')).replace('.', ','),
-                    'LINK': p.get('url').strip(),
-                    'ID_SOURCE': p.get('id')
-        }
-
-        with open('data/logs/_product_ideas.csv', mode='a', newline='', encoding='utf-8') as file:
-            writer = csv.DictWriter(file, fieldnames=product_data.keys())
-            writer.writerow(product_data)
-
-    logging.info('Explore_brand: Saved potential product ideas to csv file')
-
-
-def process_products_from_csv(source_csv, source_desc_xml='aleja'):
-
-    default_product_data = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404",
-                            "condition": "new", "show_price": "1", "indexed": "1", "visibility": "both"}
-
-    with open(f'data/logs/{source_csv}.csv', encoding='utf-8', newline='') as file:
-        products_to_add = list(csv.DictReader(file))
-
-    product_tree = ET.parse(f'data/xml/{source_desc_xml}_feed.xml')
-
-    processed_products = []
-
-    for product_source in products_to_add:
-        product = dict(default_product_data)
-
-        product['name'] = product_source.get('Product Name', None)
-        product['reference'] = product_source.get('SKU', None)
-        product['ean13'] = product_source.get('EAN', None)
-        product['price'] = product_source.get('PRICE', None).replace(',', '.')
-        product['wholesale_price'] = product_source.get('COST NET', None).replace(',', '.')
-        product['id_category_default'] = 2
-        product['link_rewrite'] = product.get('name', 'NAME NOT FOUND').lower().replace(' ', '-')
-
-        with open('data/brands_dict.json', encoding='utf-8') as f:
-            brand_ids_dict = json.load(f).get('brand_id', None)
-        brand = product_source.get('Brand', None)
-        product['id_manufacturer'] = brand_ids_dict.get(brand, None)
-
-        product_id_xml = product_source.get('ID_SOURCE', None)
-        product_xml = product_tree.find(f'.//o[@id="{product_id_xml}"]')
-
-        product['description'] = product_xml.find('desc').text.strip().replace('&#8211;', '-').replace('&nbsp', '')
-        product['description_short'] = '.'.join(product['description'].replace('\n', ' ').split('.')[:3]) + '.'[:800]
-        product['meta_title'] = product['name']
-        product['meta_description'] = truncate_meta(product['description_short'], 160)[:180]
-        product['image_url'] = product_xml.find("imgs/main").get('url')
-
-        for text in ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']:
-            product[text] = {'language': {'attrs': {'id': '2'}, 'value': product[text]}}
-
-        processed_products.append(product)
-
-    logging.info('Finished processing products from CSV.')
-    return processed_products
 
 
 def load_product_ids_from_file(file_path):
