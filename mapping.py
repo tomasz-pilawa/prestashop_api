@@ -1,124 +1,76 @@
 import json
 import requests
 import xml.etree.ElementTree as ET
+import logging
 
 
-def update_products_dict(prestashop, mode='all', max_products=1000, data_brands_list=None, data_ids_list=None):
-
+def update_products_dict(prestashop, product_ids: list[int] = None):
     with open('data/all_products.json', encoding='utf-8') as file:
-        product_list = json.load(file)
+        product_data = json.load(file)
 
-    indexes_site = prestashop.search('products')
-    indexes_dict = [int(p['id']) for p in product_list]
+    product_ids = product_ids or prestashop.search('products')
 
-    indexes_selected = prestashop.search('products')
+    modified_products = [prestashop.get('products', product_id).get('product') for product_id in product_ids]
+    product_data = [p for p in product_data if int(p['id']) not in product_ids] + modified_products
 
-    if mode == 'new':
-        indexes_new = [index for index in indexes_site if index not in indexes_dict]
-        indexes_selected = indexes_new[:max_products]
-
-    if mode == 'ids':
-        indexes_selected = data_ids_list[:max_products]
-
-    if mode == 'brands':
-        indexes_selected = [int(p['id']) for p in product_list if p['manufacturer_name']['value'] in data_brands_list]
-
-    print(f'Manipulated indexes for all_products.json: {indexes_selected}')
-
-    if len(indexes_selected) > 0:
-        product_data = [p for p in product_list if int(p['id']) not in indexes_selected]
-        modified_products = [prestashop.get('products', y)['product'] for y in indexes_selected]
-        product_data.extend(modified_products)
-
-        print(f'Added/Modified {len(indexes_selected)} products. Total number of products now: {len(product_data)}')
-        with open('data/all_products.json', 'w', encoding='utf-8') as file:
-            json.dump(product_data, file, indent=4, ensure_ascii=False)
-    else:
-        print(f'There were no more new products to add. Total number of products now is {len(product_list)}')
-
-    print('FINISHED UPDATING PRODUCTS DICT')
+    with open('data/all_products.json', 'w', encoding='utf-8') as file:
+        json.dump(product_data, file, indent=4, ensure_ascii=False)
+    logging.info(f'FINISHED updating product dict. Modified {len(product_ids)} products.')
 
 
-def update_brands_dict():
+def update_brands_dict(prestashop):
     with open('data/all_products.json', encoding='utf-8') as file:
-        data = json.load(file)
+        all_products = json.load(file)
 
-    brands = list(
-        set([product['manufacturer_name']['value'] for product in data if product['manufacturer_name']['value']]))
-    skus = list(set([product['reference'] for product in data]))
-    eans = list(set([product['ean13'] for product in data if len(product['ean13']) > 5]))
-    indexes = list(set([product['id'] for product in data]))
+    skus = list(set([product['reference'] for product in all_products]))
+    eans = list(set([product['ean13'] for product in all_products if len(product['ean13']) > 5]))
 
-    skus_list = {}
-    indexes_list = {}
+    manufacturers_ids = prestashop.search('manufacturers')
+    brand_id = {prestashop.get('manufacturers', manufacturer_id)['manufacturer']['name']: manufacturer_id
+                for manufacturer_id in manufacturers_ids}
 
-    for b in brands:
-        unique_sku = [product['reference'] for product in data if product['manufacturer_name']['value'] == b]
-        unique_index = [product['id'] for product in data if product['manufacturer_name']['value'] == b]
-        skus_list[b] = unique_sku
-        indexes_list[b] = unique_index
-
-    seen_brands = set()
-    brand_ids = {}
-
-    for product in data:
-        brand = product['manufacturer_name']['value']
-        if brand and brand not in seen_brands:
-            brand_ids[brand] = product['id_manufacturer']
-            seen_brands.add(brand)
-
-    brands_dict = {'brand_id': brand_ids, 'brands': brands, 'skus': skus, 'eans': eans, 'indexes': indexes,
-                   'brand_sku': skus_list, 'brand_index': indexes_list}
+    brands_dict = {'brand_id': brand_id, 'skus': skus, 'eans': eans}
 
     with open('data/brands_dict.json', mode='w', encoding='utf-8') as file:
         json.dump(brands_dict, file, indent=4, ensure_ascii=False)
+    logging.info('FINISHED updating brands_dict')
 
-    print('UPDATED BRANDS DICT')
 
+def update_cats_dict(prestashop):
+    categories_ids = prestashop.search('categories')
+    category_ids = {prestashop.get('categories', cat_id)['category']['name']['language']['value']: cat_id
+                    for cat_id in categories_ids}
+    cats_dict = {'cat_id': category_ids}
 
-def update_cats_dict(prestashop, update_cats_to_classify=0):
+    def extract_category_ids(category_data):
+        return [category['id'] for category in category_data['category']['associations']['categories']['category']]
 
-    with open('data/cats_dict.json', encoding='utf-8') as file:
-        full_dict = json.load(file)
+    def get_category_names(category_id):
+        return [prestashop.get('categories', cat_id)['category']['name']['language']['value'] for cat_id in
+                category_id]
 
-    all_cats_ids = prestashop.search('categories')
-    cats_list = [prestashop.get('categories', cat_id)['category'] for cat_id in all_cats_ids]
-    cats_dict = {cat['name']['language']['value']: cat['id'] for cat in cats_list}
-    # print(cats_dict)
-    full_dict['cats_name_id'] = cats_dict
+    cat_main = ['Pielęgnacja twarzy', 'Pielęgnacja ciała', 'Kosmetyki do włosów']
+    cat_random = ['Zestawy kosmetyków', 'NA LATO']
 
-    # Updates categories to classify dict in a right format for classification prompts for chatgpt
-    if update_cats_to_classify:
-        mains = ['Pielęgnacja twarzy', 'Pielęgnacja ciała', 'Kosmetyki do włosów']
-        randoms = ['Zestawy kosmetyków', 'NA LATO']
+    face_ids = extract_category_ids(prestashop.get('categories', 12))
+    cat_face_form = [cat for cat in get_category_names(face_ids) if not cat.startswith('Kosmetyki')]
+    cat_face_action = [cat for cat in get_category_names(face_ids) if cat.startswith('Kosmetyki')]
 
-        face_all_id = [category['id'] for category in
-                       prestashop.get('categories', 12)['category']['associations']['categories']['category']]
-        face_all_list = [prestashop.get('categories', cat_id)['category']['name']['language']['value']
-                         for cat_id in face_all_id]
-        face_action = [cat for cat in face_all_list if cat.startswith('Kosmetyki')]
-        face_form = [cat for cat in face_all_list if not cat.startswith('Kosmetyki')]
+    body_ids = extract_category_ids(prestashop.get('categories', 14))
+    cat_body = get_category_names(body_ids)
 
-        body_all_id = [category['id'] for category in
-                       prestashop.get('categories', 14)['category']['associations']['categories']['category']]
-        body = [prestashop.get('categories', cat_id)['category']['name']['language']['value']
-                for cat_id in body_all_id]
-        hair_all_id = [category['id'] for category in
-                       prestashop.get('categories', 31)['category']['associations']['categories']['category']]
-        hair = [prestashop.get('categories', cat_id)['category']['name']['language']['value']
-                for cat_id in hair_all_id]
+    hair_ids = extract_category_ids(prestashop.get('categories', 31))
+    cat_hair = get_category_names(hair_ids)
 
-        full_dict['cats_classify'] = {'cat_main': mains, 'cat_random': randoms, 'cat_face_form': face_form,
-                                      'cat_face_action': face_action, 'cat_body': body, 'cat_hair': hair}
+    cats_dict['cats_classify'] = {'cat_main': cat_main, 'cat_random': cat_random, 'cat_face_form': cat_face_form,
+                                  'cat_face_action': cat_face_action, 'cat_body': cat_body, 'cat_hair': cat_hair}
 
     with open('data/cats_dict.json', mode='w', encoding='utf-8') as file:
-        json.dump(full_dict, file, indent=4, ensure_ascii=False)
+        json.dump(cats_dict, file, indent=4, ensure_ascii=False)
+    logging.info('FINISHED updating cats_dict')
 
-    print('UPDATED CATS DICT')
 
-
-def get_xml_from_web(source='luminosa'):
-
+def get_xml_from_web(source: str):
     with open(f'data/xml_urls.json', encoding='utf-8') as file:
         url = json.load(file)[source]
     response = requests.get(url)
@@ -127,12 +79,12 @@ def get_xml_from_web(source='luminosa'):
         root = ET.fromstring(xml_content)
 
         if source != 'luminosa':
+
             attrs_elements = root.findall('.//attrs/a[@name="Kod producenta"]')
             for elem in attrs_elements:
                 elem.attrib['name'] = 'Kod_producenta'
 
             for product in root.findall('o'):
-                # print(product.find('desc').text.lower())
                 product_sku_element = product.find("attrs/a[@name='Kod_producenta']")
                 if product_sku_element is None:
                     missing_sku_element = ET.SubElement(product.find("attrs"), "a", attrib={"name": "Kod_producenta"})
@@ -146,30 +98,17 @@ def get_xml_from_web(source='luminosa'):
 
         with open(f'data/xml/{source}_feed.xml', 'wb') as file:
             file.write(xml_content)
-        print(f"{source.capitalize()} XML fetched successfully!")
-
-    else:
-        print("Failed to fetch the XML file!")
+        logging.info(f"{source.capitalize()} XML fetched successfully!")
 
 
-def update_files_and_xmls(prestashop, site='urodama', product_ids=None):
-
-    print('\nUPDATING DICTIONARIES & XMLs\n')
-    if product_ids:
-        mode = 'ids'
-    else:
-        mode = 'all'
-
+def update_files_and_xmls(prestashop, site: str = 'urodama', product_ids: list[int] = None):
     with open(f'data/xml_urls.json', encoding='utf-8') as file:
-        url_list = json.load(file)[f'{site}_php_update']
+        url_list = json.load(file).get(f'{site}_php_update')
     for url in url_list:
-        response = requests.get(url)
-        if response.status_code == 200:
-            print('Ceneo/Google XML Online updated')
-
+        requests.get(url)
     for xml_site in ['aleja', 'urodama', 'urodama_inci', 'luminosa']:
         get_xml_from_web(source=xml_site)
 
-    update_products_dict(prestashop, mode=mode, max_products=1000, data_ids_list=product_ids)
-    update_brands_dict()
-    update_cats_dict(prestashop, update_cats_to_classify=0)
+    update_products_dict(prestashop, product_ids=product_ids)
+    update_brands_dict(prestashop)
+    update_cats_dict(prestashop)

@@ -38,7 +38,7 @@ def classify_categories(prestashop, openai_conn, product_ids_list):
                 product_classification.append(category_name)
 
         with open('data/cats_dict.json', encoding='utf-8') as file:
-            cats_dict = json.load(file)['cats_name_id']
+            cats_dict = json.load(file)['cat_id']
 
         cats_classified = ['2'] + [cats_dict[cat] for cat in product_classification]
         cats_format = [{'id': cat_id} for cat_id in cats_classified]
