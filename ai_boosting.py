@@ -124,7 +124,7 @@ def apply_ai_actions(prestashop, openai_conn, product_ids, classify_ai=0, descri
     if meta_ai:
         write_meta(prestashop, openai_conn, product_ids)
     if inci_unit:
-        editing.fill_inci(prestashop, limit=20, product_ids=product_ids, source='aleja')
-        editing.set_unit_price_api_sql(prestashop, limit=20, product_ids=product_ids)
+        editing.fill_inci(prestashop, product_ids=product_ids, source='aleja')
+        editing.set_unit_price_api_sql(prestashop, product_ids=product_ids)
 
     logging.info('Finished all AI actions.')

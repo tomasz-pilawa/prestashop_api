@@ -11,7 +11,6 @@ def update_products_dict(prestashop, mode='all', max_products=1000, data_brands_
     indexes_site = prestashop.search('products')
     indexes_dict = [int(p['id']) for p in product_list]
 
-    # default mode is all - it would update all products
     indexes_selected = prestashop.search('products')
 
     if mode == 'new':

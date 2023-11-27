@@ -10,8 +10,7 @@ import pymysql
 import logging
 
 
-def explore_brand(brand, source='aleja'):
-
+def explore_brand(brand: str, source: str = 'aleja'):
     product_tree = ET.parse(f'data/xml/{source}_feed.xml')
     all_products = product_tree.getroot().findall('o')
 
@@ -27,19 +26,19 @@ def explore_brand(brand, source='aleja'):
 
     for p in selected_products:
         product_data = {
-                    'ID_TARGET': '',
-                    'SKU': p.find("attrs/a[@name='Kod_producenta']").text.strip(),
-                    'Product Name': p.find('name').text.strip(),
-                    'Active': 1,
-                    'Brand': brand,
-                    'Date': datetime.now().strftime("%d-%m-%Y %H:%M"),
-                    'EAN': p.find("attrs/a[@name='EAN']").text.strip(),
-                    'Sales 2021': 0,
-                    'Sales 2022': 0,
-                    'COST NET': str(round(float(p.get('price'))/1.87, 2)).replace('.', ','),
-                    'PRICE': str(p.get('price')).replace('.', ','),
-                    'LINK': p.get('url').strip(),
-                    'ID_SOURCE': p.get('id')
+            'ID_TARGET': '',
+            'SKU': p.find("attrs/a[@name='Kod_producenta']").text.strip(),
+            'Product Name': p.find('name').text.strip(),
+            'Active': 1,
+            'Brand': brand,
+            'Date': datetime.now().strftime("%d-%m-%Y %H:%M"),
+            'EAN': p.find("attrs/a[@name='EAN']").text.strip(),
+            'Sales 2021': 0,
+            'Sales 2022': 0,
+            'COST NET': str(round(float(p.get('price')) / 1.87, 2)).replace('.', ','),
+            'PRICE': str(p.get('price')).replace('.', ','),
+            'LINK': p.get('url').strip(),
+            'ID_SOURCE': p.get('id')
         }
 
         with open('data/logs/_product_ideas.csv', mode='a', newline='', encoding='utf-8') as file:
@@ -49,8 +48,7 @@ def explore_brand(brand, source='aleja'):
     logging.info('Explore_brand: Saved potential product ideas to csv file')
 
 
-def process_products_from_csv(source_csv, source_desc_xml='aleja'):
-
+def process_products_from_csv(source_csv: str, source_desc_xml: str = 'aleja') -> list:
     default_product_data = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404",
                             "condition": "new", "show_price": "1", "indexed": "1", "visibility": "both"}
 
@@ -58,7 +56,6 @@ def process_products_from_csv(source_csv, source_desc_xml='aleja'):
         products_to_add = list(csv.DictReader(file))
 
     product_tree = ET.parse(f'data/xml/{source_desc_xml}_feed.xml')
-
     processed_products = []
 
     for product_source in products_to_add:
@@ -95,7 +92,7 @@ def process_products_from_csv(source_csv, source_desc_xml='aleja'):
     return processed_products
 
 
-def add_products_api(prestashop, product_list):
+def add_products_api(prestashop, product_list: list):
     indexes_added = []
 
     for product in product_list:
@@ -103,120 +100,67 @@ def add_products_api(prestashop, product_list):
         product_upload_data['product'].pop('image_url')
 
         response = prestashop.add('products', product_upload_data)
-
         product_id = int(response['prestashop']['product']['id'])
         indexes_added.append(product_id)
 
-        image_response = requests.get(product['image_url'])
-
+        image_response = requests.get(product.get('image_url', None))
         if image_response.status_code == 200:
             filename = f"{product['link_rewrite']['language']['value']}-kosmetyki-urodama.jpg"
             image_path = "images/" + filename
-
             with open(image_path, "wb") as file:
                 file.write(image_response.content)
             with open(image_path, "rb") as file:
                 image_content = file.read()
-
             prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
-
         else:
             logging.info(f"Failed to download image for product: {product['name']['language']['value']}")
             continue
 
-    logging.info(f'Finished adding {len(product_list)} with photos to Prestashop database via API.')
-
     with open('data/logs/product_indexes.json', 'w') as file:
         json.dump(indexes_added, file)
+    logging.info(f'Finished adding {len(product_list)} with photos to Prestashop database via API.')
 
 
-def fill_inci(prestashop, brand=None, limit=2, source='aleja_inci', product_ids=None):
+def fill_inci(prestashop, product_ids: list[int], source: str = 'aleja'):
 
-    # Get list of brand IDs from json dict or set ids to be fixed or return early
-    if brand:
-        with open('data/brands_dict.json', encoding='utf-8') as file:
-            ids_to_fix = json.load(file)['brand_index'][brand]
-    elif product_ids:
-        ids_to_fix = product_ids
-    else:
-        print('No brand or product ids given hence no INCI inserted')
-        return
+    product_tree = ET.parse(f'data/xml/{source}_feed.xml')
+    source_products = product_tree.getroot().findall('o')
 
-    # Load source products' data in xml tree
-    tree = ET.parse(f'data/xml/{source}_feed.xml')
-    root = tree.getroot()
-    source_products = root.findall('o')
+    for product_id in product_ids:
+        target_product = prestashop.get('products', product_id).get('product')
 
-    # Iterate over all Products and fill in INCI if either SKU or EAN matches any product in source database
-    for p_id in ids_to_fix[:limit]:
-        product = prestashop.get('products', p_id)['product']
-        print(f"\nCHECKING PRODUCT {product['name']['language']['value']}")
+        if 'inci' not in target_product['description']['language']['value'].lower():
+            target_sku = target_product['reference']
+            target_ean = target_product['ean13']
 
-        # Check if there is no INCI at the moment
-        if 'inci' not in product['description']['language']['value'].lower():
-            print('There is no INCI on the website. Proceeding with the loop.')
-            sku = product['reference']
-            ean = product['ean13']
-            product_found = False
-            s_inci = None
+            for source_product in source_products:
+                source_sku = source_product.find("attrs/a[@name='Kod_producenta']").text.strip()
+                source_ean = source_product.find("attrs/a[@name='EAN']").text.strip()
 
-            # Firstly, find the any matching sku/ean
-            for s in source_products:
-                s_sku = s.find("attrs/a[@name='Kod_producenta']").text.strip()
-                s_ean = s.find("attrs/a[@name='EAN']").text.strip()
+                if target_sku == source_sku or target_ean == source_ean:
+                    source_desc = source_product.find('desc').text.lower()
 
-                # Secondly, if there is a match, print names & check for INCI
-                if sku == s_sku or ean == s_ean:
-                    print(sku, s_sku)
-                    print(ean, s_ean)
-                    # print(product['name']['language']['value'])
-                    print(s.find('name').text.strip())
+                    if 'inci' in source_desc:
+                        soup = BeautifulSoup(source_desc.split('inci')[1], 'html.parser')
+                        source_inci = soup.find('p', string=True)
+                        source_inci_text = source_inci.get_text() if source_inci else soup.get_text()
 
-                    product_found = True
-                    s_desc = s.find('desc').text.lower()
-
-                    # Thirdly, if there is INCI in the source - insert it via API directly and break the loop
-                    if 'inci' in s_desc:
-                        soup = BeautifulSoup(s_desc.split('inci')[1], 'html.parser')
-                        # s_inci = soup.find('p', string=True).get_text()
-                        s_inci = soup.find('p', string=True)
-                        if s_inci:
-                            s_inci_text = s_inci.get_text()
-                        else:
-                            s_inci_text = soup.get_text()
-
-                        s_inci = '<p></p><p><strong>Skład INCI:</strong></p><p>' + s_inci_text + '</p>'
-                        product['description']['language']['value'] += s_inci
-
-                        edit_presta_product(prestashop, product=product)
+                        target_inci = '<p></p><p><strong>Skład INCI:</strong></p><p>' + source_inci_text + '</p>'
+                        target_product['description']['language']['value'] += target_inci
+                        edit_presta_product(prestashop, product=target_product)
+                        break
+                    else:
+                        logging.info(f"No INCI in the source description for product {target_product.get('name')}")
                         break
 
-                    else:
-                        print('There is no INCI in the source description')
-
-            if not product_found:
-                print(f"{product['name']['language']['value']} doesn't exist in source database")
-
-        else:
-            print('The INCI is already there')
-
-    print('FINISHED INSERTING INCI\n')
+    logging.info('FINISHED Inserting INCI into selected products')
 
 
-def set_unit_price_api_sql(prestashop, site='urodama', product_ids=None, limit=5):
+def set_unit_price_api_sql(prestashop, product_ids: list[int], site: str = 'urodama'):
 
-    # switch enabling manipulating only specified product ids
-    if not product_ids:
-        indexes = prestashop.search('products')
-    else:
-        indexes = product_ids
-
-    # Get SQL connection passes
     with open('data/php_access.json', encoding='utf-8') as file:
         php_access = json.load(file)[site]
     pass_php = os.getenv('URODAMA_PHP_KEY')
-
-    # Connect to the database
     conn = pymysql.connect(
         host=php_access['host'],
         port=3306,
@@ -228,44 +172,36 @@ def set_unit_price_api_sql(prestashop, site='urodama', product_ids=None, limit=5
         c = conn.cursor()
         conn.begin()
 
-        for i in indexes[:limit]:
-            product = prestashop.get('products', i)['product']
-
-            name = product['name']['language']['value']
-            print(name)
+        for product_id in product_ids:
+            product = prestashop.get('products', product_id)['product']
+            product_name = product['name']['language']['value']
             quantity = None
 
-            matches = re.findall(r'(\d+)\s*ml', name)
+            matches = re.findall(r'(\d+)\s*ml', product_name)
             if matches:
                 quantity = sum([int(match) for match in matches])
 
-            m2 = re.search(r'(\d+)\s*x\s*(\d+)', name)
-            if m2:
-                num1 = int(m2.group(1))
-                num2 = int(m2.group(2))
-                quantity = num1 * num2
-            if 'kg' in name:
-                quantity = None
+            matches_2 = re.search(r'(\d+)\s*x\s*(\d+)', product_name)
+            if matches_2:
+                quantity = int(matches_2.group(1)) * int(matches_2.group(2))
 
+            if 'kg' in product_name:
+                quantity = None
             if quantity is not None:
                 c.execute(php_access['query'], (quantity, product['id']))
-
         conn.commit()
-
     except Exception as e:
-        print("Error:", e)
+        logging.error("Error:", e)
         conn.rollback()
     finally:
         c.close()
         conn.close()
 
 
-def manipulate_desc(desc):
-
-    summary, ingredients = '', ''
+def manipulate_desc(desc: str) -> tuple[str, str]:
 
     cleaned_text = re.sub(r'\n+(?![^\n]*:)', ' ', desc)
-    cleaned_text = re.sub(r'&#\d+;', '', cleaned_text).replace('&nbsp;', '').replace('</b>', '').replace('<b>', '').\
+    cleaned_text = re.sub(r'&#\d+;', '', cleaned_text).replace('&nbsp;', '').replace('</b>', '').replace('<b>', ''). \
         replace(' •', '')
 
     inci_split = re.split(r'skład inci', cleaned_text, flags=re.IGNORECASE)
@@ -284,10 +220,9 @@ def manipulate_desc(desc):
     return summary[:3000], ingredients[:3000]
 
 
-def make_desc(desc):
-
+def make_desc(desc: str) -> tuple[str, str]:
     desc_short = desc.split('SHORT DESCRIPTION:')[1].strip()
-    desc_long = desc.split('SHORT DESCRIPTION:')[0].replace('LONG DESCRIPTION:', '').strip().\
+    desc_long = desc.split('SHORT DESCRIPTION:')[0].replace('LONG DESCRIPTION:', '').strip(). \
         replace('Właściwości i Zalety kosmetyku:', '</p><p><strong>Właściwości i Zalety kosmetyku:</strong>')
 
     desc_short = re.sub(r'\n& ', r'</li><li>', desc_short)
@@ -302,8 +237,7 @@ def make_desc(desc):
     return desc_short, desc_long
 
 
-def make_active(desc):
-
+def make_active(desc: str) -> str:
     desc = re.sub(r'SKŁADNIKI:',
                   r'<p></p><p><strong>Składniki aktywne:</strong></p><ul style="list-style-type: disc;">', desc)
     desc = re.sub(r'(\n&|\n-)', r'</li><li>', desc).replace('</li>', '', 1)
@@ -312,19 +246,15 @@ def make_active(desc):
     return desc
 
 
-def edit_presta_product(prestashop, product):
-
+def edit_presta_product(prestashop, product: dict):
     product.pop('manufacturer_name')
     product.pop('quantity')
     product.pop('position_in_category')
-
     prestashop.edit('products', {'product': product})
+    logging.info(f"Edited product {product['name']['language']['value']}")
 
-    print(f"Edited product {product['name']['language']['value']}")
 
-
-def truncate_meta(text, max_length=160):
-
+def truncate_meta(text: str, max_length: int = 160) -> str:
     sentences = text.split('. ')
     output = sentences[0] + '. '
 
@@ -342,6 +272,6 @@ def truncate_meta(text, max_length=160):
     return output.strip()
 
 
-def load_product_ids_from_file(file_path):
+def load_product_ids_from_file(file_path: str):
     with open(file_path, 'r') as file:
         return json.load(file)
