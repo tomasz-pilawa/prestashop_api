@@ -2,13 +2,13 @@ import json
 import logging
 import openai
 from bs4 import BeautifulSoup
-import editing
+from src import editing
 
 
 def classify_categories(prestashop, openai_conn, product_ids_list: list[int]):
     openai.api_key = openai_conn
 
-    with open('../data/cats_dict.json', encoding='utf-8') as file:
+    with open('data/cats_dict.json', encoding='utf-8') as file:
         cats_classify = json.load(file).get('cats_classify')
         cats_id_dict = json.load(file).get('cat_id')
 
@@ -17,7 +17,7 @@ def classify_categories(prestashop, openai_conn, product_ids_list: list[int]):
         product_desc = product['description_short']['language']['value']
         product_cats = []
 
-        with open('../data/prompts/classify_product.txt', 'r', encoding='utf-8') as file:
+        with open('data/prompts/classify_product.txt', 'r', encoding='utf-8') as file:
             prompt_template = file.read().strip()
         prompt = prompt_template.format(product=product_desc, cats=cats_classify)
 
@@ -48,14 +48,14 @@ def write_descriptions(prestashop, openai_conn, product_ids_list: list[int]):
         product_desc = product['description']['language']['value']
         product_summary, product_ingredients = editing.manipulate_desc(product_desc)
 
-        with open('../data/prompts/write_desc_2.txt', 'r', encoding='utf-8') as file:
+        with open('data/prompts/write_desc_2.txt', 'r', encoding='utf-8') as file:
             prompt_template = file.read().strip()
         prompt = prompt_template.format(product_name=product_name, product_desc=product_summary)
         response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1900, temperature=0.25)
 
         desc_short, desc_long = editing.make_desc(response.choices[0].text.strip())
 
-        with open('../data/prompts/write_active.txt', 'r', encoding='utf-8') as file:
+        with open('data/prompts/write_active.txt', 'r', encoding='utf-8') as file:
             prompt_template = file.read().strip()
         prompt = prompt_template.format(product_desc=product_ingredients)
         response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1500, temperature=0.25)
@@ -78,7 +78,7 @@ def write_meta(prestashop, openai_conn, product_ids_list: list[int]):
         product_desc = product['description_short']['language']['value']
         product_desc = BeautifulSoup(product_desc, 'html.parser').get_text()
 
-        with open('../data/prompts/write_meta_2.txt', 'r', encoding='utf-8') as file:
+        with open('data/prompts/write_meta_2.txt', 'r', encoding='utf-8') as file:
             prompt_template = file.read().strip()
         prompt = prompt_template.format(product_name=product_name, product_desc=product_desc)
         response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=400, temperature=0.3)

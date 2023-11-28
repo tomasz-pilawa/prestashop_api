@@ -5,7 +5,7 @@ import logging
 
 
 def update_products_dict(prestashop, product_ids: list[int] = None):
-    with open('../data/all_products.json', encoding='utf-8') as file:
+    with open('data/all_products.json', encoding='utf-8') as file:
         product_data = json.load(file)
 
     product_ids = product_ids or prestashop.search('products')
@@ -13,13 +13,13 @@ def update_products_dict(prestashop, product_ids: list[int] = None):
     modified_products = [prestashop.get('products', product_id).get('product') for product_id in product_ids]
     product_data = [p for p in product_data if int(p['id']) not in product_ids] + modified_products
 
-    with open('../data/all_products.json', 'w', encoding='utf-8') as file:
+    with open('data/all_products.json', 'w', encoding='utf-8') as file:
         json.dump(product_data, file, indent=4, ensure_ascii=False)
     logging.info(f'FINISHED updating product dict. Modified {len(product_ids)} products.')
 
 
 def update_brands_dict(prestashop):
-    with open('../data/all_products.json', encoding='utf-8') as file:
+    with open('data/all_products.json', encoding='utf-8') as file:
         all_products = json.load(file)
 
     skus = list(set([product['reference'] for product in all_products]))
@@ -31,7 +31,7 @@ def update_brands_dict(prestashop):
 
     brands_dict = {'brand_id': brand_id, 'skus': skus, 'eans': eans}
 
-    with open('../data/brands_dict.json', mode='w', encoding='utf-8') as file:
+    with open('data/brands_dict.json', mode='w', encoding='utf-8') as file:
         json.dump(brands_dict, file, indent=4, ensure_ascii=False)
     logging.info('FINISHED updating brands_dict')
 
@@ -65,13 +65,13 @@ def update_cats_dict(prestashop):
     cats_dict['cats_classify'] = {'cat_main': cat_main, 'cat_random': cat_random, 'cat_face_form': cat_face_form,
                                   'cat_face_action': cat_face_action, 'cat_body': cat_body, 'cat_hair': cat_hair}
 
-    with open('../data/cats_dict.json', mode='w', encoding='utf-8') as file:
+    with open('data/cats_dict.json', mode='w', encoding='utf-8') as file:
         json.dump(cats_dict, file, indent=4, ensure_ascii=False)
     logging.info('FINISHED updating cats_dict')
 
 
 def get_xml_from_web(source: str):
-    with open(f'../data/xml_urls.json', encoding='utf-8') as file:
+    with open(f'data/xml_urls.json', encoding='utf-8') as file:
         url = json.load(file)[source]
     response = requests.get(url)
     if response.status_code == 200:
@@ -102,7 +102,7 @@ def get_xml_from_web(source: str):
 
 
 def update_files_and_xmls(prestashop, site: str = 'urodama', product_ids: list[int] = None):
-    with open(f'../data/xml_urls.json', encoding='utf-8') as file:
+    with open(f'data/xml_urls.json', encoding='utf-8') as file:
         url_list = json.load(file).get(f'{site}_php_update')
     for url in url_list:
         requests.get(url)
