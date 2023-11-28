@@ -1,8 +1,5 @@
-import mapping
-import editing as e
-import ai_boosting
+from src import editing as e, ai_boosting, mapping
 import os
-import openai
 from prestapyt import PrestaShopWebServiceDict
 from dotenv import load_dotenv
 

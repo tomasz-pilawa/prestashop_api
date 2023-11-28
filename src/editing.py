@@ -14,7 +14,7 @@ def explore_brand(brand: str, source: str = 'aleja'):
     product_tree = ET.parse(f'data/xml/{source}_feed.xml')
     all_products = product_tree.getroot().findall('o')
 
-    with open('data/brands_dict.json', encoding='utf-8') as file:
+    with open('../data/brands_dict.json', encoding='utf-8') as file:
         excluded_products_list = json.load(file)
     excluded_sku = excluded_products_list.get('skus', [])
     excluded_ean = excluded_products_list.get('eans', [])
@@ -41,7 +41,7 @@ def explore_brand(brand: str, source: str = 'aleja'):
             'ID_SOURCE': p.get('id')
         }
 
-        with open('data/logs/_product_ideas.csv', mode='a', newline='', encoding='utf-8') as file:
+        with open('../data/logs/_product_ideas.csv', mode='a', newline='', encoding='utf-8') as file:
             writer = csv.DictWriter(file, fieldnames=product_data.keys())
             writer.writerow(product_data)
 
@@ -69,7 +69,7 @@ def process_products_from_csv(source_csv: str, source_desc_xml: str = 'aleja') -
         product['id_category_default'] = 2
         product['link_rewrite'] = product.get('name', 'NAME NOT FOUND').lower().replace(' ', '-')
 
-        with open('data/brands_dict.json', encoding='utf-8') as f:
+        with open('../data/brands_dict.json', encoding='utf-8') as f:
             brand_ids_dict = json.load(f).get('brand_id', None)
         brand = product_source.get('Brand', None)
         product['id_manufacturer'] = brand_ids_dict.get(brand, None)
@@ -116,7 +116,7 @@ def add_products_api(prestashop, product_list: list):
             logging.info(f"Failed to download image for product: {product['name']['language']['value']}")
             continue
 
-    with open('data/logs/product_indexes.json', 'w') as file:
+    with open('../data/logs/product_indexes.json', 'w') as file:
         json.dump(indexes_added, file)
     logging.info(f'Finished adding {len(product_list)} with photos to Prestashop database via API.')
 
@@ -158,7 +158,7 @@ def fill_inci(prestashop, product_ids: list[int], source: str = 'aleja'):
 
 def set_unit_price_api_sql(prestashop, product_ids: list[int], site: str = 'urodama'):
 
-    with open('data/php_access.json', encoding='utf-8') as file:
+    with open('../data/php_access.json', encoding='utf-8') as file:
         php_access = json.load(file)[site]
     pass_php = os.getenv('URODAMA_PHP_KEY')
     conn = pymysql.connect(
