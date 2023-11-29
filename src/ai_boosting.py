@@ -9,8 +9,9 @@ def classify_categories(prestashop, openai_conn, product_ids_list: list[int]):
     openai.api_key = openai_conn
 
     with open('data/cats_dict.json', encoding='utf-8') as file:
-        cats_classify = json.load(file).get('cats_classify')
-        cats_id_dict = json.load(file).get('cat_id')
+        cats_dict = json.load(file)
+    cats_classify = cats_dict.get('cats_classify')
+    cats_id_dict = cats_dict.get('cat_id')
 
     for product_id in product_ids_list:
         product = prestashop.get('products', product_id).get('product')
@@ -26,7 +27,7 @@ def classify_categories(prestashop, openai_conn, product_ids_list: list[int]):
 
         for part in generated_text.split(","):
             category_name = part.strip()
-            if category_name in list(cats_classify.values()):
+            if category_name in list(cats_id_dict.keys()):
                 product_cats.append(category_name)
 
         product_cats_ids = ['2'] + [cats_id_dict[cat] for cat in product_cats]
