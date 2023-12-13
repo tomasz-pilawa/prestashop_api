@@ -8,8 +8,8 @@ api_url = os.getenv('URODAMA_LINK')
 api_key = os.getenv('URODAMA_KEY')
 openai_key = os.getenv('OPENAI_KEY')
 
-params = {'mode': 'improve',
-          'brand': 'Phyris',
+params = {'mode': 'explore',
+          'brand': 'Montibello',
           'csv_filename': 'adding_09_1'}
 ai_params = dict(classify_ai=1, descriptions_ai=1, meta_ai=1, inci_unit=1)
 
