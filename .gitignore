@@ -4,3 +4,4 @@ __pycache__/
 /data
 obsolete_functions.py
 .env
+/venv
