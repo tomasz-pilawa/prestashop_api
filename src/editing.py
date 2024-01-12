@@ -78,7 +78,7 @@ def process_products_from_csv(source_csv: str, source_desc_xml: str = 'aleja') -
         product_xml = product_tree.find(f'.//o[@id="{product_id_xml}"]')
 
         product['description'] = product_xml.find('desc').text.strip().replace('&#8211;', '-').replace('&nbsp', '')
-        product['description_short'] = '.'.join(product['description'].replace('\n', ' ').split('.')[:3]) + '.'[:800]
+        product['description_short'] = '.'.join(product['description'].replace('\n', ' ').split('.')[:3])[:790] + '.'
         product['meta_title'] = product['name']
         product['meta_description'] = truncate_meta(product['description_short'], 160)[:180]
         product['image_url'] = product_xml.find("imgs/main").get('url')
