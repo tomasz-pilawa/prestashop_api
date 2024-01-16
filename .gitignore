@@ -3,5 +3,6 @@ __pycache__/
 /images
 /data
 obsolete_functions.py
+drafts.py
 .env
 /venv

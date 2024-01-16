@@ -9,6 +9,9 @@ import re
 import pymysql
 import logging
 
+# new way
+# brand_ids = prestashop.search('products', options={'filter[id_manufacturer]': 16})
+
 
 def explore_brand(brand: str, source: str = 'aleja'):
     product_tree = ET.parse(f'data/xml/{source}_feed.xml')
