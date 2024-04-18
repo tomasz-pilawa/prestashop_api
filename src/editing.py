@@ -8,47 +8,52 @@ from bs4 import BeautifulSoup
 import re
 import pymysql
 import logging
+import pandas as pd
+from src import utils
+import config
 
-# new way
-# brand_ids = prestashop.search('products', options={'filter[id_manufacturer]': 16})
 
+class BrandExplorer:
 
-def explore_brand(brand: str, source: str = 'aleja'):
-    product_tree = ET.parse(f'data/xml/{source}_feed.xml')
-    all_products = product_tree.getroot().findall('o')
+    def __init__(self, brand: str, source: str = 'shop_a'):
+        self.brand = brand
+        self.source = source
+        self.all_products = utils.get_products_df_from_xml(self.source)
+        self.excluded_sku, self.excluded_ean = utils.get_excluded_product_list()
 
-    with open('data/brands_dict.json', encoding='utf-8') as file:
-        excluded_products_list = json.load(file)
-    excluded_sku = excluded_products_list.get('skus', [])
-    excluded_ean = excluded_products_list.get('eans', [])
+    def filter_products(self):
+        conditions = (
+                (self.all_products['Producent'].isin([self.brand])) &
+                (~self.all_products['Kod_producenta'].isin(self.excluded_sku)) &
+                (~self.all_products['EAN'].isin(self.excluded_ean))
+        )
+        return self.all_products[conditions]
 
-    selected_products = [product for product in all_products if
-                         product.find("attrs/a[@name='Producent']").text.strip() in brand and
-                         product.find("attrs/a[@name='Kod_producenta']").text.strip() not in excluded_sku and
-                         product.find("attrs/a[@name='EAN']").text.strip() not in excluded_ean]
-
-    for p in selected_products:
+    def write_product_ideas(self, product: pd.Series):
         product_data = {
             'ID_TARGET': '',
-            'SKU': p.find("attrs/a[@name='Kod_producenta']").text.strip(),
-            'Product Name': p.find('name').text.strip(),
+            'SKU': product['Kod_producenta'],
+            'Product Name': product['name'],
             'Active': 1,
-            'Brand': brand,
+            'Brand': self.brand,
             'Date': datetime.now().strftime("%d-%m-%Y %H:%M"),
-            'EAN': p.find("attrs/a[@name='EAN']").text.strip(),
+            'EAN': product['EAN'],
             'Sales 2021': 0,
             'Sales 2022': 0,
-            'COST NET': str(round(float(p.get('price')) / 1.87, 2)).replace('.', ','),
-            'PRICE': str(p.get('price')).replace('.', ','),
-            'LINK': p.get('url').strip(),
-            'ID_SOURCE': p.get('id')
+            'COST NET': utils.calculate_net_cost(product['price']),
+            'PRICE': utils.format_price(product['price']),
+            'LINK': product['url'],
+            'ID_SOURCE': product['id']
         }
 
-        with open('data/logs/_product_ideas.csv', mode='a', newline='', encoding='utf-8') as file:
+        with open(config.product_ideas_path, mode='a', newline='', encoding='utf-8') as file:
             writer = csv.DictWriter(file, fieldnames=product_data.keys())
             writer.writerow(product_data)
 
-    logging.info('Explore_brand: Saved potential product ideas to csv file')
+    def explore_brand(self):
+        selected_products = self.filter_products()
+        for index, product in selected_products.iterrows():
+            self.write_product_ideas(product)
 
 
 def process_products_from_csv(source_csv: str, source_desc_xml: str = 'aleja') -> list:

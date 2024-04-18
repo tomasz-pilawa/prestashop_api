@@ -17,7 +17,8 @@ class ProductManager:
             raise ValueError(f"Unknown mode '{mode}'.")
 
     def explore_brand(self, brand):
-        editing.explore_brand(brand)
+        # editing.explore_brand(brand)
+        editing.BrandExplorer(brand).explore_brand()
 
     def add_products(self, csv_filename):
         products = editing.process_products_from_csv(source_csv=csv_filename)
@@ -27,3 +28,4 @@ class ProductManager:
         product_ids = editing.load_product_ids_from_file('data/logs/product_indexes.json')
         ai_boosting.apply_ai_actions(self.api_connector, config.openai_key, product_ids, **config.ai_params)
         mapping.update_files_and_xmls(self.api_connector, product_ids=product_ids)
+
