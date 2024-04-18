@@ -1,4 +1,5 @@
-from src import ai_boosting, config, editing, mapping
+from src import ai_boosting, editing, mapping
+import config
 
 
 class ProductManager:

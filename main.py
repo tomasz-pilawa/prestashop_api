@@ -1,4 +1,4 @@
-from src import config
+import config
 from src.product_manager import ProductManager
 from src.utils import load_parameters
 from prestapyt import PrestaShopWebServiceDict
