@@ -1,7 +1,8 @@
 import json
-import requests
-import xml.etree.ElementTree as ET
 import logging
+import xml.etree.ElementTree as ET
+
+import requests
 
 
 def update_products_dict(prestashop, product_ids: list[int] = None):
