@@ -76,3 +76,8 @@ def calculate_net_cost(price):
     formated_price_net = str_price.replace('.', ',')
     return formated_price_net
 
+
+def get_df_from_csv(csv_filename: str):
+    os.chdir("../")
+    df = pd.read_csv(config.source_csv_path.format(csv_filename), sep=',', encoding='utf-8')
+    return df

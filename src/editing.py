@@ -12,6 +12,9 @@ import pandas as pd
 from src import utils
 import config
 
+pd.set_option('display.width', None)
+pd.set_option('display.max_colwidth', None)
+
 
 class BrandExplorer:
 
@@ -54,6 +57,16 @@ class BrandExplorer:
         selected_products = self.filter_products()
         for index, product in selected_products.iterrows():
             self.write_product_ideas(product)
+
+
+class CsvProductProcessor:
+    def __init__(self, csv_filename: str, source_desc_xml: str = 'shop_1'):
+        self.source_data = utils.get_df_from_csv(csv_filename)
+
+
+ceman = CsvProductProcessor('abec')
+print(ceman.source_data)
+
 
 
 def process_products_from_csv(source_csv: str, source_desc_xml: str = 'aleja') -> list:
