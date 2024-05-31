@@ -17,5 +17,8 @@ source_csv_path = 'data/logs/{}.csv'
 
 net_price_factor = 1.87
 
-default_product_data = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404",
-                            "condition": "new", "show_price": "1", "indexed": "1", "visibility": "both"}
+default_prestashop_product_data = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404",
+                                   "condition": "new", "show_price": "1", "indexed": "1", "visibility": "both"}
+
+lang_format_fields = ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']
+default_lang_format = {'language': {'attrs': {'id': '2'}}}

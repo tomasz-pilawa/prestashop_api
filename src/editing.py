@@ -60,57 +60,66 @@ class BrandExplorer:
 
 
 class CsvProductProcessor:
-    def __init__(self, csv_filename: str, source_desc_xml: str = 'shop_1'):
-        self.source_data = utils.get_df_from_csv(csv_filename)
+    def __init__(self, csv_filename: str, xml_filename: str = 'shop_a'):
+        self.default_data = config.default_prestashop_product_data
+        self.source_data = utils.get_dict_from_csv(csv_filename)
+        self.enriched_products_ids = utils.get_ids_from_dict(self.source_data)
+        self.enriched_data = utils.get_products_df_from_xml(xml_filename, self.enriched_products_ids)
+
+    def create_product_dict(self, product_source):
+        product_data = dict(self.default_data)
+
+        product_data['name'] = product_source.get('Product Name')
+        product_data['reference'] = product_source.get('SKU')
+        product_data['ean13'] = product_source.get('EAN')
+        product_data['price'] = utils.unformat_price(product_source.get('PRICE'))
+        product_data['wholesale_price'] = utils.unformat_price(product_source.get('COST NET'))
+        product_data['id_category_default'] = 2
+        product_data['link_rewrite'] = utils.create_simple_link(product_data.get('name'))
+
+        product_data['_Brand'] = product_source.get('Brand')
+        product_data['_ID_SOURCE'] = product_source.get('ID_SOURCE')
+
+        return product_data
+
+    def enrich_product(self, product_data):
+        product_data['id_manufacturer'] = utils.get_manufacturer_id(product_data.get('_Brand'))
+        source_product_id = product_data.get('_ID_SOURCE', None)
+        source_product_data = self.enriched_data.loc[self.enriched_data['id'] == source_product_id]
+
+        product_data['image_url'] = source_product_data['img_url'].iloc[0]
+
+        product_source_desc = source_product_data['desc'].iloc[0]
+        product_data['description'], product_data['description_short'] = utils.make_init_desc(product_source_desc)
+
+        product_data['meta_title'] = product_data['name']
+        product_data['meta_description'] = utils.truncate_meta(product_data['description_short'])
+
+        return product_data
+
+    def format_product(self, product_data):
+        print(product_data)
+        product_data.pop('_Brand')
+        product_data.pop('_ID_SOURCE')
+        formatted_product_data = utils.apply_presta_formatting(product_data)
+
+        return formatted_product_data
+
+    def process_products(self):
+        processed_products = []
+
+        for product_source in self.source_data:
+            product_data = self.create_product_dict(product_source)
+            enriched_product = self.enrich_product(product_data)
+            formatted_product = self.format_product(enriched_product)
+            processed_products.append(formatted_product)
+
+        return processed_products
 
 
 ceman = CsvProductProcessor('abec')
-print(ceman.source_data)
-
-
-
-def process_products_from_csv(source_csv: str, source_desc_xml: str = 'aleja') -> list:
-    default_product_data = {"state": "1", "low_stock_alert": "0", "active": "0", "redirect_type": "404",
-                            "condition": "new", "show_price": "1", "indexed": "1", "visibility": "both"}
-
-    with open(f'data/logs/{source_csv}.csv', encoding='utf-8', newline='') as file:
-        products_to_add = list(csv.DictReader(file))
-
-    product_tree = ET.parse(f'data/xml/{source_desc_xml}_feed.xml')
-    processed_products = []
-
-    for product_source in products_to_add:
-        product = dict(default_product_data)
-
-        product['name'] = product_source.get('Product Name', None)
-        product['reference'] = product_source.get('SKU', None)
-        product['ean13'] = product_source.get('EAN', None)
-        product['price'] = product_source.get('PRICE', None).replace(',', '.')
-        product['wholesale_price'] = product_source.get('COST NET', None).replace(',', '.')
-        product['id_category_default'] = 2
-        product['link_rewrite'] = product.get('name', 'NAME NOT FOUND').lower().replace(' ', '-')
-
-        with open('data/brands_dict.json', encoding='utf-8') as f:
-            brand_ids_dict = json.load(f).get('brand_id', None)
-        brand = product_source.get('Brand', None)
-        product['id_manufacturer'] = brand_ids_dict.get(brand, None)
-
-        product_id_xml = product_source.get('ID_SOURCE', None)
-        product_xml = product_tree.find(f'.//o[@id="{product_id_xml}"]')
-
-        product['description'] = product_xml.find('desc').text.strip().replace('&#8211;', '-').replace('&nbsp', '')
-        product['description_short'] = '.'.join(product['description'].replace('\n', ' ').split('.')[:3])[:790] + '.'
-        product['meta_title'] = product['name']
-        product['meta_description'] = truncate_meta(product['description_short'], 160)[:180]
-        product['image_url'] = product_xml.find("imgs/main").get('url')
-
-        for text in ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']:
-            product[text] = {'language': {'attrs': {'id': '2'}, 'value': product[text]}}
-
-        processed_products.append(product)
-
-    logging.info('Finished processing products from CSV.')
-    return processed_products
+elo = ceman.process_products()
+# print(ceman.enriched_data)
 
 
 def add_products_api(prestashop, product_list: list):
@@ -124,6 +133,7 @@ def add_products_api(prestashop, product_list: list):
         product_id = int(response['prestashop']['product']['id'])
         indexes_added.append(product_id)
 
+        # THIS CAN BE ECAPSULATED IN ONE FUNCTION REALLY
         image_response = requests.get(product.get('image_url', None))
         if image_response.status_code == 200:
             filename = f"{product['link_rewrite']['language']['value']}-kosmetyki-urodama.jpg"
@@ -137,6 +147,7 @@ def add_products_api(prestashop, product_list: list):
             logging.info(f"Failed to download image for product: {product['name']['language']['value']}")
             continue
 
+    # SECOND FUNCTION TO DUMP INDICES
     with open('data/logs/product_indexes.json', 'w') as file:
         json.dump(indexes_added, file)
     logging.info(f'Finished adding {len(product_list)} with photos to Prestashop database via API.')
@@ -218,7 +229,7 @@ def set_unit_price_api_sql(prestashop, product_ids: list[int], site: str = 'urod
         c.close()
         conn.close()
 
-
+# MOST OF THE FUNCTIONS BELOW EITHER GO TO UTILS OR BOOSTING
 def manipulate_desc(desc: str) -> tuple[str, str]:
 
     cleaned_text = re.sub(r'\n+(?![^\n]*:)', ' ', desc)
@@ -272,7 +283,6 @@ def edit_presta_product(prestashop, product: dict):
     product.pop('quantity')
     product.pop('position_in_category')
     prestashop.edit('products', {'product': product})
-    logging.info(f"Edited product {product['name']['language']['value']}")
 
 
 def truncate_meta(text: str, max_length: int = 160) -> str:
