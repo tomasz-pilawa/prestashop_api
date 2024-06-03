@@ -6,6 +6,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 import config
 import csv
+import copy
 
 
 def load_parameters():
@@ -43,7 +44,7 @@ def get_products_df_from_xml(source: str, id_list: list = None):
 
     for product in product_tree.getroot().findall('o'):
         product_data = product.attrib
-
+        get_dict_from_csv
         name_element = product.find('name')
         product_data['name'] = name_element.text.strip() if name_element is not None else 'MISSING'
 
@@ -99,8 +100,9 @@ def create_simple_link(name):
 
 
 def get_dict_from_csv(csv_filename: str):
-    os.chdir("../")
-    with open(f'data/logs/{csv_filename}.csv', encoding='utf-8', newline='') as file:
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    file_path = os.path.join(project_root, 'data', 'logs', f'{csv_filename}.csv')
+    with open(file_path, encoding='utf-8', newline='') as file:
         product_dict = list(csv.DictReader(file))
     return product_dict
 
@@ -149,7 +151,12 @@ def truncate_meta(text: str, max_length: int = 160) -> str:
 
 def apply_presta_formatting(product_data):
     for field in config.lang_format_fields:
-        formatted_field = config.default_lang_format.copy()
+        formatted_field = copy.deepcopy(config.default_lang_format)
         formatted_field['language']['value'] = product_data[field]
         product_data[field] = formatted_field
     return product_data
+
+
+def load_product_ids_from_file(file_path: str):
+    with open(file_path, 'r') as file:
+        return json.load(file)

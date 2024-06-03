@@ -1,8 +1,8 @@
 .idea/
 __pycache__/
-/images
+/venv
 /data
 obsolete_functions.py
 drafts.py
 .env
-/venv
+roadmap.txt

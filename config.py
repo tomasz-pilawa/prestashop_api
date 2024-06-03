@@ -22,3 +22,5 @@ default_prestashop_product_data = {"state": "1", "low_stock_alert": "0", "active
 
 lang_format_fields = ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']
 default_lang_format = {'language': {'attrs': {'id': '2'}}}
+
+image_url_suffix = "-kosmetyki-urodama.jpg"

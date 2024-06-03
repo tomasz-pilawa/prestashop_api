@@ -1,4 +1,5 @@
-from src import ai_boosting, editing, mapping, utils
+from src import ai_boosting, mapping, utils
+from src.editing import BrandExplorer, ProductCsvProcessor, ProductAdder
 import config
 
 
@@ -17,13 +18,14 @@ class ProductManager:
             raise ValueError(f"Unknown mode '{mode}'.")
 
     def explore_brand(self, brand):
-        editing.BrandExplorer(brand).explore_brand()
+        BrandExplorer(brand=brand).explore_brand()
 
     def add_products(self, csv_filename):
-        products = editing.process_products_from_csv(source_csv=csv_filename)
-        editing.add_products_api(self.api_connector, product_list=products)
+        processed_products = ProductCsvProcessor(csv_filename=csv_filename).process_products()
+        adder = ProductAdder(prestashop_connector=self.api_connector, products_to_add=processed_products)
+        adder.add_products()
 
     def improve_products(self):
-        product_ids = editing.load_product_ids_from_file('data/logs/product_indexes.json')
+        product_ids = utils.load_product_ids_from_file('data/logs/product_indexes.json')
         ai_boosting.apply_ai_actions(self.api_connector, config.openai_key, product_ids, **config.ai_params)
         mapping.update_files_and_xmls(self.api_connector, product_ids=product_ids)

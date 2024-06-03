@@ -59,14 +59,25 @@ class BrandExplorer:
             self.write_product_ideas(product)
 
 
-class CsvProductProcessor:
+class ProductCsvProcessor:
     def __init__(self, csv_filename: str, xml_filename: str = 'shop_a'):
         self.default_data = config.default_prestashop_product_data
         self.source_data = utils.get_dict_from_csv(csv_filename)
         self.enriched_products_ids = utils.get_ids_from_dict(self.source_data)
         self.enriched_data = utils.get_products_df_from_xml(xml_filename, self.enriched_products_ids)
 
-    def create_product_dict(self, product_source):
+    def process_products(self) -> list[dict]:
+        processed_products = []
+
+        for product_source in self.source_data:
+            product_data = self._create_product_dict(product_source)
+            enriched_product = self._enrich_product(product_data)
+            formatted_product = self._format_product(enriched_product)
+            processed_products.append(formatted_product)
+
+        return processed_products
+
+    def _create_product_dict(self, product_source) -> dict:
         product_data = dict(self.default_data)
 
         product_data['name'] = product_source.get('Product Name')
@@ -82,7 +93,7 @@ class CsvProductProcessor:
 
         return product_data
 
-    def enrich_product(self, product_data):
+    def _enrich_product(self, product_data) -> dict:
         product_data['id_manufacturer'] = utils.get_manufacturer_id(product_data.get('_Brand'))
         source_product_id = product_data.get('_ID_SOURCE', None)
         source_product_data = self.enriched_data.loc[self.enriched_data['id'] == source_product_id]
@@ -97,60 +108,47 @@ class CsvProductProcessor:
 
         return product_data
 
-    def format_product(self, product_data):
-        print(product_data)
+    def _format_product(self, product_data) -> dict:
         product_data.pop('_Brand')
         product_data.pop('_ID_SOURCE')
         formatted_product_data = utils.apply_presta_formatting(product_data)
+        print(formatted_product_data)
 
         return formatted_product_data
 
-    def process_products(self):
-        processed_products = []
 
-        for product_source in self.source_data:
-            product_data = self.create_product_dict(product_source)
-            enriched_product = self.enrich_product(product_data)
-            formatted_product = self.format_product(enriched_product)
-            processed_products.append(formatted_product)
+class ProductAdder:
+    def __init__(self, prestashop_connector, products_to_add: list):
+        self.products_to_add = products_to_add
+        self.prestashop = prestashop_connector
+        self.indexes_added = []
 
-        return processed_products
+    def add_products(self):
+        for product in self.products_to_add:
+            self._upload_product(product)
+        self._dump_indexes_to_file()
 
-
-ceman = CsvProductProcessor('abec')
-elo = ceman.process_products()
-# print(ceman.enriched_data)
-
-
-def add_products_api(prestashop, product_list: list):
-    indexes_added = []
-
-    for product in product_list:
+    def _upload_product(self, product):
         product_upload_data = {'product': dict(product)}
-        product_upload_data['product'].pop('image_url')
+        product_upload_data['product'].pop('image_url', None)
 
-        response = prestashop.add('products', product_upload_data)
-        product_id = int(response['prestashop']['product']['id'])
-        indexes_added.append(product_id)
+        response = self.prestashop.add('products', product_upload_data)
+        added_product_id = int(response['prestashop']['product']['id'])
+        self.indexes_added.append(added_product_id)
 
-        # THIS CAN BE ECAPSULATED IN ONE FUNCTION REALLY
-        image_response = requests.get(product.get('image_url', None))
+        self._upload_product_image(product, added_product_id)
+
+    def _upload_product_image(self, product, product_id):
+        image_url = product.get('image_url', None)
+        image_response = requests.get(image_url)
         if image_response.status_code == 200:
-            filename = f"{product['link_rewrite']['language']['value']}-kosmetyki-urodama.jpg"
-            image_path = "images/" + filename
-            with open(image_path, "wb") as file:
-                file.write(image_response.content)
-            with open(image_path, "rb") as file:
-                image_content = file.read()
-            prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
-        else:
-            logging.info(f"Failed to download image for product: {product['name']['language']['value']}")
-            continue
+            filename = f"{product['link_rewrite']['language']['value']}{config.image_url_suffix}"
+            image_content = image_response.content
+            self.prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
 
-    # SECOND FUNCTION TO DUMP INDICES
-    with open('data/logs/product_indexes.json', 'w') as file:
-        json.dump(indexes_added, file)
-    logging.info(f'Finished adding {len(product_list)} with photos to Prestashop database via API.')
+    def _dump_indexes_to_file(self):
+        with open('data/logs/product_indexes.json', 'w') as file:
+            json.dump(self.indexes_added, file)
 
 
 def fill_inci(prestashop, product_ids: list[int], source: str = 'aleja'):
@@ -229,6 +227,7 @@ def set_unit_price_api_sql(prestashop, product_ids: list[int], site: str = 'urod
         c.close()
         conn.close()
 
+
 # MOST OF THE FUNCTIONS BELOW EITHER GO TO UTILS OR BOOSTING
 def manipulate_desc(desc: str) -> tuple[str, str]:
 
@@ -301,8 +300,3 @@ def truncate_meta(text: str, max_length: int = 160) -> str:
             break
 
     return output.strip()
-
-
-def load_product_ids_from_file(file_path: str):
-    with open(file_path, 'r') as file:
-        return json.load(file)
