@@ -112,7 +112,6 @@ class ProductCsvProcessor:
         product_data.pop('_Brand')
         product_data.pop('_ID_SOURCE')
         formatted_product_data = utils.apply_presta_formatting(product_data)
-        print(formatted_product_data)
 
         return formatted_product_data
 
@@ -283,20 +282,3 @@ def edit_presta_product(prestashop, product: dict):
     product.pop('position_in_category')
     prestashop.edit('products', {'product': product})
 
-
-def truncate_meta(text: str, max_length: int = 160) -> str:
-    sentences = text.split('. ')
-    output = sentences[0] + '. '
-
-    remaining_length = max_length - len(output)
-    remaining_sentences = sorted(sentences[1:], key=len, reverse=True)
-
-    for sentence in remaining_sentences:
-        sentence_length = len(sentence) + 2
-        if sentence_length <= remaining_length:
-            output += sentence
-            remaining_length -= sentence_length
-        else:
-            break
-
-    return output.strip()
