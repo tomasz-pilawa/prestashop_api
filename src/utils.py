@@ -9,56 +9,29 @@ import csv
 import copy
 
 
-def load_parameters():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", help="Mode to operate the system.", type=str, default='explore', required=False)
-    parser.add_argument("--param", help="Brand to explore or CSV filename.", type=str, default=None)
-    args = parser.parse_args()
-
-    if args.mode == 'explore':
-        return args.mode, args.param or 'Mesoestetic'
-    elif args.mode == 'add':
-        if not args.param:
-            args.param = get_newest_csv_name()
-        return args.mode, args.param
-    else:
-        raise ValueError(f"Unknown mode '{args.mode}'.")
-
-
-def get_newest_csv_name():
-
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    parent_dir = os.path.abspath(os.path.join(base_dir, os.pardir))
-    csv_folder = os.path.join(parent_dir, 'data', 'logs')
-    csv_filenames = sorted(glob.glob(os.path.join(csv_folder, '*.csv')), reverse=True)
-    csv_filename = csv_filenames[0] if csv_filenames else None
-    basename = os.path.basename(csv_filename)
-    filename, ext = os.path.splitext(basename)
-
-    return filename
-
-
-def get_products_df_from_xml(source: str, id_list: list = None):
-    product_tree = ET.parse(config.xml_feed_link.format(source))
+def get_products_df_from_xml(id_list: list = None):
+    product_tree = ET.parse(config.xml_read.get('xml_feed_link'))
+    missing_value = config.xml_read.get('missing_tag')
     products = []
 
     for product in product_tree.getroot().findall('o'):
+
         product_data = product.attrib
-        get_dict_from_csv
-        name_element = product.find('name')
-        product_data['name'] = name_element.text.strip() if name_element is not None else 'MISSING'
-
-        desc_element = product.find('desc')
-        product_data['desc'] = desc_element.text if desc_element is not None else 'MISSING'
-
-        img_url = product.find('imgs/main')
-        product_data['img_url'] = img_url.attrib['url'] if img_url is not None else 'MISSING'
+        for key, tag in config.xml_read.get('tags').items():
+            element = product.find(tag)
+            if element is not None:
+                if key == 'img_url':
+                    product_data[key] = element.attrib.get('url', missing_value)
+                else:
+                    product_data[key] = element.text.strip() if element.text else missing_value
+            else:
+                product_data[key] = missing_value
 
         attrs = product.find('attrs')
         if attrs is not None:
             for attr in attrs.findall('a'):
-                if attr.get('name') in ['Producent', 'Kod_producenta', 'EAN']:
-                    product_data[attr.get('name')] = attr.text.strip() if attr.text else 'MISSING'
+                if attr.get('name') in config.xml_read.get('attrs'):
+                    product_data[attr.get('name')] = attr.text.strip() if attr.text else missing_value
 
         products.append(product_data)
 
@@ -69,7 +42,7 @@ def get_products_df_from_xml(source: str, id_list: list = None):
 
 
 def get_excluded_product_list():
-    with open(config.json_helper, encoding='utf-8') as file:
+    with open(config.brand_dict_path, encoding='utf-8') as file:
         excluded_products_list = json.load(file)
     excluded_sku = excluded_products_list.get('skus', [])
     excluded_ean = excluded_products_list.get('eans', [])
@@ -113,8 +86,7 @@ def get_ids_from_dict(source_dict: dict):
 
 
 def get_manufacturer_id(brand_name: str):
-    # os.chdir("../")
-    with open(config.json_helper, encoding='utf-8') as file:
+    with open(config.brand_dict_path, encoding='utf-8') as file:
         brand_ids_dict = json.load(file).get('brand_id', None)
     manufacturer_id = brand_ids_dict.get(brand_name, None)
     return manufacturer_id

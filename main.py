@@ -1,6 +1,5 @@
 import config
 from src.app_logic import ProductManager
-from src.utils import load_parameters
 from prestapyt import PrestaShopWebServiceDict
 
 

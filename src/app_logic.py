@@ -27,18 +27,18 @@ class ProductManager:
         adder.add_products()
 
     def _improve_products(self):
-        product_ids = utils.load_product_ids_from_file('data/logs/product_indexes.json')
+        product_ids = utils.load_product_ids_from_file(config.product_indexes_path)
         ai_operations.apply_ai_actions(self.api_connector, config.openai_key, product_ids, **config.ai_params)
         mapping.update_files_and_xmls(self.api_connector, product_ids=product_ids)
 
     def load_parameters(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("--mode", help="Mode to operate the system.", type=str, default='explore', required=False)
-        parser.add_argument("--param", help="Brand to explore or CSV filename.", type=str, default=None)
+        parser.add_argument("--mode", help=config.mode_help, type=str, default=config.default_mode, required=False)
+        parser.add_argument("--param", help=config.param_help, type=str, default=None)
         args = parser.parse_args()
 
         if args.mode == 'explore':
-            return args.mode, args.param or 'Mesoestetic'
+            return args.mode, args.param or config.default_brand
         elif args.mode == 'add':
             if not args.param:
                 args.param = self._get_newest_csv_name()
@@ -47,11 +47,9 @@ class ProductManager:
             raise ValueError(f"Unknown mode '{args.mode}'.")
 
     def _get_newest_csv_name(self):
-
         base_dir = os.path.abspath(os.path.dirname(__file__))
-        parent_dir = os.path.abspath(os.path.join(base_dir, os.pardir))
-        csv_folder = os.path.join(parent_dir, 'data', 'logs')
-        csv_filenames = sorted(glob.glob(os.path.join(csv_folder, '*.csv')), reverse=True)
+        csv_folder = os.path.abspath(os.path.join(base_dir, config.csv_path))
+        csv_filenames = sorted(glob.glob(f"{csv_folder}/*.csv"), reverse=True)
         csv_filename = csv_filenames[0] if csv_filenames else None
         basename = os.path.basename(csv_filename)
         filename, ext = os.path.splitext(basename)

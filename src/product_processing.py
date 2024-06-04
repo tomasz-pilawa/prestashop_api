@@ -12,16 +12,12 @@ import pandas as pd
 from src import utils
 import config
 
-pd.set_option('display.width', None)
-pd.set_option('display.max_colwidth', None)
-
 
 class BrandExplorer:
 
-    def __init__(self, brand: str, source: str = 'shop_a'):
+    def __init__(self, brand: str):
         self.brand = brand
-        self.source = source
-        self.all_products = utils.get_products_df_from_xml(self.source)
+        self.all_products = utils.get_products_df_from_xml()
         self.excluded_sku, self.excluded_ean = utils.get_excluded_product_list()
 
     def filter_products(self):
@@ -60,11 +56,11 @@ class BrandExplorer:
 
 
 class ProductCsvProcessor:
-    def __init__(self, csv_filename: str, xml_filename: str = 'shop_a'):
+    def __init__(self, csv_filename: str):
         self.default_data = config.default_prestashop_product_data
         self.source_data = utils.get_dict_from_csv(csv_filename)
         self.enriched_products_ids = utils.get_ids_from_dict(self.source_data)
-        self.enriched_data = utils.get_products_df_from_xml(xml_filename, self.enriched_products_ids)
+        self.enriched_data = utils.get_products_df_from_xml(self.enriched_products_ids)
 
     def process_products(self) -> list[dict]:
         processed_products = []
@@ -146,7 +142,7 @@ class ProductAdder:
             self.prestashop.add(f'/images/products/{product_id}', files=[('image', filename, image_content)])
 
     def _dump_indexes_to_file(self):
-        with open('data/logs/product_indexes.json', 'w') as file:
+        with open(config.product_indexes_path, 'w') as file:
             json.dump(self.indexes_added, file)
 
 
