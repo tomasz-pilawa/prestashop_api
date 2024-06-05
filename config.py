@@ -16,7 +16,8 @@ default_mode = 'explore'
 default_brand = 'Mesoestetic'
 csv_path = 'data/logs'
 
-# product_processing
+# processors
+
 default_source_shop = 'shop_a'
 product_ideas_path = 'data/logs/_product_ideas.csv'
 product_indexes_path = 'data/logs/product_indexes.json'
@@ -26,10 +27,14 @@ default_prestashop_product_data = {"state": "1", "low_stock_alert": "0", "active
                                    "condition": "new", "show_price": "1", "indexed": "1", "visibility": "both"}
 image_url_suffix = "-kosmetyki-urodama.jpg"
 
+inci_header = '<p></p><p><strong>Skład INCI:</strong></p><p>'
+
+
+
 # utils
 
 xml_read = {
-    'xml_feed_link': 'data/shop_a_feed.xml',
+    'xml_feed_link': '../data/shop_a_feed.xml',
     'missing_tag': "MISSING",
     'tags': {
         'name': 'name',
@@ -39,7 +44,6 @@ xml_read = {
 }
 
 brand_dict_path = 'data/brands_dict.json'
-
 
 lang_format_fields = ['meta_description', 'meta_title', 'link_rewrite', 'name', 'description', 'description_short']
 default_lang_format = {'language': {'attrs': {'id': '2'}}}

@@ -7,7 +7,7 @@ import csv
 import copy
 
 
-def get_products_df_from_xml(id_list: list = None):
+def get_products_df_from_xml(id_list: list = None) -> pd.DataFrame:
     product_tree = ET.parse(config.xml_read.get('xml_feed_link'))
     missing_value = config.xml_read.get('missing_tag')
     products = []

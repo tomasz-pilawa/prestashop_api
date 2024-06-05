@@ -7,7 +7,6 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import re
 import pymysql
-import logging
 import pandas as pd
 from src import utils
 import config
@@ -146,39 +145,36 @@ class ProductAdder:
             json.dump(self.indexes_added, file)
 
 
-def fill_inci(prestashop, product_ids: list[int], source: str = 'aleja'):
+class ProductEnhancer:
+    def __init__(self, prestashop_connector, product_ids):
+        self.prestashop = prestashop_connector
+        self.product_ids = product_ids
+        self.source_data = utils.get_products_df_from_xml()
 
-    product_tree = ET.parse(f'data/xml/{source}_feed.xml')
-    source_products = product_tree.getroot().findall('o')
+    def update_product_inci(self):
 
-    for product_id in product_ids:
-        target_product = prestashop.get('products', product_id).get('product')
+        for product_id in self.product_ids:
+            target_product = self.prestashop.get('products', product_id).get('product')
 
-        if 'inci' not in target_product['description']['language']['value'].lower():
-            target_sku = target_product['reference']
-            target_ean = target_product['ean13']
+            if 'inci' in target_product['description']['language']['value'].lower():
+                continue
 
-            for source_product in source_products:
-                source_sku = source_product.find("attrs/a[@name='Kod_producenta']").text.strip()
-                source_ean = source_product.find("attrs/a[@name='EAN']").text.strip()
+            product_match = self.source_data.loc[self.source_data['EAN'] == target_product['ean13']]
+            if not product_match.empty:
+                source_desc = product_match['desc'].values[0].lower()
+                if 'inci' in source_desc:
+                    target_inci = self._get_clean_inci(source_desc)
+                    target_product['description']['language']['value'] += target_inci
+                    utils.edit_presta_product(self.prestashop, product=target_product)
+                    continue
 
-                if target_sku == source_sku or target_ean == source_ean:
-                    source_desc = source_product.find('desc').text.lower()
+    def _get_clean_inci(self, source_desc):
+        soup = BeautifulSoup(source_desc.split('inci')[1], 'html.parser')
+        source_inci = soup.find('p', string=True)
+        source_inci_text = source_inci.get_text() if source_inci else soup.get_text()
+        target_inci = config.inci_header + source_inci_text + '</p>'
+        return target_inci
 
-                    if 'inci' in source_desc:
-                        soup = BeautifulSoup(source_desc.split('inci')[1], 'html.parser')
-                        source_inci = soup.find('p', string=True)
-                        source_inci_text = source_inci.get_text() if source_inci else soup.get_text()
-
-                        target_inci = '<p></p><p><strong>Skład INCI:</strong></p><p>' + source_inci_text + '</p>'
-                        target_product['description']['language']['value'] += target_inci
-                        utils.edit_presta_product(prestashop, product=target_product)
-                        break
-                    else:
-                        logging.info(f"No INCI in the source description for product {target_product.get('name')}")
-                        break
-
-    logging.info('FINISHED Inserting INCI into selected products')
 
 
 def set_unit_price_api_sql(prestashop, product_ids: list[int], site: str = 'urodama'):
