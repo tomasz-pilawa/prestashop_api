@@ -1,5 +1,3 @@
-import argparse
-import glob
 import os
 import json
 import pandas as pd
@@ -132,3 +130,11 @@ def apply_presta_formatting(product_data):
 def load_product_ids_from_file(file_path: str):
     with open(file_path, 'r') as file:
         return json.load(file)
+
+
+def edit_presta_product(prestashop, product: dict):
+    product.pop('manufacturer_name')
+    product.pop('quantity')
+    product.pop('position_in_category')
+    prestashop.edit('products', {'product': product})
+

@@ -172,7 +172,7 @@ def fill_inci(prestashop, product_ids: list[int], source: str = 'aleja'):
 
                         target_inci = '<p></p><p><strong>Skład INCI:</strong></p><p>' + source_inci_text + '</p>'
                         target_product['description']['language']['value'] += target_inci
-                        edit_presta_product(prestashop, product=target_product)
+                        utils.edit_presta_product(prestashop, product=target_product)
                         break
                     else:
                         logging.info(f"No INCI in the source description for product {target_product.get('name')}")
@@ -216,65 +216,9 @@ def set_unit_price_api_sql(prestashop, product_ids: list[int], site: str = 'urod
                 c.execute(php_access['query'], (quantity, product['id']))
         conn.commit()
     except Exception as e:
-        logging.error("Error:", e)
         conn.rollback()
     finally:
         c.close()
         conn.close()
 
-
-# MOST OF THE FUNCTIONS BELOW EITHER GO TO UTILS OR BOOSTING
-def manipulate_desc(desc: str) -> tuple[str, str]:
-
-    cleaned_text = re.sub(r'\n+(?![^\n]*:)', ' ', desc)
-    cleaned_text = re.sub(r'&#\d+;', '', cleaned_text).replace('&nbsp;', '').replace('</b>', '').replace('<b>', ''). \
-        replace(' •', '')
-
-    inci_split = re.split(r'skład inci', cleaned_text, flags=re.IGNORECASE)
-    if len(inci_split) >= 2:
-        cleaned_text = inci_split[0].strip()
-
-    active_split = re.split(r'składniki aktywne:', cleaned_text, flags=re.IGNORECASE)
-
-    if len(active_split) >= 2:
-        summary = active_split[0].strip()
-        ingredients = active_split[1].strip()
-    else:
-        summary = cleaned_text
-        ingredients = cleaned_text
-
-    return summary[:3000], ingredients[:3000]
-
-
-def make_desc(desc: str) -> tuple[str, str]:
-    desc_short = desc.split('SHORT DESCRIPTION:')[1].strip()
-    desc_long = desc.split('SHORT DESCRIPTION:')[0].replace('LONG DESCRIPTION:', '').strip(). \
-        replace('Właściwości i Zalety kosmetyku:', '</p><p><strong>Właściwości i Zalety kosmetyku:</strong>')
-
-    desc_short = re.sub(r'\n& ', r'</li><li>', desc_short)
-    desc_short = re.sub(r'& ', r'<li>', desc_short)
-    desc_short = f'<ul style="list-style-type: disc;">{desc_short}</li></ul>'
-
-    desc_long = re.sub(r'\n& ', r'</li><li>', desc_long)
-    desc_long = re.sub(r'\n\n', '</p><p>', desc_long)
-    desc_long = desc_long.replace('</strong></li><li>', '</strong></p><ul style="list-style-type: disc;"><li>')
-    desc_long = f'<p>{desc_long}</li></ul>'
-
-    return desc_short, desc_long
-
-
-def make_active(desc: str) -> str:
-    desc = re.sub(r'SKŁADNIKI:',
-                  r'<p></p><p><strong>Składniki aktywne:</strong></p><ul style="list-style-type: disc;">', desc)
-    desc = re.sub(r'(\n&|\n-)', r'</li><li>', desc).replace('</li>', '', 1)
-    desc = re.sub(r'\n\nSPOSÓB UŻYCIA:', r'</li></ul><p></p><p><strong>Sposób użycia:</strong><p>', desc + '</p>')
-
-    return desc
-
-
-def edit_presta_product(prestashop, product: dict):
-    product.pop('manufacturer_name')
-    product.pop('quantity')
-    product.pop('position_in_category')
-    prestashop.edit('products', {'product': product})
 

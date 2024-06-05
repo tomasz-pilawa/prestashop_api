@@ -1,8 +1,8 @@
 import json
-import logging
+import re
 import openai
 from bs4 import BeautifulSoup
-from src import product_processing, utils
+from src import processors, utils
 
 
 def classify_categories(prestashop, openai_conn, product_ids_list: list[int]):
@@ -36,8 +36,7 @@ def classify_categories(prestashop, openai_conn, product_ids_list: list[int]):
         product['id_category_default'] = product_cats_ids[-1]
         product['associations']['categories']['category'] = product_cats_upload
 
-        product_processing.edit_presta_product(prestashop, product=product)
-    logging.info('FINISHED product classification')
+        utils.edit_presta_product(prestashop, product=product)
 
 
 def write_descriptions(prestashop, openai_conn, product_ids_list: list[int]):
@@ -47,27 +46,26 @@ def write_descriptions(prestashop, openai_conn, product_ids_list: list[int]):
         product = prestashop.get('products', product_id).get('product')
         product_name = product['name']['language']['value']
         product_desc = product['description']['language']['value']
-        product_summary, product_ingredients = product_processing.manipulate_desc(product_desc)
+        product_summary, product_ingredients = manipulate_desc(product_desc)
 
         with open('data/prompts/write_desc_2.txt', 'r', encoding='utf-8') as file:
             prompt_template = file.read().strip()
         prompt = prompt_template.format(product_name=product_name, product_desc=product_summary)
         response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1900, temperature=0.25)
 
-        desc_short, desc_long = product_processing.make_desc(response.choices[0].text.strip())
+        desc_short, desc_long = make_desc(response.choices[0].text.strip())
 
         with open('data/prompts/write_active.txt', 'r', encoding='utf-8') as file:
             prompt_template = file.read().strip()
         prompt = prompt_template.format(product_desc=product_ingredients)
         response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1500, temperature=0.25)
 
-        desc_active = product_processing.make_active(response.choices[0].text.strip())
+        desc_active = make_active(response.choices[0].text.strip())
 
         product['description_short']['language']['value'] = desc_short
         product['description']['language']['value'] = desc_long + desc_active
 
-        product_processing.edit_presta_product(prestashop, product=product)
-    logging.info('FINISHED writing product descriptions')
+        utils.edit_presta_product(prestashop, product=product)
 
 
 def write_meta(prestashop, openai_conn, product_ids_list: list[int]):
@@ -92,8 +90,7 @@ def write_meta(prestashop, openai_conn, product_ids_list: list[int]):
         product['meta_title']['language']['value'] = meta_title
         product['meta_description']['language']['value'] = meta_desc
 
-        product_processing.edit_presta_product(prestashop, product=product)
-    logging.info('FINISHED writing meta descriptions')
+        utils.edit_presta_product(prestashop, product=product)
 
 
 def apply_ai_actions(prestashop, openai_conn, product_ids: list[int],
@@ -106,7 +103,53 @@ def apply_ai_actions(prestashop, openai_conn, product_ids: list[int],
     if meta_ai:
         write_meta(prestashop, openai_conn, product_ids)
     if inci_unit:
-        product_processing.fill_inci(prestashop, product_ids=product_ids, source='aleja')
-        product_processing.set_unit_price_api_sql(prestashop, product_ids=product_ids)
+        processors.fill_inci(prestashop, product_ids=product_ids, source='aleja')
+        processors.set_unit_price_api_sql(prestashop, product_ids=product_ids)
 
-    logging.info('Finished all AI actions.')
+
+def manipulate_desc(desc: str) -> tuple[str, str]:
+
+    cleaned_text = re.sub(r'\n+(?![^\n]*:)', ' ', desc)
+    cleaned_text = re.sub(r'&#\d+;', '', cleaned_text).replace('&nbsp;', '').replace('</b>', '').replace('<b>', ''). \
+        replace(' •', '')
+
+    inci_split = re.split(r'skład inci', cleaned_text, flags=re.IGNORECASE)
+    if len(inci_split) >= 2:
+        cleaned_text = inci_split[0].strip()
+
+    active_split = re.split(r'składniki aktywne:', cleaned_text, flags=re.IGNORECASE)
+
+    if len(active_split) >= 2:
+        summary = active_split[0].strip()
+        ingredients = active_split[1].strip()
+    else:
+        summary = cleaned_text
+        ingredients = cleaned_text
+
+    return summary[:3000], ingredients[:3000]
+
+
+def make_desc(desc: str) -> tuple[str, str]:
+    desc_short = desc.split('SHORT DESCRIPTION:')[1].strip()
+    desc_long = desc.split('SHORT DESCRIPTION:')[0].replace('LONG DESCRIPTION:', '').strip(). \
+        replace('Właściwości i Zalety kosmetyku:', '</p><p><strong>Właściwości i Zalety kosmetyku:</strong>')
+
+    desc_short = re.sub(r'\n& ', r'</li><li>', desc_short)
+    desc_short = re.sub(r'& ', r'<li>', desc_short)
+    desc_short = f'<ul style="list-style-type: disc;">{desc_short}</li></ul>'
+
+    desc_long = re.sub(r'\n& ', r'</li><li>', desc_long)
+    desc_long = re.sub(r'\n\n', '</p><p>', desc_long)
+    desc_long = desc_long.replace('</strong></li><li>', '</strong></p><ul style="list-style-type: disc;"><li>')
+    desc_long = f'<p>{desc_long}</li></ul>'
+
+    return desc_short, desc_long
+
+
+def make_active(desc: str) -> str:
+    desc = re.sub(r'SKŁADNIKI:',
+                  r'<p></p><p><strong>Składniki aktywne:</strong></p><ul style="list-style-type: disc;">', desc)
+    desc = re.sub(r'(\n&|\n-)', r'</li><li>', desc).replace('</li>', '', 1)
+    desc = re.sub(r'\n\nSPOSÓB UŻYCIA:', r'</li></ul><p></p><p><strong>Sposób użycia:</strong><p>', desc + '</p>')
+
+    return desc

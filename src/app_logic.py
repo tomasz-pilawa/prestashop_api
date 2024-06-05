@@ -1,5 +1,5 @@
 from src import ai_operations, mapping, utils
-from src.product_processing import BrandExplorer, ProductCsvProcessor, ProductAdder
+from src.processors import BrandExplorer, ProductCsvProcessor, ProductAdder
 import config
 import os, glob, argparse
 
