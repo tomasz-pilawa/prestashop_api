@@ -1,7 +1,6 @@
 import os
 import json
 import csv
-import xml.etree.ElementTree as ET
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
@@ -150,6 +149,31 @@ class ProductEnhancer:
         self.prestashop = prestashop_connector
         self.product_ids = product_ids
         self.source_data = utils.get_products_df_from_xml()
+        self.php_credentials = config.php_credentials
+
+    def update_products(self):
+        self.update_product_quantities()
+        self.update_product_inci()
+
+    def update_product_quantities(self):
+        try:
+            with DatabaseConnection(self.php_credentials) as conn:
+                cursor = conn.cursor()
+                conn.begin()
+
+                for product_id in self.product_ids:
+                    if not self._has_quantity(cursor, product_id):
+                        product = self.prestashop.get('products', product_id)['product']
+                        product_name = product['name']['language']['value']
+                        quantity = self._extract_quantity(product_name)
+
+                        if quantity is not None:
+                            cursor.execute(config.php_query_update_quantity, (quantity, product['id']))
+                conn.commit()
+
+        except Exception as e:
+            print(f"An error occurred during quantity update: {e}")
+            conn.rollback()
 
     def update_product_inci(self):
 
@@ -168,7 +192,27 @@ class ProductEnhancer:
                     utils.edit_presta_product(self.prestashop, product=target_product)
                     continue
 
-    def _get_clean_inci(self, source_desc):
+    @staticmethod
+    def _has_quantity(cursor, product_id):
+        query = config.php_query_check_quantity
+        cursor.execute(query, (product_id,))
+        result = cursor.fetchone()
+        return result is not None and result[0] is not None and result[0] > 0
+
+    @staticmethod
+    def _extract_quantity(product_name):
+        matches = re.findall(config.quantity_ml_pattern, product_name)
+        if matches:
+            return sum([int(match) for match in matches])
+        matches_2 = re.search(config.quantity_pack_pattern, product_name)
+        if matches_2:
+            return int(matches_2.group(1)) * int(matches_2.group(2))
+        if 'kg' in product_name:
+            return None
+        return None
+
+    @staticmethod
+    def _get_clean_inci(source_desc):
         soup = BeautifulSoup(source_desc.split('inci')[1], 'html.parser')
         source_inci = soup.find('p', string=True)
         source_inci_text = source_inci.get_text() if source_inci else soup.get_text()
@@ -176,45 +220,22 @@ class ProductEnhancer:
         return target_inci
 
 
+class DatabaseConnection:
+    def __init__(self, credentials):
+        self.credentials = credentials
+        self.connection = None
 
-def set_unit_price_api_sql(prestashop, product_ids: list[int], site: str = 'urodama'):
+    def connect(self):
+        self.connection = pymysql.connect(**self.credentials)
+        return self.connection
 
-    with open('data/php_access.json', encoding='utf-8') as file:
-        php_access = json.load(file)[site]
-    pass_php = os.getenv('URODAMA_PHP_KEY')
-    conn = pymysql.connect(
-        host=php_access['host'],
-        port=3306,
-        user=php_access['user'],
-        password=pass_php,
-        db=php_access['db'])
+    def close(self):
+        if self.connection:
+            self.connection.close()
 
-    try:
-        c = conn.cursor()
-        conn.begin()
+    def __enter__(self):
+        self.connect()
+        return self.connection
 
-        for product_id in product_ids:
-            product = prestashop.get('products', product_id)['product']
-            product_name = product['name']['language']['value']
-            quantity = None
-
-            matches = re.findall(r'(\d+)\s*ml', product_name)
-            if matches:
-                quantity = sum([int(match) for match in matches])
-
-            matches_2 = re.search(r'(\d+)\s*x\s*(\d+)', product_name)
-            if matches_2:
-                quantity = int(matches_2.group(1)) * int(matches_2.group(2))
-
-            if 'kg' in product_name:
-                quantity = None
-            if quantity is not None:
-                c.execute(php_access['query'], (quantity, product['id']))
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-    finally:
-        c.close()
-        conn.close()
-
-
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
