@@ -2,109 +2,108 @@ import json
 import re
 import openai
 from bs4 import BeautifulSoup
-from src import processors, utils
+
+import config
+from src import utils
 
 
-def classify_categories(prestashop, openai_conn, product_ids_list: list[int]):
-    openai.api_key = openai_conn
+class BoosterAI:
+    def __init__(self, prestashop_connector, product_ids: list):
+        openai.api_key = config.openai_key
+        self.prestashop = prestashop_connector
+        self.product_ids = product_ids
 
-    with open('data/cats_dict.json', encoding='utf-8') as file:
-        cats_dict = json.load(file)
-    cats_classify = cats_dict.get('cats_classify')
-    cats_id_dict = cats_dict.get('cat_id')
+    def apply_ai_actions(self, classify_ai: bool = False, descriptions_ai: bool = False, meta_ai: bool = False):
 
-    for product_id in product_ids_list:
-        product = prestashop.get('products', product_id).get('product')
-        product_desc = product['description_short']['language']['value']
-        product_cats = []
+        for product_id in self.product_ids:
+            product, product_name, product_desc, product_desc_short = self._load_product_data(product_id)
 
-        with open('data/prompts/classify_product.txt', 'r', encoding='utf-8') as file:
-            prompt_template = file.read().strip()
-        prompt = prompt_template.format(product=product_desc, cats=cats_classify)
+            if classify_ai:
+                id_category_default, associations_categories = self._format_categories(product_desc_short)
+                product['id_category_default'] = id_category_default
+                product['associations']['categories']['category'] = associations_categories
 
-        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=400, temperature=0.2)
-        generated_text = response.choices[0].text
+            if descriptions_ai:
+                description_short, description = self._format_descriptions(product_name, product_desc)
+                product['description_short']['language']['value'] = description_short
+                product['description']['language']['value'] = description
 
-        for part in generated_text.split(","):
-            category_name = part.strip()
-            if category_name in list(cats_id_dict.keys()):
-                product_cats.append(category_name)
+            if meta_ai:
+                meta_title, meta_description = self._format_meta(product_name, product_desc_short)
+                product['meta_title']['language']['value'] = meta_title
+                product['meta_description']['language']['value'] = meta_description
 
-        product_cats_ids = ['2'] + [cats_id_dict[cat] for cat in product_cats]
-        product_cats_upload = [{'id': cat_id} for cat_id in product_cats_ids]
+            utils.edit_presta_product(self.prestashop, product=product)
 
-        product['id_category_default'] = product_cats_ids[-1]
-        product['associations']['categories']['category'] = product_cats_upload
-
-        utils.edit_presta_product(prestashop, product=product)
-
-
-def write_descriptions(prestashop, openai_conn, product_ids_list: list[int]):
-    openai.api_key = openai_conn
-
-    for product_id in product_ids_list:
-        product = prestashop.get('products', product_id).get('product')
-        product_name = product['name']['language']['value']
-        product_desc = product['description']['language']['value']
+    def _format_descriptions(self, product_name: str, product_desc: str):
         product_summary, product_ingredients = manipulate_desc(product_desc)
 
-        with open('data/prompts/write_desc_2.txt', 'r', encoding='utf-8') as file:
-            prompt_template = file.read().strip()
-        prompt = prompt_template.format(product_name=product_name, product_desc=product_summary)
-        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1900, temperature=0.25)
+        prompt = self._load_prompt(prompt_name='prompt_description', product_name=product_name,
+                                   product_desc=product_summary)
+        desc_response = self._generate_response(prompt, max_tokens=config.max_tokens_description)
+        description_short, desc_long = make_desc(desc_response)
 
-        desc_short, desc_long = make_desc(response.choices[0].text.strip())
+        prompt = self._load_prompt(prompt_name='prompt_description_enrichment', product_desc=product_ingredients)
+        active_response = self._generate_response(prompt, max_tokens=config.max_tokens_enrichment)
+        desc_active = make_active(active_response)
+        description = desc_long + desc_active
 
-        with open('data/prompts/write_active.txt', 'r', encoding='utf-8') as file:
-            prompt_template = file.read().strip()
-        prompt = prompt_template.format(product_desc=product_ingredients)
-        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=1500, temperature=0.25)
+        return description_short, description
 
-        desc_active = make_active(response.choices[0].text.strip())
+    def _format_meta(self, product_name: str, product_desc: str):
+        product_desc_clean = BeautifulSoup(product_desc, features='html.parser').get_text()
+        prompt = self._load_prompt(prompt_name='prompt_meta', product_name=product_name,
+                                   product_desc=product_desc_clean)
+        meta_response = self._generate_response(prompt, max_tokens=config.max_tokens_meta)
 
-        product['description_short']['language']['value'] = desc_short
-        product['description']['language']['value'] = desc_long + desc_active
+        meta_title = meta_response.split('META DESCRIPTION:')[0].split('META TITLE:')[1].strip()
+        meta_description = utils.truncate_meta(meta_response.split('META DESCRIPTION:')[1].strip())
 
-        utils.edit_presta_product(prestashop, product=product)
+        return meta_title, meta_description
 
+    def _format_categories(self, product_desc: str):
+        cats_classify, cat_ids = self._load_cats_dict()
 
-def write_meta(prestashop, openai_conn, product_ids_list: list[int]):
-    openai.api_key = openai_conn
+        prompt = self._load_prompt(prompt_name='prompt_classification', product_desc=product_desc, cats=cats_classify)
+        generated_text = self._generate_response(prompt, max_tokens=config.max_tokens_classification)
 
-    for product_id in product_ids_list:
-        product = prestashop.get('products', product_id)['product']
+        product_cats = [cat.strip() for cat in generated_text.split(",") if cat.strip() in cat_ids]
+        product_cats_ids = ['2'] + [cat_ids[cat] for cat in product_cats]
+        product_cats_upload = [{'id': cat_id} for cat_id in product_cats_ids]
+
+        return product_cats_ids[-1], product_cats_upload
+
+    def _load_product_data(self, product_id: int):
+        product = self.prestashop.get('products', product_id).get('product')
         product_name = product['name']['language']['value']
-        product_desc = product['description_short']['language']['value']
-        product_desc = BeautifulSoup(product_desc, 'html.parser').get_text()
+        product_desc = product['description']['language']['value']
+        product_desc_short = product['description_short']['language']['value']
+        return product, product_name, product_desc, product_desc_short
 
-        with open('data/prompts/write_meta_2.txt', 'r', encoding='utf-8') as file:
-            prompt_template = file.read().strip()
-        prompt = prompt_template.format(product_name=product_name, product_desc=product_desc)
-        response = openai.Completion.create(engine='text-davinci-003', prompt=prompt, max_tokens=400, temperature=0.3)
+    @staticmethod
+    def _generate_response(prompt: str, max_tokens: int):
+        response = openai.ChatCompletion.create(
+            model=config.openai_default_model,
+            messages=[
+                {"role": "system", "content": config.openai_default_role},
+                {"role": "user", "content": prompt}],
+            max_tokens=max_tokens,
+            temperature=config.openai_default_temp
+        )
+        return response.choices[0].message['content'].strip()
 
-        text = response.choices[0].text.strip()
+    @staticmethod
+    def _load_cats_dict():
+        with open(config.cats_dict_filepath, encoding='utf-8') as file:
+            cats_dict = json.load(file)
+        cats_classify = cats_dict.get('cats_classify')
+        cat_ids = cats_dict.get('cat_id')
+        return cats_classify, cat_ids
 
-        meta_title = text.split('META DESCRIPTION:')[0].split('META TITLE:')[1].strip()
-        meta_desc = utils.truncate_meta(text.split('META DESCRIPTION:')[1].strip())
-
-        product['meta_title']['language']['value'] = meta_title
-        product['meta_description']['language']['value'] = meta_desc
-
-        utils.edit_presta_product(prestashop, product=product)
-
-
-def apply_ai_actions(prestashop, openai_conn, product_ids: list[int],
-                     classify_ai: bool = 0, descriptions_ai: bool = 0, meta_ai: bool = 0, inci_unit: bool = 0):
-
-    if classify_ai:
-        classify_categories(prestashop, openai_conn, product_ids)
-    if descriptions_ai:
-        write_descriptions(prestashop, openai_conn, product_ids)
-    if meta_ai:
-        write_meta(prestashop, openai_conn, product_ids)
-    if inci_unit:
-        processors.fill_inci(prestashop, product_ids=product_ids, source='aleja')
-        processors.set_unit_price_api_sql(prestashop, product_ids=product_ids)
+    @staticmethod
+    def _load_prompt(prompt_name: str, **kwargs) -> str:
+        prompt_template = config.ai_prompts.get(prompt_name, "")
+        return prompt_template.format(**kwargs)
 
 
 def manipulate_desc(desc: str) -> tuple[str, str]:

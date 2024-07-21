@@ -1,4 +1,3 @@
-import os
 import json
 import csv
 import requests
@@ -145,7 +144,7 @@ class ProductAdder:
 
 
 class ProductEnhancer:
-    def __init__(self, prestashop_connector, product_ids):
+    def __init__(self, prestashop_connector, product_ids: list):
         self.prestashop = prestashop_connector
         self.product_ids = product_ids
         self.source_data = utils.get_products_df_from_xml()

@@ -1,7 +1,10 @@
-from src import ai_operations, mapping, utils
+from src import utils
 from src.processors import BrandExplorer, ProductCsvProcessor, ProductAdder
+from src.ai_operations import BoosterAI
 import config
-import os, glob, argparse
+import os
+import glob
+import argparse
 
 
 class ProductManager:
@@ -28,8 +31,10 @@ class ProductManager:
 
     def _improve_products(self):
         product_ids = utils.load_product_ids_from_file(config.product_indexes_path)
-        ai_operations.apply_ai_actions(self.api_connector, config.openai_key, product_ids, **config.ai_params)
-        mapping.update_files_and_xmls(self.api_connector, product_ids=product_ids)
+        booster = BoosterAI(prestashop_connector=self.api_connector, product_ids=product_ids)
+        booster.apply_ai_actions(**config.ai_params)
+        # ai_operations.apply_ai_actions(self.api_connector, config.openai_key, product_ids, **config.ai_params)
+        # mapping.update_files_and_xmls(self.api_connector, product_ids=product_ids)
 
     def load_parameters(self):
         parser = argparse.ArgumentParser()
@@ -43,10 +48,13 @@ class ProductManager:
             if not args.param:
                 args.param = self._get_newest_csv_name()
             return args.mode, args.param
+        elif args.mode == 'improve':
+            return args.mode, None
         else:
             raise ValueError(f"Unknown mode '{args.mode}'.")
 
-    def _get_newest_csv_name(self):
+    @staticmethod
+    def _get_newest_csv_name():
         base_dir = os.path.abspath(os.path.dirname(__file__))
         csv_folder = os.path.abspath(os.path.join(base_dir, config.csv_path))
         csv_filenames = sorted(glob.glob(f"{csv_folder}/*.csv"), reverse=True)
